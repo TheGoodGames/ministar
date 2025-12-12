@@ -4,11 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lin: Drake Clipper</title>
+  
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Google Fonts: Cormorant Garamond — книжный стиль -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #0b0b12;
-      --fg: #e6e6ff;
+      --bg: #0c0b14;
+      --fg: #e8e6f6;
       --accent: #6a5acd;
       --success: #4caf50;
       --deadend: #f44336;
@@ -21,11 +29,14 @@
     body {
       background: var(--bg);
       color: var(--fg);
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      font-size: 19px;
       padding: 20px;
       min-height: 100vh;
       overflow-x: hidden;
-      scroll-behavior: smooth; /* Плавная прокрутка */
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
     #app {
       max-width: 600px;
@@ -44,9 +55,10 @@
     .illustration {
       width: 100%;
       border-radius: 14px;
-      margin: 18px 0;
+      margin: 24px 0;
       overflow: hidden;
-      background: #121220;
+      background: #141224;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .illustration img {
       width: 100%;
@@ -54,41 +66,46 @@
       display: block;
     }
     .illustration .fallback {
-      color: #666;
+      color: #777;
       font-style: italic;
       text-align: center;
-      padding: 20px;
+      padding: 24px;
+      font-family: system-ui, sans-serif;
     }
     .text {
-      font-size: 17px;
-      line-height: 1.65;
-      margin: 22px 0;
+      line-height: 1.78;
+      margin: 26px 0;
+      text-align: justify;
+      hyphens: auto;
     }
     .text p {
-      margin-bottom: 18px;
+      margin-bottom: 22px;
+      text-indent: 24px; /* книжный отступ */
     }
     .choices {
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      margin-top: 26px;
+      gap: 16px;
+      margin: 30px 0 24px;
     }
     .choice-btn {
-      padding: 16px;
+      padding: 16px 20px;
       background: var(--accent);
       color: white;
       border: none;
       border-radius: 12px;
-      font-size: 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 17px;
       text-align: left;
       cursor: pointer;
       transition: background 0.2s, transform 0.12s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .choice-btn:hover {
       background: #5a4ab0;
     }
     .choice-btn:active {
-      transform: scale(0.99);
+      transform: scale(0.992);
     }
     .deadend .choice-btn {
       background: var(--deadend);
@@ -98,12 +115,13 @@
     }
     .ending-success {
       border-left: 4px solid var(--success);
-      padding-left: 14px;
+      padding-left: 16px;
     }
     .loading {
       padding: 40px;
       color: #777;
       text-align: center;
+      font-family: system-ui, sans-serif;
     }
     .restart-btn {
       background: #ff9800;
@@ -113,12 +131,13 @@
     }
     #audio-control {
       position: fixed;
-      bottom: 12px;
-      right: 12px;
-      background: rgba(255,255,255,0.1);
+      bottom: 16px;
+      right: 16px;
+      background: rgba(106, 90, 205, 0.25);
+      backdrop-filter: blur(4px);
       border: none;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       color: white;
       cursor: pointer;
@@ -127,6 +146,7 @@
       justify-content: center;
       font-size: 18px;
       z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
   </style>
 </head>
@@ -173,8 +193,7 @@
     }
 
     function getIllustrationHtml(nodeId) {
-      // Добавим ?v=2 чтобы обойти кэш (особенно на iOS)
-      return `<div class="illustration"><img src="img/${nodeId}.jpg?v=2" alt="Сцена ${nodeId}"></div>`;
+      return `<div class="illustration"><img src="img/${nodeId}.jpg?v=3" alt="Сцена ${nodeId}"></div>`;
     }
 
     function showNode(nodeId) {
@@ -209,7 +228,7 @@
         sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div><div class="choices">${choicesHtml}</div>`;
         sceneEl.classList.add('active');
 
-        // 🔼 Прокрутка в самое начало сцены
+        // Прокрутка в начало
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         // Обработка ошибки изображения
