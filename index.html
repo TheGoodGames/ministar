@@ -177,9 +177,10 @@
 
     function getIllustrationHtml(nodeId) {
       // Просто возвращаем тег — ошибку обработаем после вставки
-      return `<div class="illustration"><img src="img/${nodeId}.jpg" alt="Сцена ${nodeId}"></div>`;
+      const timestamp = '?v=2'; // или любое число — меняйте при обновлении
+      return `<div class="illustration"><img src="img/${nodeId}.jpg${timestamp}" alt="Сцена ${nodeId}"></div>`;
     }
-
+      
     function showNode(nodeId) {
       if (!story[nodeId]) {
         sceneEl.innerHTML = `<div class="text">Ошибка: узел "${nodeId}" не найден.</div>`;
@@ -276,3 +277,4 @@
   </script>
 </body>
 </html>
+
