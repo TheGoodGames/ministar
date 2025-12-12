@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Три в ряд</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      background: #0f0f0f;
+      color: white;
+      font-family: sans-serif;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 20px 0;
+    }
+    .cell {
+      width: 80px;
+      height: 80px;
+      background: #1e1e1e;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      cursor: pointer;
+    }
+    .cell:hover {
+      background: #2a2a2a;
+    }
+    #status {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    #restart {
+      padding: 8px 16px;
+      background: #5e7ce0;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Крестики-нолики</h2>
+  <div id="status">Ходят: ❌</div>
+  <div id="board"></div>
+  <button id="restart">Новая игра</button>
+
+  <script>
+    let currentPlayer = '❌';
+    let gameActive = true;
+    let board = Array(9).fill(null);
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const restartBtn = document.getElementById('restart');
+
+    function initBoard() {
+      boardEl.innerHTML = '';
+      board = Array(9).fill(null);
+      gameActive = true;
+      currentPlayer = '❌';
+      statusEl.textContent = 'Ходят: ❌';
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        cell.addEventListener('click', handleCellClick);
+        boardEl.appendChild(cell);
+      }
+    }
+
+    function handleCellClick(e) {
+      const idx = e.target.dataset.index;
+      if (board[idx] || !gameActive) return;
+
+      board[idx] = currentPlayer;
+      e.target.textContent = currentPlayer;
+
+      if (checkWinner()) {
+        statusEl.textContent = `Победили: ${currentPlayer}!`;
+        gameActive = false;
+        // Отправляем результат боту (опционально)
+        Telegram.WebApp.sendData(JSON.stringify({ game: "tic_tac_toe", winner: currentPlayer }));
+        return;
+      }
+
+      if (!board.includes(null)) {
+        statusEl.textContent = 'Ничья!';
+        gameActive = false;
+        Telegram.WebApp.sendData(JSON.stringify({ game: "tic_tac_toe", result: "draw" }));
+        return;
+      }
+
+      currentPlayer = currentPlayer === '❌' ? '⭕' : '❌';
+      statusEl.textContent = `Ходят: ${currentPlayer}`;
+    }
+
+    function checkWinner() {
+      const winPatterns = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      return winPatterns.some(pattern => {
+        const [a,b,c] = pattern;
+        return board[a] && board[a] === board[b] && board[a] === board[c];
+      });
+    }
+
+    restartBtn.addEventListener('click', initBoard);
+    initBoard();
+
+    // Настройка Telegram WebApp
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand(); // раскрыть на весь экран
+  </script>
+</body>
+</html>
