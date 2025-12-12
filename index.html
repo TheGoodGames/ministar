@@ -25,6 +25,7 @@
       padding: 20px;
       min-height: 100vh;
       overflow-x: hidden;
+      scroll-behavior: smooth; /* Плавная прокрутка */
     }
     #app {
       max-width: 600px;
@@ -42,19 +43,15 @@
     }
     .illustration {
       width: 100%;
-      height: 220px;
       border-radius: 14px;
       margin: 18px 0;
       overflow: hidden;
       background: #121220;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .illustration img {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      height: auto;
+      display: block;
     }
     .illustration .fallback {
       color: #666;
@@ -129,6 +126,7 @@
       align-items: center;
       justify-content: center;
       font-size: 18px;
+      z-index: 100;
     }
   </style>
 </head>
@@ -150,7 +148,6 @@
     const audioBtn = document.getElementById('audio-control');
     let isAudioPlaying = false;
 
-    // Загрузка story.json
     async function loadStory() {
       try {
         const res = await fetch('story.json');
@@ -176,11 +173,10 @@
     }
 
     function getIllustrationHtml(nodeId) {
-      // Просто возвращаем тег — ошибку обработаем после вставки
-      const timestamp = '?v=2'; // или любое число — меняйте при обновлении
-      return `<div class="illustration"><img src="img/${nodeId}.jpg${timestamp}" alt="Сцена ${nodeId}"></div>`;
+      // Добавим ?v=2 чтобы обойти кэш (особенно на iOS)
+      return `<div class="illustration"><img src="img/${nodeId}.jpg?v=2" alt="Сцена ${nodeId}"></div>`;
     }
-      
+
     function showNode(nodeId) {
       if (!story[nodeId]) {
         sceneEl.innerHTML = `<div class="text">Ошибка: узел "${nodeId}" не найден.</div>`;
@@ -213,7 +209,10 @@
         sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div><div class="choices">${choicesHtml}</div>`;
         sceneEl.classList.add('active');
 
-        // Безопасная обработка ошибки загрузки изображения
+        // 🔼 Прокрутка в самое начало сцены
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Обработка ошибки изображения
         const img = sceneEl.querySelector('.illustration img');
         if (img) {
           img.onerror = function() {
@@ -277,4 +276,3 @@
   </script>
 </body>
 </html>
-
