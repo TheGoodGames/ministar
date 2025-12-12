@@ -7,11 +7,11 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: #0c0c14;
-      --fg: #e0e0ff;
-      --accent: #5e7ce0;
-      --deadend: #c0392b;
-      --success: #27ae60;
+      --bg: #0b0b12;
+      --fg: #e6e6ff;
+      --accent: #6a5acd;
+      --success: #4caf50;
+      --deadend: #f44336;
     }
     * {
       margin: 0;
@@ -21,7 +21,7 @@
     body {
       background: var(--bg);
       color: var(--fg);
-      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       padding: 20px;
       min-height: 100vh;
       overflow-x: hidden;
@@ -29,146 +29,166 @@
     #app {
       max-width: 600px;
       margin: 0 auto;
-      text-align: center;
     }
     #scene {
       opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      transform: translateY(15px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      text-align: left;
     }
     #scene.active {
       opacity: 1;
       transform: translateY(0);
     }
-    .planet-img {
+    .illustration {
       width: 100%;
-      height: 200px;
-      object-fit: cover;
+      height: 180px;
+      background: rgba(30, 30, 50, 0.4);
       border-radius: 12px;
       margin: 16px 0;
-      background: #1a1a2e;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #666;
+      color: #888;
+      font-size: 14px;
       font-style: italic;
     }
     .text {
-      font-size: 18px;
-      line-height: 1.5;
+      font-size: 17px;
+      line-height: 1.65;
       margin: 20px 0;
-      text-align: left;
+    }
+    .text p {
+      margin-bottom: 16px;
     }
     .choices {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 20px;
+      gap: 14px;
+      margin-top: 24px;
     }
     .choice-btn {
-      padding: 14px;
+      padding: 15px;
       background: var(--accent);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 11px;
       font-size: 16px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
       text-align: left;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.12s;
     }
     .choice-btn:hover {
-      background: #4a66d0;
+      background: #5a4ab0;
     }
     .choice-btn:active {
-      transform: scale(0.98);
+      transform: scale(0.99);
     }
     .deadend .choice-btn {
       background: var(--deadend);
     }
     .deadend .choice-btn:hover {
-      background: #a0281a;
+      background: #d32f2f;
     }
     .ending-success {
-      color: var(--success);
-      font-weight: bold;
-    }
-    .ending-fail {
-      color: var(--deadend);
+      border-left: 4px solid var(--success);
+      padding-left: 12px;
     }
     .loading {
       padding: 40px;
-      color: #666;
+      color: #777;
+      text-align: center;
+    }
+    .restart-btn {
+      background: #ff9800;
+    }
+    .restart-btn:hover {
+      background: #f57c00;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div id="scene" class="loading">Загрузка игры...</div>
+    <div id="scene" class="loading">Загрузка вселенной...</div>
   </div>
 
   <script>
-    // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
-    let gameData = null;
-    let currentState = null;
+    let story = null;
+    let currentNodeId = null;
     const sceneEl = document.getElementById('scene');
 
-    // === ЗАГРУЗКА ИГРОВЫХ ДАННЫХ ===
-    async function loadGameData() {
+    // Загрузка story.json
+    async function loadStory() {
       try {
-        const res = await fetch('game_data.json');
-        if (!res.ok) throw new Error('Файл не найден');
-        gameData = await res.json();
-        startGame();
+        const res = await fetch('story.json');
+        if (!res.ok) throw new Error('Файл story.json не найден');
+        story = await res.json();
+        showNode('m1');
       } catch (e) {
-        sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}<br>Убедитесь, что game_data.json лежит рядом с index.html.</div>`;
+        sceneEl.innerHTML = `<div class="text">Ошибка: ${e.message}</div>`;
       }
     }
 
-    // === НАЧАЛО ИГРЫ ===
-    function startGame() {
-      // Сразу переходим к первому шагу (без ввода кода — Mini App не поддерживает ввод)
-      showNode('m1');
+    // Преобразование текста: \n\n → <p>
+    function formatText(text) {
+      return text.split('\n\n').map(p => `<p>${p}</p>`).join('');
     }
 
-    // === ОТОБРАЖЕНИЕ УЗЛА ===
+    // Иллюстрация по ID (можно заменить на реальные изображения)
+    function getIllustration(nodeId) {
+      const scenes = {
+        'm1': 'Комната Лин — тусклый свет, неон, похмелье',
+        'm2': '«Гарпун-3» — кабина, приборы, звёзды',
+        'm3': 'Полёт сквозь астероиды',
+        'm4': 'Заброшенный аутпост',
+        'm5': 'Бой с наёмниками',
+        'm6': 'Починка корабля',
+        'm7': 'Лунный пейзаж, пыль, охрана',
+        'm9': 'Ночь в аутпосте — близость, доверие',
+        'm10': 'Предательство на рассвете',
+        'success_final': '🏆 Drake Clipper — найден!',
+        'a1_1': 'Бар «Орбитуари» — тени, цилиндр',
+        'a1_3': 'Лорвиль — мегаполис, труп в магазине',
+        'a1_5': 'Пайро IV — буря, охотники',
+        'a1_6': 'Sel_Oin — клинок, плащ из кевлара'
+      };
+      const desc = scenes[nodeId] || '🌌 Неизвестное место';
+      return `<div class="illustration">${desc}</div>`;
+    }
+
+    // Отображение узла
     function showNode(nodeId) {
-      if (!gameData || !gameData[nodeId]) {
-        sceneEl.innerHTML = `<div class="text">Ошибка: узел ${nodeId} не найден.</div>`;
+      if (!story[nodeId]) {
+        sceneEl.innerHTML = `<div class="text">Ошибка: узел "${nodeId}" не найден.</div>`;
         return;
       }
 
-      const node = gameData[nodeId];
-      currentState = nodeId;
+      const node = story[nodeId];
+      currentNodeId = nodeId;
 
-      // Определяем тип сцены
       const isEnding = node.ending === "true";
-      const isDeadend = node.ending === "false";
-      const className = isEnding ? 'ending-success' : isDeadend ? 'deadend ending-fail' : '';
+      const isDeadend = nodeId.startsWith('alt_') && node.choices?.some(c => c.next?.startsWith('m'));
+      const className = isEnding ? 'ending-success' : isDeadend ? 'deadend' : '';
 
-      // Иллюстрация (заглушка — можно заменить на реальные URL)
-      const imgSrc = getPlanetImage(nodeId);
+      const illustration = getIllustration(nodeId);
+      const formattedText = formatText(node.text);
 
-      // Генерация кнопок
-      const choicesHtml = node.choices?.length
-        ? node.choices.map(c => 
-            `<button class="choice-btn" onclick="handleChoice('${c.next}')">${c.text}</button>`
-          ).join('')
-        : '';
+      const choicesHtml = node.choices?.map(c => {
+        const isRestart = c.next === 'm1' || nodeId.includes('alt_') && c.next.startsWith('m');
+        const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
+        return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
+      }).join('') || '';
 
-      // Анимация: сначала скрыть, потом показать
+      // Анимация перехода
       sceneEl.classList.remove('active');
       setTimeout(() => {
         sceneEl.className = `scene ${className}`;
-        sceneEl.innerHTML = `
-          ${imgSrc ? `<div class="planet-img">${imgSrc}</div>` : ''}
-          <div class="text">${node.text}</div>
-          <div class="choices">${choicesHtml}</div>
-        `;
+        sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div><div class="choices">${choicesHtml}</div>`;
         sceneEl.classList.add('active');
-      }, 300);
+      }, 320);
     }
 
-    // === ОБРАБОТКА ВЫБОРА ===
+    // Обработка выбора
     window.handleChoice = function(nextId) {
       if (nextId === 'end_game') {
         Telegram.WebApp.sendData(JSON.stringify({ result: 'aborted' }));
@@ -176,42 +196,30 @@
         return;
       }
 
-      if (nextId === 'restart_no_code') {
-        return showNode('m1');
+      const nextNode = story[nextId];
+      if (!nextNode) {
+        showNode('m1');
+        return;
       }
 
       showNode(nextId);
 
-      // Если это конец — отправить результат
-      if (gameData[nextId]?.ending === "true") {
+      // Отправка результата при победе
+      if (nextNode.ending === "true") {
         Telegram.WebApp.sendData(JSON.stringify({ result: 'success' }));
-        Telegram.WebApp.showAlert("Победа! DRAKE CLIPPER найден.");
-      } else if (gameData[nextId]?.ending === "false") {
-        Telegram.WebApp.sendData(JSON.stringify({ result: 'deadend' }));
+        Telegram.WebApp.showAlert("🏆 Вы нашли Drake Clipper!");
       }
     };
 
-    // === ПОДБОР ИЛЛЮСТРАЦИИ ===
-    function getPlanetImage(nodeId) {
-      // Можно подключить реальные изображения с CDN
-      // Пока — текстовые заглушки с названием планеты
-      const planets = {
-        'm1': 'Delamar', 'm2': 'ArcCorp', 'm3': 'Pyro',
-        'm4': 'MicroTech', 'm5': 'Hurston'
-      };
-      const base = parseInt(nodeId.replace('m', '').split('_')[0]);
-      const planet = planets[`m${((base - 1) % 5) + 1}`] || 'Unknown';
-      return `<span>🌌 ${planet}</span>`;
-    }
-
-    // === ИНИЦИАЛИЗАЦИЯ ===
+    // Telegram WebApp
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     Telegram.WebApp.MainButton.setText('Начать заново');
     Telegram.WebApp.MainButton.show();
     Telegram.WebApp.MainButton.onClick(() => showNode('m1'));
 
-    loadGameData();
+    // Запуск
+    loadStory();
   </script>
 </body>
 </html>
