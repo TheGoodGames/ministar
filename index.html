@@ -11,7 +11,7 @@
   <!-- Google Fonts: Cormorant Garamond — книжный стиль -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -168,6 +168,16 @@
     const audioBtn = document.getElementById('audio-control');
     let isAudioPlaying = false;
 
+    // Функция для перемешивания массива (алгоритм Фишера-Йетса)
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+
     async function loadStory() {
       try {
         const res = await fetch('story.json');
@@ -216,7 +226,15 @@
 
       const illustration = getIllustrationHtml(nodeId);
       const formattedText = formatText(node.text);
-      const choicesHtml = node.choices?.map(c => {
+      
+      // РАНДОМИЗАЦИЯ КНОПОК!
+      let choices = [...(node.choices || [])];
+      // Перемешиваем кнопки для каждого узла, кроме конечных
+      if (!isEnding && nodeId !== 'success_final') {
+        choices = shuffleArray(choices);
+      }
+      
+      const choicesHtml = choices.map(c => {
         const isRestart = c.next === 'm1';
         const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
         return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
@@ -295,4 +313,3 @@
   </script>
 </body>
 </html>
-
