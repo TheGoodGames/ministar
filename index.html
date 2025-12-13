@@ -178,12 +178,13 @@
       return newArray;
     }
 
-    // Функция для безопасного получения изображения (с заменой недопустимых символов)
+    // Безопасное получение имени изображения с заменой пробелов и спецсимволов
     function getSafeImageName(nodeId) {
-      // Заменяем символы, которые могут вызвать проблемы в именах файлов
       return nodeId
-        .replace(/[^a-zA-Z0-9_-]/g, '_')
-        .toLowerCase();
+        .replace(/[^a-zA-Z0-9\s_-]/g, '') // Удаляем опасные символы
+        .replace(/\s+/g, '_') // Пробелы на подчеркивания
+        .toLowerCase()
+        .replace(/_{2,}/g, '_'); // Убираем множественные подчеркивания
     }
 
     async function loadStory() {
@@ -202,28 +203,35 @@
       if (saved && story[saved]) {
         showNode(saved);
       } else {
-        // Находим первый узел в JSON (первый ключ в объекте)
+        // Берем первый узел из объекта
         const firstNodeId = Object.keys(story)[0];
         showNode(firstNodeId);
       }
     }
 
     function formatText(text) {
-      // Заменяем символы форматирования из JSON на HTML
+      // Обработка Markdown-стиля форматирования
       return text
-        .replace(/`([^`]*)`/g, '<em>$1</em>') // Обработка курсивных фраз
-        .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>') // Обработка жирного текста
+        .replace(/`([^`]*)`/g, '<em>$1</em>') // Курсив в `обратных кавычках`
+        .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>') // Жирный текст в **звёздочках**
         .split('\n\n')
         .map(p => `<p>${p.trim()}</p>`)
-        .filter(p => p !== '<p></p>') // Удаляем пустые абзацы
+        .filter(p => p !== '<p></p>') // Убираем пустые абзацы
         .join('');
     }
 
     function getIllustrationHtml(nodeId) {
       const safeName = getSafeImageName(nodeId);
+      // Для узла "node_end" используем особое изображение
+      const imgSrc = nodeId === "node_end" 
+        ? "img/end_scene.jpg" 
+        : `img/${safeName}.jpg`;
+      
       return `
         <div class="illustration">
-          <img src="img/${safeName}.jpg?v=${Date.now()}" alt="Сцена ${nodeId}" onerror="this.parentElement.innerHTML='<div class=\'fallback\'>🌌 Иллюстрация недоступна</div>'">
+          <img src="${imgSrc}?v=${Date.now()}" 
+               alt="Сцена ${nodeId}" 
+               onerror="this.parentElement.innerHTML='<div class=\'fallback\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
         </div>
       `;
     }
@@ -231,7 +239,6 @@
     function showNode(nodeId) {
       if (!story[nodeId]) {
         console.error(`Узел "${nodeId}" не найден в story.json`);
-        // Попробуем найти первый доступный узел
         const firstNodeId = Object.keys(story)[0];
         if (firstNodeId) {
           showNode(firstNodeId);
@@ -245,29 +252,27 @@
       currentNodeId = nodeId;
       localStorage.setItem('lingame_lastNode', nodeId);
 
-      // Проверяем, является ли узел конечным
-      const isEnding = node.ending === "true";
-      const hasRestartOption = node.choices && node.choices.some(c => c.next === 'm1');
+      // Определяем тип узла
+      const isRestartNode = nodeId === "node_end";
+      const hasRestartOption = node.choices?.some(c => c.next === "MAIN STORY");
       
       // Определяем класс для стилизации
       let className = '';
-      if (isEnding) {
-        className = 'ending-success';
-      } else if (hasRestartOption) {
-        className = 'deadend';
+      if (isRestartNode || hasRestartOption) {
+        className = 'deadend'; // Для узлов с возвратом в начало
       }
 
       const illustration = getIllustrationHtml(nodeId);
       const formattedText = formatText(node.text);
       
-      // РАНДОМИЗАЦИЯ КНОПОК (кроме конечных узлов)
+      // РАНДОМИЗАЦИЯ КНОПОК (кроме узлов с возвратом)
       let choices = [...(node.choices || [])];
-      if (!isEnding && !hasRestartOption) {
+      if (!isRestartNode && !hasRestartOption) {
         choices = shuffleArray(choices);
       }
       
       const choicesHtml = choices.map(c => {
-        const isRestart = c.next === 'm1' || c.next === 'end_game';
+        const isRestart = c.next === "MAIN STORY" || c.next === "node_end";
         const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
         return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
       }).join('') || '';
@@ -286,48 +291,37 @@
           audioEl.play().catch(e => console.log("Audio play failed:", e));
         }
         
-        // Если это конечный узел - отправляем данные в Telegram
-        if (isEnding) {
-          sendGameResult('success');
-          Telegram.WebApp.showAlert("🏆 Вы завершили сценарий!");
+        // Специальная обработка для узла завершения
+        if (isRestartNode) {
+          try {
+            Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+          } catch (e) {
+            console.log("Telegram alert not available");
+          }
         }
       }, 320);
     }
 
-    function sendGameResult(result) {
-      try {
-        Telegram.WebApp.sendData(JSON.stringify({ result: result }));
-      } catch (e) {
-        console.log("Telegram.WebApp недоступен:", e);
-      }
-    }
-
     window.handleChoice = function(nextId) {
-      // Специальная обработка для кнопки "Начать заново"
-      if (nextId === 'm1' || nextId === 'end_game') {
+      // Обработка возврата в начало
+      if (nextId === "MAIN STORY") {
         localStorage.removeItem('lingame_lastNode');
-        
-        if (nextId === 'end_game') {
-          sendGameResult('aborted');
-          // Не закрываем приложение, чтобы пользователь мог начать заново
-          showNode('m1');
-          return;
-        }
       }
 
-      // Проверяем, существует ли узел в JSON
+      // Специальная обработка для узла завершения
+      if (nextId === "node_end") {
+        setTimeout(() => {
+          showNode("MAIN STORY");
+        }, 500);
+        return;
+      }
+
+      // Обработка перехода к следующему узлу
       if (story[nextId]) {
         showNode(nextId);
       } else {
-        console.warn(`Узел "${nextId}" не найден. Ищем альтернативы...`);
-        
-        // Попытка найти похожий узел или вернуться к началу
-        const fallbackNodeId = Object.keys(story).find(id => 
-          id.toLowerCase().includes(nextId.toLowerCase()) || 
-          nextId.toLowerCase().includes(id.toLowerCase())
-        ) || 'm1';
-        
-        showNode(fallbackNodeId);
+        console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+        showNode("MAIN STORY");
       }
     };
 
@@ -349,7 +343,7 @@
 
     // Инициализация Telegram WebApp
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.Telegram && Telegram.WebApp) {
+      if (window.Telegram?.WebApp) {
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
         
@@ -358,11 +352,22 @@
         Telegram.WebApp.MainButton.show();
         Telegram.WebApp.MainButton.onClick(() => {
           localStorage.removeItem('lingame_lastNode');
-          const firstNodeId = Object.keys(story)[0];
-          showNode(firstNodeId);
+          showNode("MAIN STORY");
         });
       } else {
         console.log("Telegram.WebApp не доступен. Запуск в обычном режиме.");
+        
+        // Добавляем fallback-кнопку для обычного браузера
+        const restartBtn = document.createElement('button');
+        restartBtn.className = 'choice-btn restart-btn';
+        restartBtn.textContent = 'Начать заново';
+        restartBtn.style.marginTop = '20px';
+        restartBtn.style.width = '100%';
+        restartBtn.onclick = () => {
+          localStorage.removeItem('lingame_lastNode');
+          showNode("MAIN STORY");
+        };
+        sceneEl.parentNode.appendChild(restartBtn);
       }
       
       loadStory();
