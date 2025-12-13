@@ -217,7 +217,7 @@
       localStorage.setItem('lingame_lastNode', nodeId);
 
       const isEnding = node.ending === "true";
-      const isRestartChoice = node.choices?.some(c => c.next === 'm1');
+      const isRestartChoice = node.choices?.some(c => c.next === 'MAIN STORY');
       const className = isEnding 
         ? 'ending-success' 
         : isRestartChoice 
