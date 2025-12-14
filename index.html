@@ -266,7 +266,7 @@
     localStorage.setItem('lingame_lastNode', nodeId);
 
     const isRestartNode = nodeId === "node_end";
-    const hasRestartOption = node.choices?.some(c => c.next === "MAIN STORY");
+    const hasRestartOption = node.choices?.some(c => c.next === "main_story");
     let className = '';
     if (isRestartNode || hasRestartOption) className = 'deadend';
 
@@ -279,7 +279,7 @@
     }
 
     const choicesHtml = choices.map(c => {
-      const isRestart = c.next === "MAIN STORY" || c.next === "node_end";
+      const isRestart = c.next === "main_story" || c.next === "node_end";
       const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
       return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
     }).join('') || '';
@@ -302,18 +302,18 @@
   }
 
   window.handleChoice = function(nextId) {
-    if (nextId === "MAIN STORY") {
+    if (nextId === "main_story") {
       localStorage.removeItem('lingame_lastNode');
     }
     if (nextId === "node_end") {
-      setTimeout(() => showNode("MAIN STORY"), 500);
+      setTimeout(() => showNode("main_story"), 500);
       return;
     }
     if (story[nextId]) {
       showNode(nextId);
     } else {
       console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-      showNode("MAIN STORY");
+      showNode("main_story");
     }
   };
 
