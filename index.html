@@ -161,201 +161,201 @@
   </audio>
 
   <script>
-    let story = null;
-    let currentNodeId = null;
-    const sceneEl = document.getElementById('scene');
-    const audioEl = document.getElementById('ambient-audio');
-    const audioBtn = document.getElementById('audio-control');
-    let isAudioPlaying = false;
+  // === ЗАГРУЗКА И ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ Pasted_Text_1765754068140.txt ===
+  let story = null;
+  let currentNodeId = null;
+  const sceneEl = document.getElementById('scene');
+  const audioEl = document.getElementById('ambient-audio');
+  const audioBtn = document.getElementById('audio-control');
+  let isAudioPlaying = false;
 
-    function shuffleArray(array) {
-      const newArray = [...array];
-      for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-      }
-      return newArray;
+  function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
+    return newArray;
+  }
 
-    function getSafeImageName(nodeId) {
-      return nodeId
-        .replace(/[^a-zA-Z0-9\s_-]/g, '')
-        .replace(/\s+/g, '_')
-        .toLowerCase()
-        .replace(/_{2,}/g, '_');
-    }
+  function getSafeImageName(nodeId) {
+    return nodeId
+      .replace(/[^a-zA-Z0-9\s_-]/g, '')
+      .replace(/\s+/g, '_')
+      .toLowerCase()
+      .replace(/_{2,}/g, '_');
+  }
 
-    async function loadStory() {
-      try {
-        const res = await fetch('Pasted_Text_1765754068140.txt');
-        if (!res.ok) throw new Error('Файл Pasted_Text_1765754068140.txt не найден');
-        const rawData = await res.json(); // [nodes[], edges[]]
+  async function loadStory() {
+    try {
+      const res = await fetch('story.json');
+      if (!res.ok) throw new Error('Файл не найден');
+      const rawData = await res.json(); // [nodes[], edges[]]
 
-        const nodes = rawData[0];
-        const edges = rawData[1];
-        const builtStory = {};
+      const nodes = rawData[0];
+      const edges = rawData[1];
+      const builtStory = {};
 
-        nodes.forEach(node => {
-          const outgoingEdges = edges.filter(e => e.source === node.id);
-          const choices = (node.replies || []).map((reply, idx) => {
-            const edge = outgoingEdges.find(e => e.sourceHandle === String(idx));
-            return { text: reply.text, next: edge ? edge.target : null };
-          }).filter(c => c.next !== null);
+      nodes.forEach(node => {
+        const outgoingEdges = edges.filter(e => e.source === node.id);
+        const choices = (node.replies || []).map((reply, idx) => {
+          const edge = outgoingEdges.find(e => e.sourceHandle === String(idx));
+          return { text: reply.text, next: edge ? edge.target : null };
+        }).filter(c => c.next !== null);
 
-          builtStory[node.id] = {
-            text: node.text,
-            choices: choices
-          };
-        });
-
-        story = builtStory;
-        initGame();
-      } catch (e) {
-        sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
-        console.error(e);
-      }
-    }
-
-    function initGame() {
-      const saved = localStorage.getItem('lingame_lastNode');
-      if (saved && story[saved]) {
-        showNode(saved);
-      } else {
-        const startNode = Object.values(story).find((_, idx, arr) => {
-          const id = Object.keys(story)[idx];
-          return rawData[0][idx]?.start === true;
-        });
-        const firstNodeId = Object.keys(story)[0];
-        showNode(startNode ? Object.keys(story)[Object.values(story).indexOf(startNode)] : firstNodeId);
-      }
-    }
-
-    function formatText(text) {
-      return text
-        .replace(/`([^`]*)`/g, '<em>$1</em>')
-        .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
-        .split('\n\n')
-        .map(p => `<p>${p.trim()}</p>`)
-        .filter(p => p !== '<p></p>')
-        .join('');
-    }
-
-    function getIllustrationHtml(nodeId) {
-      const safeName = getSafeImageName(nodeId);
-      const imgSrc = nodeId === "node_end"
-        ? "img/end_scene.jpg"
-        : `img/${safeName}.jpg`;
-      return `
-        <div class="illustration">
-          <img src="${imgSrc}?v=${Date.now()}"
-               alt="Сцена ${nodeId}"
-               onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
-        </div>
-      `;
-    }
-
-    function showNode(nodeId) {
-      if (!story[nodeId]) {
-        console.error(`Узел "${nodeId}" не найден`);
-        showNode(Object.keys(story)[0]);
-        return;
-      }
-
-      const node = story[nodeId];
-      currentNodeId = nodeId;
-      localStorage.setItem('lingame_lastNode', nodeId);
-
-      const isRestartNode = nodeId === "node_end";
-      const hasRestartOption = node.choices?.some(c => c.next === "MAIN STORY");
-      let className = '';
-      if (isRestartNode || hasRestartOption) className = 'deadend';
-
-      const illustration = getIllustrationHtml(nodeId);
-      const formattedText = formatText(node.text);
-
-      let choices = [...(node.choices || [])];
-      if (!isRestartNode && !hasRestartOption) {
-        choices = shuffleArray(choices);
-      }
-
-      const choicesHtml = choices.map(c => {
-        const isRestart = c.next === "MAIN STORY" || c.next === "node_end";
-        const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-        return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
-      }).join('') || '';
-
-      sceneEl.classList.remove('active');
-      setTimeout(() => {
-        sceneEl.className = `scene ${className}`;
-        sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}`;
-        sceneEl.classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        if (isAudioPlaying) {
-          audioEl.play().catch(e => console.log("Audio play failed:", e));
-        }
-
-        if (isRestartNode && window.Telegram?.WebApp) {
-          Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-        }
-      }, 320);
-    }
-
-    window.handleChoice = function(nextId) {
-      if (nextId === "MAIN STORY") {
-        localStorage.removeItem('lingame_lastNode');
-      }
-      if (nextId === "node_end") {
-        setTimeout(() => showNode("MAIN STORY"), 500);
-        return;
-      }
-      if (story[nextId]) {
-        showNode(nextId);
-      } else {
-        console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-        showNode("MAIN STORY");
-      }
-    };
-
-    function toggleAudio() {
-      if (isAudioPlaying) {
-        audioEl.pause();
-        audioBtn.textContent = '🔇';
-        isAudioPlaying = false;
-      } else {
-        audioEl.play().then(() => {
-          audioBtn.textContent = '🔊';
-          isAudioPlaying = true;
-        }).catch(e => {
-          alert('Для воспроизведения звука нужно сначала взаимодействовать со страницей.');
-        });
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.Telegram?.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.MainButton.setText('Начать заново');
-        Telegram.WebApp.MainButton.show();
-        Telegram.WebApp.MainButton.onClick(() => {
-          localStorage.removeItem('lingame_lastNode');
-          showNode("MAIN STORY");
-        });
-      } else {
-        const restartBtn = document.createElement('button');
-        restartBtn.className = 'choice-btn restart-btn';
-        restartBtn.textContent = 'Начать заново';
-        restartBtn.style.marginTop = '20px';
-        restartBtn.style.width = '100%';
-        restartBtn.onclick = () => {
-          localStorage.removeItem('lingame_lastNode');
-          showNode("MAIN STORY");
+        builtStory[node.id] = {
+          text: node.text,
+          choices: choices
         };
-        document.getElementById('app').appendChild(restartBtn);
+      });
+
+      story = builtStory;
+      initGame();
+    } catch (e) {
+      sceneEl.innerHTML = `<div class="text">Ошибка: ${e.message}</div>`;
+      console.error(e);
+    }
+  }
+
+  function initGame() {
+    const saved = localStorage.getItem('lingame_lastNode');
+    if (saved && story[saved]) {
+      showNode(saved);
+    } else {
+      // Ищем стартовый узел с полем start: true
+      const startNode = Object.keys(story).find(id => {
+        return rawData[0].find(n => n.id === id)?.start === true;
+      });
+      showNode(startNode || '0'); // fallback к "0", если start не найден
+    }
+  }
+
+  function formatText(text) {
+    return text
+      .replace(/`([^`]*)`/g, '<em>$1</em>')
+      .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
+      .split('\n\n')
+      .map(p => `<p>${p.trim()}</p>`)
+      .filter(p => p !== '<p></p>')
+      .join('');
+  }
+
+  function getIllustrationHtml(nodeId) {
+    const safeName = getSafeImageName(nodeId);
+    const imgSrc = nodeId === "node_end"
+      ? "img/end_scene.jpg"
+      : `img/${safeName}.jpg`;
+    return `
+      <div class="illustration">
+        <img src="${imgSrc}?v=${Date.now()}"
+             alt="Сцена ${nodeId}"
+             onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
+      </div>
+    `;
+  }
+
+  function showNode(nodeId) {
+    if (!story[nodeId]) {
+      console.error(`Узел "${nodeId}" не найден`);
+      showNode(Object.keys(story)[0]);
+      return;
+    }
+
+    const node = story[nodeId];
+    currentNodeId = nodeId;
+    localStorage.setItem('lingame_lastNode', nodeId);
+
+    const isRestartNode = nodeId === "node_end";
+    const hasRestartOption = node.choices?.some(c => c.next === "MAIN STORY");
+    let className = '';
+    if (isRestartNode || hasRestartOption) className = 'deadend';
+
+    const illustration = getIllustrationHtml(nodeId);
+    const formattedText = formatText(node.text);
+
+    let choices = [...(node.choices || [])];
+    if (!isRestartNode && !hasRestartOption) {
+      choices = shuffleArray(choices);
+    }
+
+    const choicesHtml = choices.map(c => {
+      const isRestart = c.next === "MAIN STORY" || c.next === "node_end";
+      const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
+      return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
+    }).join('') || '';
+
+    sceneEl.classList.remove('active');
+    setTimeout(() => {
+      sceneEl.className = `scene ${className}`;
+      sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}`;
+      sceneEl.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (isAudioPlaying) {
+        audioEl.play().catch(e => console.log("Audio play failed:", e));
       }
-      loadStory();
-    });
-  </script>
+
+      if (isRestartNode && window.Telegram?.WebApp) {
+        Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+      }
+    }, 320);
+  }
+
+  window.handleChoice = function(nextId) {
+    if (nextId === "MAIN STORY") {
+      localStorage.removeItem('lingame_lastNode');
+    }
+    if (nextId === "node_end") {
+      setTimeout(() => showNode("MAIN STORY"), 500);
+      return;
+    }
+    if (story[nextId]) {
+      showNode(nextId);
+    } else {
+      console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+      showNode("MAIN STORY");
+    }
+  };
+
+  function toggleAudio() {
+    if (isAudioPlaying) {
+      audioEl.pause();
+      audioBtn.textContent = '🔇';
+      isAudioPlaying = false;
+    } else {
+      audioEl.play().then(() => {
+        audioBtn.textContent = '🔊';
+        isAudioPlaying = true;
+      }).catch(e => {
+        alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand();
+      Telegram.WebApp.MainButton.setText('Начать заново');
+      Telegram.WebApp.MainButton.show();
+      Telegram.WebApp.MainButton.onClick(() => {
+        localStorage.removeItem('lingame_lastNode');
+        showNode("MAIN STORY");
+      });
+    } else {
+      const restartBtn = document.createElement('button');
+      restartBtn.className = 'choice-btn restart-btn';
+      restartBtn.textContent = 'Начать заново';
+      restartBtn.style.marginTop = '20px';
+      restartBtn.style.width = '100%';
+      restartBtn.onclick = () => {
+        localStorage.removeItem('lingame_lastNode');
+        showNode("MAIN STORY");
+      };
+      document.getElementById('app').appendChild(restartBtn);
+    }
+    loadStory(); // ← ЗАГРУЖАЕМ ИГРУ
+  });
+</script>
 </body>
 </html>
