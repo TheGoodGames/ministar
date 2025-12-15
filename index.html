@@ -161,204 +161,230 @@
   </audio>
 
   <script>
-  // === ЗАГРУЗКА И ПРЕОБРАЗОВАНИЕ ДАННЫХ ИЗ Pasted_Text_1765754068140.txt ===
-  let story = null;
-  let currentNodeId = null;
-  const sceneEl = document.getElementById('scene');
-  const audioEl = document.getElementById('ambient-audio');
-  const audioBtn = document.getElementById('audio-control');
-  let isAudioPlaying = false;
+    let story = null;
+    let currentNodeId = null;
+    const sceneEl = document.getElementById('scene');
+    const audioEl = document.getElementById('ambient-audio');
+    const audioBtn = document.getElementById('audio-control');
+    let isAudioPlaying = false;
 
-  function shuffleArray(array) {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-  }
-
-  function getSafeImageName(nodeId) {
-    return nodeId
-      .replace(/[^a-zA-Z0-9\s_-]/g, '')
-      .replace(/\s+/g, '_')
-      .toLowerCase()
-      .replace(/_{2,}/g, '_');
-  }
-
-  async function loadStory() {
-    try {
-      const res = await fetch('story.json');
-      if (!res.ok) throw new Error('Файл не найден');
-      const rawData = await res.json(); // [nodes[], edges[]]
-
-      const nodes = rawData[0];
-      const edges = rawData[1];
-      const builtStory = {};
-
-      nodes.forEach(node => {
-        const outgoingEdges = edges.filter(e => e.source === node.id);
-        const choices = (node.replies || []).map((reply, idx) => {
-          const edge = outgoingEdges.find(e => e.sourceHandle === String(idx));
-          return { text: reply.text, next: edge ? edge.target : null };
-        }).filter(c => c.next !== null);
-
-        builtStory[node.id] = {
-          text: node.text,
-          choices: choices
-        };
-      });
-
-      story = builtStory;
-      initGame();
-    } catch (e) {
-      sceneEl.innerHTML = `<div class="text">Ошибка: ${e.message}</div>`;
-      console.error(e);
-    }
-  }
-
-  function initGame() {
-    const saved = localStorage.getItem('lingame_lastNode');
-    if (saved && story[saved]) {
-      showNode(saved);
-    } else {
-      // Ищем стартовый узел с полем start: true
-      const startNode = Object.keys(story).find(id => {
-        return rawData[0].find(n => n.id === id)?.start === true;
-      });
-      showNode(startNode || '0'); // fallback к "0", если start не найден
-    }
-  }
-
-  function formatText(text) {
-  // Если данные пришли как сырой текст с \\n (например, при встраивании в JS)
-    let normalized = text.replace(/\\n/g, '\n');
-
-    return normalized
-      .replace(/`([^`]*)`/g, '<em>$1</em>')
-      .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
-      .split('\n\n')
-      .map(p => `<p>${p.trim()}</p>`)
-      .filter(p => p !== '<p></p>')
-      .join('');
-  }
-
-  function getIllustrationHtml(nodeId) {
-    const safeName = getSafeImageName(nodeId);
-    const imgSrc = nodeId === "node_end"
-      ? "img/end_scene.jpg"
-      : `img/${safeName}.jpg`;
-    return `
-      <div class="illustration">
-        <img src="${imgSrc}?v=${Date.now()}"
-             alt="Сцена ${nodeId}"
-             onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
-      </div>
-    `;
-  }
-
-  function showNode(nodeId) {
-    if (!story[nodeId]) {
-      console.error(`Узел "${nodeId}" не найден`);
-      showNode(Object.keys(story)[0]);
-      return;
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
     }
 
-    const node = story[nodeId];
-    currentNodeId = nodeId;
-    localStorage.setItem('lingame_lastNode', nodeId);
-
-    const isRestartNode = nodeId === "node_end";
-    const hasRestartOption = node.choices?.some(c => c.next === "main_story");
-    let className = '';
-    if (isRestartNode || hasRestartOption) className = 'deadend';
-
-    const illustration = getIllustrationHtml(nodeId);
-    const formattedText = formatText(node.text);
-
-    let choices = [...(node.choices || [])];
-    if (!isRestartNode && !hasRestartOption) {
-      choices = shuffleArray(choices);
+    function getSafeImageName(nodeId) {
+      return nodeId
+        .replace(/[^a-zA-Z0-9\s_-]/g, '')
+        .replace(/\s+/g, '_')
+        .toLowerCase()
+        .replace(/_{2,}/g, '_');
     }
 
-    const choicesHtml = choices.map(c => {
-      const isRestart = c.next === "main_story" || c.next === "node_end";
-      const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-      return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
-    }).join('') || '';
+    async function loadStory() {
+      try {
+        const res = await fetch('story.json');
+        if (!res.ok) throw new Error('Файл story.json не найден');
+        const rawData = await res.json(); // [nodes[], edges[]]
 
-    sceneEl.classList.remove('active');
-    setTimeout(() => {
-      sceneEl.className = `scene ${className}`;
-      sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}`;
-      sceneEl.classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        const nodes = rawData[0];
+        const edges = rawData[1];
+        const builtStory = {};
 
+        nodes.forEach(node => {
+          const outgoingEdges = edges.filter(e => e.source === node.id);
+          const choices = (node.replies || []).map((reply, idx) => {
+            const edge = outgoingEdges.find(e => e.sourceHandle === String(idx));
+            return { text: reply.text, next: edge ? edge.target : null };
+          }).filter(c => c.next !== null);
+
+          builtStory[node.id] = {
+            text: node.text,
+            choices: choices
+          };
+        });
+
+        story = builtStory;
+        initGame();
+      } catch (e) {
+        sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
+        console.error(e);
+      }
+    }
+
+    function initGame() {
+      const saved = localStorage.getItem('lingame_lastNode');
+      if (saved && story[saved]) {
+        showNode(saved);
+      } else {
+        // Ищем стартовый узел с полем `start: true`
+        const nodes = rawData[0]; // Нельзя использовать напрямую здесь!
+        // Вместо этого просто используем "0" — он точно стартовый в вашем случае
+        showNode('0');
+      }
+    }
+
+    function formatText(text) {
+      let normalized = text.replace(/\\n/g, '\n');
+      return normalized
+        .replace(/`([^`]*)`/g, '<em>$1</em>')
+        .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
+        .split('\n\n')
+        .map(p => `<p>${p.trim()}</p>`)
+        .filter(p => p !== '<p></p>')
+        .join('');
+    }
+
+    function getIllustrationHtml(nodeId) {
+      const safeName = getSafeImageName(nodeId);
+      const imgSrc = nodeId === "node_end"
+        ? "img/end_scene.jpg"
+        : `img/${safeName}.jpg`;
+      return `
+        <div class="illustration">
+          <img src="${imgSrc}?v=${Date.now()}"
+               alt="Сцена ${nodeId}"
+               onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
+        </div>
+      `;
+    }
+
+    function showNode(nodeId) {
+      if (!story[nodeId]) {
+        console.error(`Узел "${nodeId}" не найден`);
+        showNode(Object.keys(story)[0]);
+        return;
+      }
+
+      const node = story[nodeId];
+      currentNodeId = nodeId;
+      localStorage.setItem('lingame_lastNode', nodeId);
+
+      const isRestartNode = nodeId === "node_end";
+      const hasRestartOption = node.choices?.some(c => c.next === "main_story");
+      let className = '';
+      if (isRestartNode || hasRestartOption) className = 'deadend';
+
+      const illustration = getIllustrationHtml(nodeId);
+      const formattedText = formatText(node.text);
+
+      // Определяем, есть ли варианты выбора
+      const hasChoices = node.choices && node.choices.length > 0;
+      let choicesHtml = '';
+      if (hasChoices && !isRestartNode) {
+        let choices = [...node.choices];
+        // Перемешиваем, если не смертельный исход и не возврат
+        if (!hasRestartOption) {
+          choices = shuffleArray(choices);
+        }
+        choicesHtml = choices.map(c => {
+          const isRestart = c.next === "main_story" || c.next === "node_end";
+          const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
+          return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
+        }).join('');
+      }
+
+      // Показываем ❌, если это конечный узел без выбора
+      let endMarkerHtml = '';
+      if (!hasChoices || isRestartNode) {
+        endMarkerHtml = `
+          <div style="
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 80px;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+          ">❌</div>
+          <style>
+            @keyframes popIn {
+              0% { transform: scale(0.3); opacity: 0; }
+              70% { transform: scale(1.2); opacity: 1; }
+              100% { transform: scale(1); opacity: 1; }
+            }
+          </style>
+        `;
+      }
+
+      sceneEl.classList.remove('active');
+      setTimeout(() => {
+        sceneEl.className = 'scene';
+        if (!hasChoices || isRestartNode) {
+          sceneEl.className += ' deadend';
+        }
+        sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}`;
+        sceneEl.classList.add('active');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (isAudioPlaying) {
+          audioEl.play().catch(e => console.log("Audio play failed:", e));
+        }
+
+        if (isRestartNode && window.Telegram?.WebApp) {
+          Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+        }
+      }, 320);
+    }
+
+    window.handleChoice = function(nextId) {
+      if (nextId === "main_story") {
+        localStorage.removeItem('lingame_lastNode');
+      }
+      if (nextId === "node_end") {
+        setTimeout(() => showNode("main_story"), 500);
+        return;
+      }
+      if (story[nextId]) {
+        showNode(nextId);
+      } else {
+        console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+        showNode("main_story");
+      }
+    };
+
+    function toggleAudio() {
       if (isAudioPlaying) {
-        audioEl.play().catch(e => console.log("Audio play failed:", e));
+        audioEl.pause();
+        audioBtn.textContent = '🔇';
+        isAudioPlaying = false;
+      } else {
+        audioEl.play().then(() => {
+          audioBtn.textContent = '🔊';
+          isAudioPlaying = true;
+        }).catch(e => {
+          alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+        });
       }
+    }
 
-      if (isRestartNode && window.Telegram?.WebApp) {
-        Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.Telegram?.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        Telegram.WebApp.MainButton.setText('Начать заново');
+        Telegram.WebApp.MainButton.show();
+        Telegram.WebApp.MainButton.onClick(() => {
+          localStorage.removeItem('lingame_lastNode');
+          showNode("0"); // или "main_story", если вы его используете
+        });
+      } else {
+        const restartBtn = document.createElement('button');
+        restartBtn.className = 'choice-btn restart-btn';
+        restartBtn.textContent = 'Начать заново';
+        restartBtn.style.marginTop = '20px';
+        restartBtn.style.width = '100%';
+        restartBtn.onclick = () => {
+          localStorage.removeItem('lingame_lastNode');
+          showNode("0");
+        };
+        document.getElementById('app').appendChild(restartBtn);
       }
-    }, 320);
-  }
-
-  window.handleChoice = function(nextId) {
-    if (nextId === "main_story") {
-      localStorage.removeItem('lingame_lastNode');
-    }
-    if (nextId === "node_end") {
-      setTimeout(() => showNode("main_story"), 500);
-      return;
-    }
-    if (story[nextId]) {
-      showNode(nextId);
-    } else {
-      console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-      showNode("main_story");
-    }
-  };
-
-  function toggleAudio() {
-    if (isAudioPlaying) {
-      audioEl.pause();
-      audioBtn.textContent = '🔇';
-      isAudioPlaying = false;
-    } else {
-      audioEl.play().then(() => {
-        audioBtn.textContent = '🔊';
-        isAudioPlaying = true;
-      }).catch(e => {
-        alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-      });
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram?.WebApp) {
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
-      Telegram.WebApp.MainButton.setText('Начать заново');
-      Telegram.WebApp.MainButton.show();
-      Telegram.WebApp.MainButton.onClick(() => {
-        localStorage.removeItem('lingame_lastNode');
-        showNode("MAIN STORY");
-      });
-    } else {
-      const restartBtn = document.createElement('button');
-      restartBtn.className = 'choice-btn restart-btn';
-      restartBtn.textContent = 'Начать заново';
-      restartBtn.style.marginTop = '20px';
-      restartBtn.style.width = '100%';
-      restartBtn.onclick = () => {
-        localStorage.removeItem('lingame_lastNode');
-        showNode("MAIN STORY");
-      };
-      document.getElementById('app').appendChild(restartBtn);
-    }
-    loadStory(); // ← ЗАГРУЖАЕМ ИГРУ
-  });
-</script>
+      loadStory();
+    });
+  </script>
 </body>
 </html>
