@@ -189,26 +189,7 @@
       try {
         const res = await fetch('story.json');
         if (!res.ok) throw new Error('Файл story.json не найден');
-        const rawData = await res.json(); // [nodes[], edges[]]
-
-        const nodes = rawData[0];
-        const edges = rawData[1];
-        const builtStory = {};
-
-        nodes.forEach(node => {
-          const outgoingEdges = edges.filter(e => e.source === node.id);
-          const choices = (node.replies || []).map((reply, idx) => {
-            const edge = outgoingEdges.find(e => e.sourceHandle === String(idx));
-            return { text: reply.text, next: edge ? edge.target : null };
-          }).filter(c => c.next !== null);
-
-          builtStory[node.id] = {
-            text: node.text,
-            choices: choices
-          };
-        });
-
-        story = builtStory;
+        story = await res.json();
         initGame();
       } catch (e) {
         sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
