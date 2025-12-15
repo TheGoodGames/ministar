@@ -231,7 +231,10 @@
   }
 
   function formatText(text) {
-    return text
+  // Если данные пришли как сырой текст с \\n (например, при встраивании в JS)
+    let normalized = text.replace(/\\n/g, '\n');
+
+    return normalized
       .replace(/`([^`]*)`/g, '<em>$1</em>')
       .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
       .split('\n\n')
