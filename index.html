@@ -1,278 +1,392 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lin: Drake Clipper</title>
-  
-  <!-- Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
-  <!-- Google Fonts: Merriweather -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lin: Drake Clipper</title>
 
-  <style>
-    :root {
-      --bg: #0c0b14;
-      --fg: #e8e6f6;
-      --accent: #6a5acd;
-      --success: #4caf50;
-      --deadend: #f44336;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      background: var(--bg);
-      color: var(--fg);
-      font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-      font-size: 19px;
-      padding: 20px;
-      min-height: 100vh;
-      overflow-x: hidden;
-      scroll-behavior: smooth;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-    #app {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    #scene {
-      opacity: 0;
-      transform: translateY(15px);
-      transition: opacity 0.45s ease, transform 0.45s ease;
-      text-align: left;
-    }
-    #scene.active {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .illustration {
-      width: 100%;
-      border-radius: 14px;
-      margin: 24px 0;
-      overflow: hidden;
-      background: #141224;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    .illustration img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-    .illustration .fallback {
-      color: #777;
-      font-style: italic;
-      text-align: center;
-      padding: 24px;
-      font-family: system-ui, sans-serif;
-    }
-    .text {
-      line-height: 1.78;
-      margin: 26px 0;
-      text-align: justify;
-      hyphens: auto;
-    }
-    .text p {
-      margin-bottom: 22px;
-      text-indent: 24px;
-    }
-    .choices {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin: 30px 0 24px;
-    }
-    .choice-btn {
-      padding: 16px 20px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-family: 'Merriweather', system-ui, sans-serif;
-      font-size: 17px;
-      text-align: left;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.12s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .choice-btn:hover {
-      background: #5a4ab0;
-    }
-    .choice-btn:active {
-      transform: scale(0.992);
-    }
-    .deadend .choice-btn {
-      background: var(--deadend);
-    }
-    .deadend .choice-btn:hover {
-      background: #d32f2f;
-    }
-    .ending-success {
-      border-left: 4px solid var(--success);
-      padding-left: 16px;
-    }
-    .loading {
-      padding: 40px;
-      color: #777;
-      text-align: center;
-      font-family: system-ui, sans-serif;
-    }
-    .restart-btn {
-      background: #ff9800;
-    }
-    .restart-btn:hover {
-      background: #f57c00;
-    }
-    #audio-control {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      background: rgba(106, 90, 205, 0.25);
-      backdrop-filter: blur(4px);
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      color: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-  </style>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Google Fonts: Merriweather -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0c0b14;
+            --fg: #e8e6f6;
+            --accent: #6a5acd;
+            --success: #4caf50;
+            --deadend: #f44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+            font-size: 19px;
+            padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        #app {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #scene {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            text-align: left;
+        }
+
+        #scene.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .illustration {
+            width: 100%;
+            border-radius: 14px;
+            margin: 24px 0;
+            overflow: hidden;
+            background: #141224;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .illustration img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .illustration .fallback {
+            color: #777;
+            font-style: italic;
+            text-align: center;
+            padding: 24px;
+            font-family: system-ui, sans-serif;
+        }
+
+        .text {
+            line-height: 1.78;
+            margin: 26px 0;
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        .text p {
+            margin-bottom: 22px;
+            text-indent: 24px;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 30px 0 24px;
+        }
+
+        .choice-btn {
+            padding: 16px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Merriweather', system-ui, sans-serif;
+            font-size: 17px;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.12s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .choice-btn:hover {
+            background: #5a4ab0;
+        }
+
+        .choice-btn:active {
+            transform: scale(0.992);
+        }
+
+        .deadend .choice-btn {
+            background: var(--deadend);
+        }
+
+        .deadend .choice-btn:hover {
+            background: #d32f2f;
+        }
+
+        .ending-success {
+            border-left: 4px solid var(--success);
+            padding-left: 16px;
+        }
+
+        .loading {
+            padding: 40px;
+            color: #777;
+            text-align: center;
+            font-family: system-ui, sans-serif;
+        }
+
+        .restart-btn {
+            background: #ff9800;
+        }
+
+        .restart-btn:hover {
+            background: #f57c00;
+        }
+
+        #audio-control {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(106, 90, 205, 0.25);
+            backdrop-filter: blur(4px);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Стиль для экрана броска кубиков */
+        #dice-screen {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        #dice-screen .dice {
+            font-size: 100px;
+            margin-bottom: 30px;
+        }
+
+        #dice-screen .result {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        #dice-screen button {
+            width: 200px;
+            margin: 0 auto;
+        }
+    </style>
 </head>
+
 <body>
-  <div id="app">
-    <div id="scene" class="loading">Загрузка вселенной…</div>
-  </div>
-  <button id="audio-control" onclick="toggleAudio()">🔇</button>
+    <div id="app">
+        <div id="scene" class="loading">Загрузка вселенной…</div>
+    </div>
+    <button id="audio-control" onclick="toggleAudio()">🔇</button>
 
-  <audio id="ambient-audio" loop preload="auto">
-    <source src="audio/ambient-loop.mp3" type="audio/mpeg">
-  </audio>
+    <!-- Экран броска кубиков -->
+    <div id="dice-screen">
+        <div class="dice">🎲 🎲</div>
+        <div class="result">Бросьте кости, чтобы определить исход.</div>
+        <button class="choice-btn" id="roll-button">Бросить кости</button>
+    </div>
 
-  <script>
-    let story = null;
-    let currentNodeId = null;
-    const sceneEl = document.getElementById('scene');
-    const audioEl = document.getElementById('ambient-audio');
-    const audioBtn = document.getElementById('audio-control');
-    let isAudioPlaying = false;
+    <audio id="ambient-audio" loop preload="auto">
+        <source src="audio/ambient-loop.mp3" type="audio/mpeg">
+    </audio>
 
-    function shuffleArray(array) {
-      const newArray = [...array];
-      for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-      }
-      return newArray;
-    }
+    <script>
+        let story = null;
+        let currentNodeId = null;
+        const sceneEl = document.getElementById('scene');
+        const diceScreen = document.getElementById('dice-screen');
+        const rollButton = document.getElementById('roll-button');
+        const audioEl = document.getElementById('ambient-audio');
+        const audioBtn = document.getElementById('audio-control');
+        let isAudioPlaying = false;
 
-    function getSafeImageName(nodeId) {
-      return nodeId
-        .replace(/[^a-zA-Z0-9\s_-]/g, '')
-        .replace(/\s+/g, '_')
-        .toLowerCase()
-        .replace(/_{2,}/g, '_');
-    }
+        // === БРОСОК КУБИКОВ ===
+        let diceData = { success: null, partial: null, fail: null };
 
-    async function loadStory() {
-      try {
-        const res = await fetch('story.json');
-        if (!res.ok) throw new Error('Файл story.json не найден');
-        story = await res.json();
-        initGame();
-      } catch (e) {
-        sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
-        console.error(e);
-      }
-    }
+        function getDiceEmoji(n) {
+            const dice = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            return dice[n - 1] || '🎲';
+        }
 
-    function initGame() {
-      const saved = localStorage.getItem('lingame_lastNode');
-      if (saved && story[saved]) {
-        showNode(saved);
-      } else {
-        // Ищем стартовый узел с полем `start: true`
-        //const nodes = rawData[0]; // Нельзя использовать напрямую здесь!
-        // Вместо этого просто используем "0" — он точно стартовый в вашем случае
-        showNode('0');
-      }
-    }
+        function rollDice() {
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'block';
 
-    function formatText(text) {
-      let normalized = text.replace(/\\n/g, '\n');
-      return normalized
-        .replace(/`([^`]*)`/g, '<em>$1</em>')
-        .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
-        .split('\n\n')
-        .map(p => `<p>${p.trim()}</p>`)
-        .filter(p => p !== '<p></p>')
-        .join('');
-    }
+            let rolled = false;
+            rollButton.onclick = () => {
+                if (rolled) return;
+                rolled = true;
 
-    function getIllustrationHtml(nodeId) {
-      const safeName = getSafeImageName(nodeId);
-      const imgSrc = nodeId === "node_end"
-        ? "img/end_scene.jpg"
-        : `img/${safeName}.jpg`;
-      return `
+                // Анимация броска
+                let animCount = 0;
+                const interval = setInterval(() => {
+                    const d1 = Math.floor(Math.random() * 6) + 1;
+                    const d2 = Math.floor(Math.random() * 6) + 1;
+                    diceScreen.innerHTML = `
+            <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+            <div class="result">Бросок...</div>
+            <button class="choice-btn" disabled>Бросить кости</button>
+          `;
+                    animCount++;
+                    if (animCount > 12) {
+                        clearInterval(interval);
+                        const total = d1 + d2;
+                        diceScreen.innerHTML = `
+              <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+              <div class="result">Выпало: <strong>${total}</strong></div>
+              <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
+            `;
+                    }
+                }, 100);
+            };
+        }
+
+        function proceedAfterDice(total) {
+            diceScreen.style.display = 'none';
+            sceneEl.style.display = 'block';
+
+            let target;
+            if (total >= 8) {
+                target = diceData.success;
+            } else if (total === 7) {
+                target = diceData.partial;
+            } else {
+                target = diceData.fail;
+            }
+
+            if (target && story[target]) {
+                showNode(target);
+            } else {
+                // fallback: возврат к началу
+                showNode('0');
+            }
+        }
+
+        // === ОСНОВНАЯ ЛОГИКА ===
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function getSafeImageName(nodeId) {
+            return nodeId
+                .replace(/[^a-zA-Z0-9\s_-]/g, '')
+                .replace(/\s+/g, '_')
+                .toLowerCase()
+                .replace(/_{2,}/g, '_');
+        }
+
+        async function loadStory() {
+            try {
+                const res = await fetch('story.json');
+                if (!res.ok) throw new Error('Файл story.json не найден');
+                story = await res.json();
+                initGame();
+            } catch (e) {
+                sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
+                console.error(e);
+            }
+        }
+
+        function initGame() {
+            const saved = localStorage.getItem('lingame_lastNode');
+            if (saved && story[saved]) {
+                showNode(saved);
+            } else {
+                showNode('0');
+            }
+        }
+
+        function formatText(text) {
+            let normalized = text.replace(/\\n/g, '\n');
+            return normalized
+                .replace(/`([^`]*)`/g, '<em>$1</em>')
+                .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
+                .split('\n\n')
+                .map(p => `<p>${p.trim()}</p>`)
+                .filter(p => p !== '<p></p>')
+                .join('');
+        }
+
+        function getIllustrationHtml(nodeId) {
+            const safeName = getSafeImageName(nodeId);
+            const imgSrc = nodeId === "node_end"
+                ? "img/end_scene.jpg"
+                : `img/${safeName}.jpg`;
+            return `
         <div class="illustration">
           <img src="${imgSrc}?v=${Date.now()}"
                alt="Сцена ${nodeId}"
                onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
         </div>
       `;
-    }
-
-    function showNode(nodeId) {
-      if (!story[nodeId]) {
-        console.error(`Узел "${nodeId}" не найден`);
-        showNode(Object.keys(story)[0]);
-        return;
-      }
-
-      const node = story[nodeId];
-      currentNodeId = nodeId;
-      localStorage.setItem('lingame_lastNode', nodeId);
-
-      const isRestartNode = nodeId === "node_end";
-      const hasRestartOption = node.choices?.some(c => c.next === "main_story");
-      let className = '';
-      if (isRestartNode || hasRestartOption) className = 'deadend';
-
-      const illustration = getIllustrationHtml(nodeId);
-      const formattedText = formatText(node.text);
-
-      // Определяем, есть ли варианты выбора
-      const hasChoices = node.choices && node.choices.length > 0;
-      let choicesHtml = '';
-      if (hasChoices && !isRestartNode) {
-        let choices = [...node.choices];
-        // Перемешиваем, если не смертельный исход и не возврат
-        if (!hasRestartOption) {
-          choices = shuffleArray(choices);
         }
-        choicesHtml = choices.map(c => {
-          const isRestart = c.next === "main_story" || c.next === "node_end";
-          const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-          return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
-        }).join('');
-      }
 
-      // Показываем ❌, если это конечный узел без выбора
-      let endMarkerHtml = '';
-      if (!hasChoices || isRestartNode) {
-        endMarkerHtml = `
+        function showNode(nodeId) {
+            if (!story[nodeId]) {
+                console.error(`Узел "${nodeId}" не найден`);
+                showNode(Object.keys(story)[0]);
+                return;
+            }
+
+            const node = story[nodeId];
+            currentNodeId = nodeId;
+            localStorage.setItem('lingame_lastNode', nodeId);
+
+            const isRestartNode = nodeId === "node_end";
+            const hasRestartOption = node.choices?.some(c => c.next === "main_story");
+            let className = '';
+            if (isRestartNode || hasRestartOption) className = 'deadend';
+
+            const illustration = getIllustrationHtml(nodeId);
+            const formattedText = formatText(node.text);
+
+            const hasChoices = node.choices && node.choices.length > 0;
+            let choicesHtml = '';
+            if (hasChoices && !isRestartNode) {
+                let choices = [...node.choices];
+                if (!hasRestartOption) {
+                    choices = shuffleArray(choices);
+                }
+                choicesHtml = choices.map(c => {
+                    const isRestart = c.next === "main_story" || c.next === "node_end";
+                    const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
+                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
+                }).join('');
+            }
+
+            let endMarkerHtml = '';
+            if (!hasChoices || isRestartNode) {
+                endMarkerHtml = `
           <div style="
             text-align: center;
             margin: 40px 0 20px;
@@ -288,84 +402,98 @@
             }
           </style>
         `;
-      }
+            }
 
-      sceneEl.classList.remove('active');
-      setTimeout(() => {
-        sceneEl.className = 'scene';
-        if (!hasChoices || isRestartNode) {
-          sceneEl.className += ' deadend';
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
         }
-        sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}`;
-        sceneEl.classList.add('active');
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.handleChoice = function (nextId) {
+            // Поддержка броска кубиков
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                diceData = {
+                    success: parts[0] || null,
+                    partial: parts[1] || null,
+                    fail: parts[2] || null
+                };
+                rollDice();
+                return;
+            }
 
-        if (isAudioPlaying) {
-          audioEl.play().catch(e => console.log("Audio play failed:", e));
-        }
-
-        if (isRestartNode && window.Telegram?.WebApp) {
-          Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-        }
-      }, 320);
-    }
-
-    window.handleChoice = function(nextId) {
-      if (nextId === "main_story") {
-        localStorage.removeItem('lingame_lastNode');
-      }
-      if (nextId === "node_end") {
-        setTimeout(() => showNode("main_story"), 500);
-        return;
-      }
-      if (story[nextId]) {
-        showNode(nextId);
-      } else {
-        console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-        showNode("main_story");
-      }
-    };
-
-    function toggleAudio() {
-      if (isAudioPlaying) {
-        audioEl.pause();
-        audioBtn.textContent = '🔇';
-        isAudioPlaying = false;
-      } else {
-        audioEl.play().then(() => {
-          audioBtn.textContent = '🔊';
-          isAudioPlaying = true;
-        }).catch(e => {
-          alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-        });
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.Telegram?.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.MainButton.setText('Начать заново');
-        Telegram.WebApp.MainButton.show();
-        Telegram.WebApp.MainButton.onClick(() => {
-          localStorage.removeItem('lingame_lastNode');
-          showNode("0"); // или "main_story", если вы его используете
-        });
-      } else {
-        const restartBtn = document.createElement('button');
-        restartBtn.className = 'choice-btn restart-btn';
-        restartBtn.textContent = 'Начать заново';
-        restartBtn.style.marginTop = '20px';
-        restartBtn.style.width = '100%';
-        restartBtn.onclick = () => {
-          localStorage.removeItem('lingame_lastNode');
-          showNode("0");
+            // Стандартное поведение
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+            }
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
         };
-        document.getElementById('app').appendChild(restartBtn);
-      }
-      loadStory();
-    });
-  </script>
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+            loadStory();
+        });
+    </script>
 </body>
+
 </html>
