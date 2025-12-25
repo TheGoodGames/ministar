@@ -225,25 +225,63 @@
         const audioBtn = document.getElementById('audio-control');
         let isAudioPlaying = false;
 
-        // === БРОСОК КУБИКОВ ===
-        let diceData = { success: null, partial: null, fail: null };
-
-        function resetDiceData() {
-            diceData = { success: null, partial: null, fail: null };
-            if (diceAnimationInterval) {
-                clearInterval(diceAnimationInterval);
-                diceAnimationInterval = null;
-            }
-            rollButton.onclick = null;
-        }
+        // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 
         function getDiceEmoji(n) {
             const dice = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
             return dice[n - 1] || '🎲';
         }
 
-        function rollDice() {
-            resetDiceData();
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function getSafeImageName(nodeId) {
+            return nodeId
+                .replace(/[^a-zA-Z0-9\s_-]/g, '')
+                .replace(/\s+/g, '_')
+                .toLowerCase()
+                .replace(/_{2,}/g, '_');
+        }
+
+        function formatText(text) {
+            let normalized = text.replace(/\\n/g, '\n');
+            return normalized
+                .replace(/`([^`]*)`/g, '<em>$1</em>')
+                .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
+                .split('\n\n')
+                .map(p => `<p>${p.trim()}</p>`)
+                .filter(p => p !== '<p></p>')
+                .join('');
+        }
+
+        function getIllustrationHtml(nodeId) {
+            const safeName = getSafeImageName(nodeId);
+            const imgSrc = nodeId === "node_end"
+                ? "img/end_scene.jpg"
+                : `img/${safeName}.jpg`;
+            return `
+        <div class="illustration">
+          <img src="${imgSrc}?v=${Date.now()}"
+               alt="Сцена ${nodeId}"
+               onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
+        </div>
+      `;
+        }
+
+        // === БРОСОК КУБИКОВ (локальный, без глобальных переменных) ===
+
+        function rollDice(successTarget, partialTarget, failTarget) {
+            // Останавливаем предыдущую анимацию, если есть
+            if (diceAnimationInterval) {
+                clearInterval(diceAnimationInterval);
+                diceAnimationInterval = null;
+            }
 
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'block';
@@ -274,49 +312,33 @@
                             <div class="result">Выпало: <strong>${total}</strong></div>
                             <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
                         `;
+
+                        // 🔥 ЛОКАЛЬНАЯ ФУНКЦИЯ ПОСЛЕ БРОСКА
+                        window.proceedAfterDice = function(total) {
+                            diceScreen.style.display = 'none';
+                            sceneEl.style.display = 'block';
+
+                            let target;
+                            if (total >= 8) {
+                                target = successTarget;
+                            } else if (total === 7) {
+                                target = partialTarget;
+                            } else {
+                                target = failTarget;
+                            }
+
+                            if (target && story[target]) {
+                                showNode(target);
+                            } else {
+                                showNode('0');
+                            }
+                        };
                     }
                 }, 100);
             };
         }
 
-        function proceedAfterDice(total) {
-            diceScreen.style.display = 'none';
-            sceneEl.style.display = 'block';
-
-            let target;
-            if (total >= 8) {
-                target = diceData.success;
-            } else if (total === 7) {
-                target = diceData.partial;
-            } else {
-                target = diceData.fail;
-            }
-
-            if (target && story[target]) {
-                showNode(target);
-            } else {
-                showNode('0');
-            }
-        }
-
         // === ОСНОВНАЯ ЛОГИКА ===
-
-        function shuffleArray(array) {
-            const newArray = [...array];
-            for (let i = newArray.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-            }
-            return newArray;
-        }
-
-        function getSafeImageName(nodeId) {
-            return nodeId
-                .replace(/[^a-zA-Z0-9\s_-]/g, '')
-                .replace(/\s+/g, '_')
-                .toLowerCase()
-                .replace(/_{2,}/g, '_');
-        }
 
         async function loadStory() {
             try {
@@ -331,7 +353,6 @@
         }
 
         function initGame() {
-            resetDiceData();
             const saved = localStorage.getItem('lingame_lastNode');
             if (saved && story[saved]) {
                 showNode(saved);
@@ -340,33 +361,7 @@
             }
         }
 
-        function formatText(text) {
-            let normalized = text.replace(/\\n/g, '\n');
-            return normalized
-                .replace(/`([^`]*)`/g, '<em>$1</em>')
-                .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
-                .split('\n\n')
-                .map(p => `<p>${p.trim()}</p>`)
-                .filter(p => p !== '<p></p>')
-                .join('');
-        }
-
-        function getIllustrationHtml(nodeId) {
-            const safeName = getSafeImageName(nodeId);
-            const imgSrc = nodeId === "node_end"
-                ? "img/end_scene.jpg"
-                : `img/${safeName}.jpg`;
-            return `
-        <div class="illustration">
-          <img src="${imgSrc}?v=${Date.now()}"
-               alt="Сцена ${nodeId}"
-               onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
-        </div>
-      `;
-        }
-
         function showNode(nodeId) {
-            // ✅ ТОЛЬКО ЭТО — БЕЗ resetDiceData!
             sceneEl.style.display = 'block';
             diceScreen.style.display = 'none';
 
@@ -444,14 +439,13 @@
         }
 
         window.handleChoice = function (nextId) {
+            // Поддержка броска кубиков: DICE:успех,семёрка,провал
             if (nextId.startsWith("DICE:")) {
                 const parts = nextId.slice(5).split(',');
-                diceData = {
-                    success: parts[0] || null,
-                    partial: parts[1] || null,
-                    fail: parts[2] || null
-                };
-                rollDice();
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
                 return;
             }
 
@@ -493,7 +487,6 @@
                 Telegram.WebApp.MainButton.show();
                 Telegram.WebApp.MainButton.onClick(() => {
                     localStorage.removeItem('lingame_lastNode');
-                    resetDiceData();
                     showNode("0");
                 });
             } else {
@@ -504,7 +497,6 @@
                 restartBtn.style.width = '100%';
                 restartBtn.onclick = () => {
                     localStorage.removeItem('lingame_lastNode');
-                    resetDiceData();
                     showNode("0");
                 };
                 document.getElementById('app').appendChild(restartBtn);
