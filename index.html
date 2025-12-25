@@ -227,6 +227,10 @@
         // === БРОСОК КУБИКОВ ===
         let diceData = { success: null, partial: null, fail: null };
 
+        function resetDiceData() {
+            diceData = { success: null, partial: null, fail: null };
+        }
+
         function getDiceEmoji(n) {
             const dice = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
             return dice[n - 1] || '🎲';
@@ -281,7 +285,6 @@
             if (target && story[target]) {
                 showNode(target);
             } else {
-                // fallback: возврат к началу
                 showNode('0');
             }
         }
@@ -318,6 +321,7 @@
         }
 
         function initGame() {
+            resetDiceData();
             const saved = localStorage.getItem('lingame_lastNode');
             if (saved && story[saved]) {
                 showNode(saved);
@@ -352,6 +356,10 @@
         }
 
         function showNode(nodeId) {
+            // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: всегда показываем сцену и скрываем кубики
+            sceneEl.style.display = 'block';
+            diceScreen.style.display = 'none';
+
             if (!story[nodeId]) {
                 console.error(`Узел "${nodeId}" не найден`);
                 showNode(Object.keys(story)[0]);
@@ -477,6 +485,7 @@
                 Telegram.WebApp.MainButton.show();
                 Telegram.WebApp.MainButton.onClick(() => {
                     localStorage.removeItem('lingame_lastNode');
+                    resetDiceData();
                     showNode("0");
                 });
             } else {
@@ -487,6 +496,7 @@
                 restartBtn.style.width = '100%';
                 restartBtn.onclick = () => {
                     localStorage.removeItem('lingame_lastNode');
+                    resetDiceData();
                     showNode("0");
                 };
                 document.getElementById('app').appendChild(restartBtn);
