@@ -217,6 +217,7 @@
     <script>
         let story = null;
         let currentNodeId = null;
+        let diceAnimationInterval = null; // ← для остановки анимации
         const sceneEl = document.getElementById('scene');
         const diceScreen = document.getElementById('dice-screen');
         const rollButton = document.getElementById('roll-button');
@@ -229,6 +230,13 @@
 
         function resetDiceData() {
             diceData = { success: null, partial: null, fail: null };
+            // Останавливаем анимацию, если она идёт
+            if (diceAnimationInterval) {
+                clearInterval(diceAnimationInterval);
+                diceAnimationInterval = null;
+            }
+            // Сбрасываем обработчик кнопки
+            rollButton.onclick = null;
         }
 
         function getDiceEmoji(n) {
@@ -237,39 +245,46 @@
         }
 
         function rollDice() {
+            // Сбрасываем всё перед новым броском
+            resetDiceData();
+
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'block';
+            diceScreen.innerHTML = `
+                <div class="dice">🎲 🎲</div>
+                <div class="result">Бросьте кости, чтобы определить исход.</div>
+                <button class="choice-btn" id="roll-button">Бросить кости</button>
+            `;
 
-            let rolled = false;
-            rollButton.onclick = () => {
-                if (rolled) return;
-                rolled = true;
-
+            const newRollButton = document.getElementById('roll-button');
+            newRollButton.onclick = () => {
                 // Анимация броска
                 let animCount = 0;
-                const interval = setInterval(() => {
+                diceAnimationInterval = setInterval(() => {
                     const d1 = Math.floor(Math.random() * 6) + 1;
                     const d2 = Math.floor(Math.random() * 6) + 1;
                     diceScreen.innerHTML = `
-            <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
-            <div class="result">Бросок...</div>
-            <button class="choice-btn" disabled>Бросить кости</button>
-          `;
+                        <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+                        <div class="result">Бросок...</div>
+                        <button class="choice-btn" disabled>Бросить кости</button>
+                    `;
                     animCount++;
                     if (animCount > 12) {
-                        clearInterval(interval);
+                        clearInterval(diceAnimationInterval);
+                        diceAnimationInterval = null;
                         const total = d1 + d2;
                         diceScreen.innerHTML = `
-              <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
-              <div class="result">Выпало: <strong>${total}</strong></div>
-              <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
-            `;
+                            <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+                            <div class="result">Выпало: <strong>${total}</strong></div>
+                            <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
+                        `;
                     }
                 }, 100);
             };
         }
 
         function proceedAfterDice(total) {
+            // Скрываем экран кубиков и показываем сцену
             diceScreen.style.display = 'none';
             sceneEl.style.display = 'block';
 
@@ -356,7 +371,8 @@
         }
 
         function showNode(nodeId) {
-            // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: всегда показываем сцену и скрываем кубики
+            // 🔥 ГАРАНТИРОВАННЫЙ СБРОС ВСЕГО, СВЯЗАННОГО С КУБИКАМИ
+            resetDiceData();
             sceneEl.style.display = 'block';
             diceScreen.style.display = 'none';
 
