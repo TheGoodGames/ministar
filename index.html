@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lin: Drake Clipper</title>
+
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Google Fonts: Merriweather -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             --bg: #0c0b14;
@@ -16,11 +24,13 @@
             --success: #4caf50;
             --deadend: #f44336;
         }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             background: var(--bg);
             color: var(--fg);
@@ -33,20 +43,24 @@
             -webkit-font-smoothing: antialiased;
             text-rendering: optimizeLegibility;
         }
+
         #app {
             max-width: 600px;
             margin: 0 auto;
         }
+
         #scene {
             opacity: 0;
             transform: translateY(15px);
             transition: opacity 0.45s ease, transform 0.45s ease;
             text-align: left;
         }
+
         #scene.active {
             opacity: 1;
             transform: translateY(0);
         }
+
         .illustration {
             width: 100%;
             border-radius: 14px;
@@ -55,11 +69,13 @@
             background: #141224;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
+
         .illustration img {
             width: 100%;
             height: auto;
             display: block;
         }
+
         .illustration .fallback {
             color: #777;
             font-style: italic;
@@ -67,22 +83,26 @@
             padding: 24px;
             font-family: system-ui, sans-serif;
         }
+
         .text {
             line-height: 1.78;
             margin: 26px 0;
             text-align: justify;
             hyphens: auto;
         }
+
         .text p {
             margin-bottom: 22px;
             text-indent: 24px;
         }
+
         .choices {
             display: flex;
             flex-direction: column;
             gap: 16px;
             margin: 30px 0 24px;
         }
+
         .choice-btn {
             padding: 16px 20px;
             background: var(--accent);
@@ -96,34 +116,43 @@
             transition: background 0.2s, transform 0.12s;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
+
         .choice-btn:hover {
             background: #5a4ab0;
         }
+
         .choice-btn:active {
             transform: scale(0.992);
         }
+
         .deadend .choice-btn {
             background: var(--deadend);
         }
+
         .deadend .choice-btn:hover {
             background: #d32f2f;
         }
+
         .ending-success {
             border-left: 4px solid var(--success);
             padding-left: 16px;
         }
+
         .loading {
             padding: 40px;
             color: #777;
             text-align: center;
             font-family: system-ui, sans-serif;
         }
+
         .restart-btn {
             background: #ff9800;
         }
+
         .restart-btn:hover {
             background: #f57c00;
         }
+
         #audio-control {
             position: fixed;
             bottom: 16px;
@@ -143,23 +172,30 @@
             z-index: 100;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
+
+        /* Стиль для экрана броска кубиков */
         #dice-screen {
             display: none;
             text-align: center;
             padding: 40px;
         }
+
         #dice-screen .dice {
             font-size: 100px;
             margin-bottom: 30px;
         }
+
         #dice-screen .result {
             font-size: 24px;
             margin: 20px 0;
         }
+
         #dice-screen button {
             width: 200px;
             margin: 0 auto;
         }
+
+        /* === ИНВЕНТАРЬ === */
         #inventory-screen {
             display: none;
             position: fixed;
@@ -173,10 +209,12 @@
             padding: 30px 20px;
             text-align: center;
         }
+
         #inventory-screen h2 {
             margin-bottom: 24px;
             font-size: 28px;
         }
+
         #code-screen {
             display: none;
             text-align: center;
@@ -184,11 +222,13 @@
             max-width: 500px;
             margin: 0 auto;
         }
+
         #code-screen h2 {
             font-size: 28px;
             margin-bottom: 24px;
             text-align: center;
         }
+
         .code-input-container {
             background: white;
             color: black;
@@ -197,6 +237,7 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             margin: 20px 0;
         }
+
         #code-input {
             width: 100%;
             padding: 18px;
@@ -209,17 +250,14 @@
             background: #f8f8f8;
             box-sizing: border-box;
             letter-spacing: 4px;
-            transition: border-color 0.3s;
         }
+
         #code-input:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.3);
         }
-        #code-input.error {
-            border-color: var(--deadend) !important;
-            animation: shake 0.5s;
-        }
+
         #submit-code {
             background: var(--accent);
             color: white;
@@ -233,24 +271,27 @@
             transition: all 0.2s;
             width: 100%;
         }
+
         #submit-code:hover {
             background: #5a4ab0;
             transform: translateY(-2px);
         }
+
         #code-error {
             color: var(--deadend);
             min-height: 24px;
             margin-top: 12px;
             font-weight: bold;
             font-size: 18px;
-            min-height: 28px;
         }
+
         .code-hint {
             color: #666;
             margin-top: 15px;
             font-style: italic;
             font-size: 18px;
         }
+
         .keys-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -258,16 +299,19 @@
             max-width: 500px;
             margin: 0 auto;
         }
+
         .key-item {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+
         .key-icon {
             font-size: 64px;
             margin-bottom: 10px;
             filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
         }
+
         .key-label {
             background: white;
             color: black;
@@ -279,6 +323,7 @@
             box-sizing: border-box;
             text-align: center;
         }
+
         .inventory-close {
             margin-top: 28px;
             background: var(--accent);
@@ -289,77 +334,107 @@
             font-size: 17px;
             cursor: pointer;
         }
+
         .inventory-close:hover {
             background: #5a4ab0;
         }
+
+        /* === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА === */
         #key-animation {
             display: none;
             text-align: center;
             padding: 40px 20px;
         }
+
         #key-animation .icon {
             font-size: 120px;
             margin-bottom: 20px;
             opacity: 0;
             animation: keyPop 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+
         #key-animation .label {
             font-size: 22px;
             margin-bottom: 30px;
             opacity: 0;
             animation: fadeIn 0.8s 0.4s forwards;
         }
+
         @keyframes keyPop {
-            0% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
-            70% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-            100% { transform: scale(1) rotate(0); opacity: 1; }
+            0% {
+                transform: scale(0.2) rotate(-30deg);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 1;
+            }
         }
+
         @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-            20%, 40%, 60%, 80% { transform: translateX(6px); }
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="app">
         <div id="scene" class="loading">Загрузка вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
+
+    <!-- Экран ввода кода -->
     <div id="code-screen">
         <h2 id="code-title">Введите секретный код</h2>
         <div class="code-input-container">
-            <input type="text" id="code-input" aria-label="Секретный код" placeholder="____" maxlength="10">
+            <input type="text" id="code-input" placeholder="____" maxlength="10">
             <button id="submit-code">Подтвердить</button>
             <div id="code-error"></div>
         </div>
         <div class="code-hint" id="code-hint">Код состоит из 4 цифр</div>
     </div>
+
+    <!-- Экран броска кубиков -->
     <div id="dice-screen">
         <div class="dice">🎲 🎲</div>
         <div class="result">Бросьте кости, чтобы определить исход.</div>
         <button class="choice-btn" id="roll-button">Бросить кости</button>
     </div>
+
+    <!-- Экран инвентаря -->
     <div id="inventory-screen">
         <h2>Ваши ключи</h2>
-        <div class="keys-grid" id="keys-container"></div>
+        <div class="keys-grid" id="keys-container">
+            <!-- Ключи будут добавлены сюда -->
+        </div>
         <button class="inventory-close" onclick="closeInventory()">← Назад к игре</button>
     </div>
+
+    <!-- Экран анимации ключа -->
     <div id="key-animation">
         <div class="icon" id="anim-key-icon">🗝️</div>
         <div class="label" id="anim-key-label">Новый ключ!</div>
     </div>
+
     <audio id="ambient-audio" loop preload="auto">
         <source src="audio/ambient-loop.mp3" type="audio/mpeg">
     </audio>
+
     <script>
         let story = null;
         let currentNodeId = null;
         let diceAnimationInterval = null;
         let autoAdvanceTimeout = null;
+
+        // Добавляем новые переменные
         let currentCodeNode = null;
         const codeScreen = document.getElementById('code-screen');
         const codeInput = document.getElementById('code-input');
@@ -367,6 +442,7 @@
         const codeErrorEl = document.getElementById('code-error');
         const codeTitleEl = document.getElementById('code-title');
         const codeHintEl = document.getElementById('code-hint');
+
         const sceneEl = document.getElementById('scene');
         const diceScreen = document.getElementById('dice-screen');
         const inventoryScreen = document.getElementById('inventory-screen');
@@ -377,12 +453,14 @@
         const audioEl = document.getElementById('ambient-audio');
         const audioBtn = document.getElementById('audio-control');
         let isAudioPlaying = false;
+
+        // === СИСТЕМА КЛЮЧЕЙ ===
         let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-        
+
         function saveKeys() {
             localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
         }
-        
+
         function collectKey(keyData) {
             if (keyData && keyData.id) {
                 collectedKeys[keyData.id] = {
@@ -390,12 +468,14 @@
                     type: keyData.type || 'regular'
                 };
                 saveKeys();
+                console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')');
             }
         }
-        
+
         function hasAllKeys(requiredKeys) {
             if (!requiredKeys) return true;
             if (typeof requiredKeys === 'string') {
+                // Поддержка старого формата: "requires": "single_key"
                 requiredKeys = [requiredKeys];
             }
             if (!Array.isArray(requiredKeys)) {
@@ -403,7 +483,7 @@
             }
             return requiredKeys.every(keyId => !!collectedKeys[keyId]);
         }
-        
+
         function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
             if (!requiredKeys) return [];
             const keys = Array.isArray(requiredKeys) ? requiredKeys : [requiredKeys];
@@ -411,11 +491,13 @@
                 .filter(keyId => !collectedKeys[keyId])
                 .map(keyId => missingMessages[keyId] || `Требуется предмет: ${keyId}`);
         }
-        
+
         function showInventory() {
+            // НЕ скрываем сцену! Только показываем инвентарь поверх
             diceScreen.style.display = 'none';
             keyAnimScreen.style.display = 'none';
             inventoryScreen.style.display = 'block';
+
             keysContainer.innerHTML = '';
             const keys = Object.entries(collectedKeys);
             if (keys.length === 0) {
@@ -427,31 +509,39 @@
                     'digital': '💾',
                     'regular': '🗝️'
                 };
+
                 for (const [id, data] of keys) {
                     const { label, type = 'regular' } = data;
                     const icon = iconMap[type] || iconMap.regular;
+
                     const keyEl = document.createElement('div');
                     keyEl.className = 'key-item';
                     keyEl.innerHTML = `
-                        <div class="key-icon">${icon}</div>
-                        <div class="key-label">${label}</div>
-                    `;
+                <div class="key-icon">${icon}</div>
+                <div class="key-label">${label}</div>
+            `;
                     keysContainer.appendChild(keyEl);
                 }
             }
+            // Не прокручиваем наверх — оставляем позицию сцены как есть
         }
-        
+
         function closeInventory() {
             inventoryScreen.style.display = 'none';
+            // НЕ делаем sceneEl.style.display = 'block' — он и так виден
         }
-        
+
+        // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
         function showKeyAnimation(keyData, nextNodeId) {
             if (!keyData || !keyData.id || !keyData.label) return;
+
+            // ✅ СОХРАНЯЕМ КЛЮЧ ПРЯМО ЗДЕСЬ
             collectedKeys[keyData.id] = {
                 label: keyData.label,
                 type: keyData.type || 'regular'
             };
-            saveKeys();
+            saveKeys(); // сохраняем в localStorage
+
             const iconMap = {
                 'card': '🃏',
                 'old': '🔑',
@@ -459,24 +549,30 @@
                 'regular': '🗝️'
             };
             const icon = iconMap[keyData.type || 'regular'] || iconMap.regular;
+
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'none';
             inventoryScreen.style.display = 'none';
             keyAnimScreen.style.display = 'block';
+
             animKeyIcon.textContent = icon;
             animKeyLabel.textContent = keyData.label;
+
             autoAdvanceTimeout = setTimeout(() => {
                 keyAnimScreen.style.display = 'none';
                 showNode(nextNodeId);
             }, 2200);
         }
-        
+
+        // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+
         function getDiceEmoji(n) {
             const dice = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
             return dice[n - 1] || '🎲';
         }
-        
+
         function shuffleArray(array) {
             const newArray = [...array];
             for (let i = newArray.length - 1; i > 0; i--) {
@@ -485,7 +581,7 @@
             }
             return newArray;
         }
-        
+
         function getSafeImageName(nodeId) {
             return nodeId
                 .replace(/[^a-zA-Z0-9\s_-]/g, '')
@@ -493,7 +589,7 @@
                 .toLowerCase()
                 .replace(/_{2,}/g, '_');
         }
-        
+
         function formatText(text) {
             let normalized = text.replace(/\\n/g, '\n');
             return normalized
@@ -504,26 +600,29 @@
                 .filter(p => p !== '<p></p>')
                 .join('');
         }
-        
+
         function getIllustrationHtml(nodeId) {
             const safeName = getSafeImageName(nodeId);
             const imgSrc = nodeId === "node_end"
                 ? "img/end_scene.jpg"
                 : `img/${safeName}.jpg`;
             return `
-                <div class="illustration">
-                  <img src="${imgSrc}?v=${Date.now()}"
-                       alt="Сцена ${nodeId}"
-                       onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
-                </div>
-            `;
+        <div class="illustration">
+          <img src="${imgSrc}?v=${Date.now()}"
+               alt="Сцена ${nodeId}"
+               onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
+        </div>
+      `;
         }
-        
+
+        // === БРОСОК КУБИКОВ ===
+
         function rollDice(successTarget, partialTarget, failTarget) {
             if (diceAnimationInterval) {
                 clearInterval(diceAnimationInterval);
                 diceAnimationInterval = null;
             }
+
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'block';
             diceScreen.innerHTML = `
@@ -531,6 +630,7 @@
                 <div class="result">Испытать удачу и сделать верный выбор.</div>
                 <button class="choice-btn" id="roll-button">Положиться на судьбу</button>
             `;
+
             const newRollButton = document.getElementById('roll-button');
             newRollButton.onclick = () => {
                 let animCount = 0;
@@ -552,9 +652,11 @@
                             <div class="result">Выпало: <strong>${total}</strong></div>
                             <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
                         `;
+
                         window.proceedAfterDice = function (total) {
                             diceScreen.style.display = 'none';
                             sceneEl.style.display = 'block';
+
                             let target;
                             if (total >= 8) {
                                 target = successTarget;
@@ -563,6 +665,7 @@
                             } else {
                                 target = failTarget;
                             }
+
                             if (target && story[target]) {
                                 showNode(target);
                             } else {
@@ -573,7 +676,9 @@
                 }, 100);
             };
         }
-        
+
+        // === ОСНОВНАЯ ЛОГИКА ===
+
         async function loadStory() {
             try {
                 const res = await fetch('story.json');
@@ -585,7 +690,7 @@
                 console.error(e);
             }
         }
-        
+
         function initGame() {
             const saved = localStorage.getItem('lingame_lastNode');
             if (saved && story[saved]) {
@@ -594,26 +699,34 @@
                 showNode('0');
             }
         }
-        
+
         function showNode(nodeId) {
+            // Отмена предыдущего таймера
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+
             sceneEl.style.display = 'block';
             diceScreen.style.display = 'none';
             inventoryScreen.style.display = 'none';
             keyAnimScreen.style.display = 'none';
-            codeScreen.style.display = 'none';
+
             if (!story[nodeId]) {
                 console.error(`Узел "${nodeId}" не найден`);
                 showNode(Object.keys(story)[0]);
                 return;
             }
+
             const node = story[nodeId];
             currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
+
+            // 🔑 Сбор ключа удалён
+            // Проверка на ноду с вводом кода
             if (node.input_type === "code") {
                 showCodeScreen(node);
                 return;
             }
+
+            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
             if (node.requires && !hasAllKeys(node.requires)) {
                 const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
                 sceneEl.classList.remove('active');
@@ -633,30 +746,41 @@
                 }, 320);
                 return;
             }
+
             const isRestartNode = nodeId === "node_end";
             const hasRestartOption = node.choices?.some(c => c.next === "main_story");
+
             const illustration = getIllustrationHtml(nodeId);
             const formattedText = formatText(node.text);
+
             const hasChoices = node.choices && node.choices.length > 0;
             let showAnimation = false;
             let nextAfterCollect = null;
+
+            // 🎬 Проверка: один выбор + есть collect → анимация!
             if (node.collect && node.choices && node.choices.length === 1) {
                 showAnimation = true;
                 nextAfterCollect = node.choices[0].next;
             }
+
             if (showAnimation) {
+                // Показываем анимацию вместо кнопки
                 sceneEl.classList.remove('active');
                 setTimeout(() => {
                     sceneEl.className = 'scene';
                     sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>`;
                     sceneEl.classList.add('active');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Запуск анимации ключа
                     setTimeout(() => {
                         showKeyAnimation(node.collect, nextAfterCollect);
                     }, 600);
                 }, 320);
                 return;
             }
+
+            // Обычное отображение
             let choicesHtml = '';
             if (hasChoices && !isRestartNode) {
                 let choices = [...node.choices];
@@ -669,33 +793,36 @@
                     return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${index})">${c.text}</button>`;
                 }).join('');
             }
+
             let inventoryButtonHtml = '';
             if (Object.keys(collectedKeys).length > 0 || hasChoices) {
                 inventoryButtonHtml = `
-                    <div style="text-align:center; margin-top:16px;">
-                        <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">Инвентарь</button>
-                    </div>
-                `;
+        <div style="text-align:center; margin-top:16px;">
+            <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">Инвентарь</button>
+        </div>
+    `;
             }
+
             let endMarkerHtml = '';
             if (!hasChoices || isRestartNode) {
                 endMarkerHtml = `
-                    <div style="
-                        text-align: center;
-                        margin: 40px 0 20px;
-                        font-size: 80px;
-                        animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-                        opacity: 0;
-                    ">❌</div>
-                    <style>
-                        @keyframes popIn {
-                            0% { transform: scale(0.3); opacity: 0; }
-                            70% { transform: scale(1.2); opacity: 1; }
-                            100% { transform: scale(1); opacity: 1; }
-                        }
-                    </style>
-                `;
+        <div style="
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 80px;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        ">❌</div>
+        <style>
+            @keyframes popIn {
+                0% { transform: scale(0.3); opacity: 0; }
+                70% { transform: scale(1.2); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
             }
+        </style>
+    `;
+            }
+
             sceneEl.classList.remove('active');
             setTimeout(() => {
                 sceneEl.className = 'scene';
@@ -704,17 +831,21 @@
                 }
                 sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml}`;
                 sceneEl.classList.add('active');
+
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+
                 if (isAudioPlaying) {
                     audioEl.play().catch(e => console.log("Audio play failed:", e));
                 }
+
                 if (isRestartNode && window.Telegram?.WebApp) {
                     Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
                 }
             }, 320);
         }
-        
+
         window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
             if (nextId.startsWith("DICE:")) {
                 const parts = nextId.slice(5).split(',');
                 const success = parts[0] || null;
@@ -723,6 +854,8 @@
                 rollDice(success, partial, fail);
                 return;
             }
+
+            // Обработка сбора предмета из ВЫБОРА
             if (choiceIndex !== null && currentNodeId) {
                 const choice = story[currentNodeId].choices[choiceIndex];
                 if (choice && choice.collect) {
@@ -734,6 +867,8 @@
                     return;
                 }
             }
+
+            // Проверка требований на уровне ВЫБОРА
             if (choiceIndex !== null && currentNodeId) {
                 const choice = story[currentNodeId].choices[choiceIndex];
                 if (choice && choice.requires) {
@@ -744,14 +879,18 @@
                     }
                 }
             }
+
+            // Обработка перехода
             if (nextId === "main_story") {
                 localStorage.removeItem('lingame_lastNode');
                 collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
             }
+
             if (nextId === "node_end") {
                 setTimeout(() => showNode("0"), 500);
                 return;
             }
+
             if (story[nextId]) {
                 showNode(nextId);
             } else {
@@ -759,7 +898,7 @@
                 showNode("0");
             }
         };
-        
+
         function toggleAudio() {
             if (isAudioPlaying) {
                 audioEl.pause();
@@ -774,74 +913,80 @@
                 });
             }
         }
-        
+
         function showCodeScreen(node) {
+            // Скрываем основную сцену
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'none';
             inventoryScreen.style.display = 'none';
             keyAnimScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
             codeScreen.style.display = 'block';
             currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
             codeTitleEl.textContent = node.code_title || "Введите секретный код";
             codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
             codeInput.value = '';
             codeErrorEl.textContent = '';
-            if (node.code_type === "numeric") {
-                codeInput.type = "tel";
-                codeInput.inputmode = "numeric";
-                codeInput.pattern = "[0-9]*";
-            } else {
-                codeInput.type = "text";
-                codeInput.inputmode = "text";
-            }
-            codeInput.classList.remove('error');
-            codeInput.style.borderColor = '';
-            setTimeout(() => {
-                codeInput.focus();
-                codeInput.select();
-            }, 300);
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        
+
         function checkCode() {
             if (!currentCodeNode) return;
+
             const inputCode = codeInput.value.trim();
             const correctCode = currentCodeNode.correct_code;
             const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
             const isCorrect = caseSensitive
                 ? inputCode === correctCode
                 : inputCode.toLowerCase() === correctCode.toLowerCase();
+
             if (isCorrect) {
+                // Код верный - переходим к следующей ноде
                 codeScreen.style.display = 'none';
                 showNode(currentCodeNode.success_next);
                 currentCodeNode = null;
             } else {
+                // Код неверный - показываем ошибку
                 codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-                codeInput.classList.add('error');
-                codeInput.style.borderColor = 'var(--deadend)';
-                setTimeout(() => {
-                    codeInput.classList.remove('error');
-                }, 500);
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
             }
         }
-        
+
+        // Обработчик кнопки подтверждения
         submitCodeBtn.addEventListener('click', checkCode);
-        
+
+        // Обработчик нажатия Enter в поле ввода
         codeInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 checkCode();
             }
         });
-        
-        codeInput.addEventListener('click', () => {
-            codeInput.select();
-        });
-        
-        codeInput.addEventListener('focus', () => {
-            codeErrorEl.textContent = '';
-            codeInput.style.borderColor = '';
-        });
-        
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
         document.addEventListener('DOMContentLoaded', () => {
             if (window.Telegram?.WebApp) {
                 Telegram.WebApp.ready();
@@ -850,6 +995,7 @@
                 Telegram.WebApp.MainButton.show();
                 Telegram.WebApp.MainButton.onClick(() => {
                     localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
                     collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
                     showNode("0");
                 });
@@ -861,6 +1007,7 @@
                 restartBtn.style.width = '100%';
                 restartBtn.onclick = () => {
                     localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
                     collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
                     showNode("0");
                 };
@@ -870,4 +1017,5 @@
         });
     </script>
 </body>
+
 </html>
