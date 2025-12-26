@@ -3307,7 +3307,7 @@
     "choices": [
       {
         "text": "Подобрать ключ",
-        "next": "381",
+        "next": "380",
         "collect": {
           "id": "arch",
           "label": "Ключ от Архива отца",
@@ -3344,3 +3344,4 @@
     "tag": "find_arch_key_start"
   }
 }
+
