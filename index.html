@@ -686,6 +686,32 @@
             }
         }
 
+        async function loadStory() {
+    try {
+        const res = await fetch('story.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const text = await res.text();
+        try {
+            story = JSON.parse(text);
+        } catch (parseErr) {
+            throw new Error("Некорректный JSON: " + parseErr.message);
+        }
+        initGame();
+    } catch (e) {
+        sceneEl.classList.remove('loading');
+        sceneEl.classList.add('active');
+        sceneEl.innerHTML = `
+            <div class="text" style="color:white;background:#000;padding:20px;">
+                <h3>❌ Ошибка загрузки игры</h3>
+                <p><strong>Причина:</strong> ${e.message}</p>
+                <p>Убедитесь, что файл <code>story.json</code> существует и корректен.</p>
+                <p>Если вы запускаете локально — используйте локальный сервер, а не file://</p>
+            </div>
+        `;
+        console.error(e);
+    }
+}
+
         function initGame() {
             const saved = localStorage.getItem('lingame_lastNode');
             if (saved && story[saved]) {
