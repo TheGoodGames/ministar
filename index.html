@@ -378,6 +378,7 @@
         function hasAllKeys(requiredKeys) {
             if (!requiredKeys) return true;
             if (typeof requiredKeys === 'string') {
+                // Поддержка старого формата: "requires": "single_key"
                 requiredKeys = [requiredKeys];
             }
             if (!Array.isArray(requiredKeys)) {
@@ -395,16 +396,54 @@
         }
 
         function showInventory() {
+            // НЕ скрываем сцену! Только показываем инвентарь поверх
+            diceScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
             inventoryScreen.style.display = 'block';
+
+            keysContainer.innerHTML = '';
+            const keys = Object.entries(collectedKeys);
+            if (keys.length === 0) {
+                keysContainer.innerHTML = '<p>У вас пока нет ключей.</p>';
+            } else {
+                const iconMap = {
+                    'card': '🃏',
+                    'old': '🔑',
+                    'digital': '💾',
+                    'regular': '🗝️'
+                };
+
+                for (const [id, data] of keys) {
+                    const { label, type = 'regular' } = data;
+                    const icon = iconMap[type] || iconMap.regular;
+
+                    const keyEl = document.createElement('div');
+                    keyEl.className = 'key-item';
+                    keyEl.innerHTML = `
+                <div class="key-icon">${icon}</div>
+                <div class="key-label">${label}</div>
+            `;
+                    keysContainer.appendChild(keyEl);
+                }
+            }
+            // Не прокручиваем наверх — оставляем позицию сцены как есть
         }
 
         function closeInventory() {
             inventoryScreen.style.display = 'none';
+            // НЕ делаем sceneEl.style.display = 'block' — он и так виден
         }
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
         function showKeyAnimation(keyData, nextNodeId) {
-            if (!keyData || !keyData.label) return;
+            if (!keyData || !keyData.id || !keyData.label) return;
+
+            // ✅ СОХРАНЯЕМ КЛЮЧ ПРЯМО ЗДЕСЬ
+            collectedKeys[keyData.id] = {
+                label: keyData.label,
+                type: keyData.type || 'regular'
+            };
+            saveKeys(); // сохраняем в localStorage
 
             const iconMap = {
                 'card': '🃏',
@@ -517,7 +556,7 @@
                             <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
                         `;
 
-                        window.proceedAfterDice = function(total) {
+                        window.proceedAfterDice = function (total) {
                             diceScreen.style.display = 'none';
                             sceneEl.style.display = 'block';
 
@@ -565,6 +604,7 @@
         }
 
         function showNode(nodeId) {
+            // Отмена предыдущего таймера
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
             sceneEl.style.display = 'block';
@@ -582,7 +622,10 @@
             currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
 
-            // Проверка доступа на уровне УЗЛА (оставлена для совместимости)
+            // 🔑 Сбор ключа удалён
+
+
+            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
             if (node.requires && !hasAllKeys(node.requires)) {
                 const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
                 sceneEl.classList.remove('active');
@@ -610,7 +653,33 @@
             const formattedText = formatText(node.text);
 
             const hasChoices = node.choices && node.choices.length > 0;
+            let showAnimation = false;
+            let nextAfterCollect = null;
 
+            // 🎬 Проверка: один выбор + есть collect → анимация!
+            if (node.collect && node.choices && node.choices.length === 1) {
+                showAnimation = true;
+                nextAfterCollect = node.choices[0].next;
+            }
+
+            if (showAnimation) {
+                // Показываем анимацию вместо кнопки
+                sceneEl.classList.remove('active');
+                setTimeout(() => {
+                    sceneEl.className = 'scene';
+                    sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>`;
+                    sceneEl.classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Запуск анимации ключа
+                    setTimeout(() => {
+                        showKeyAnimation(node.collect, nextAfterCollect);
+                    }, 600);
+                }, 320);
+                return;
+            }
+
+            // Обычное отображение
             let choicesHtml = '';
             if (hasChoices && !isRestartNode) {
                 let choices = [...node.choices];
@@ -627,30 +696,30 @@
             let inventoryButtonHtml = '';
             if (Object.keys(collectedKeys).length > 0 || hasChoices) {
                 inventoryButtonHtml = `
-                    <div style="text-align:center; margin-top:16px;">
-                        <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">Инвентарь</button>
-                    </div>
-                `;
+        <div style="text-align:center; margin-top:16px;">
+            <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">Инвентарь</button>
+        </div>
+    `;
             }
 
             let endMarkerHtml = '';
             if (!hasChoices || isRestartNode) {
                 endMarkerHtml = `
-                    <div style="
-                        text-align: center;
-                        margin: 40px 0 20px;
-                        font-size: 80px;
-                        animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-                        opacity: 0;
-                    ">❌</div>
-                    <style>
-                        @keyframes popIn {
-                            0% { transform: scale(0.3); opacity: 0; }
-                            70% { transform: scale(1.2); opacity: 1; }
-                            100% { transform: scale(1); opacity: 1; }
-                        }
-                    </style>
-                `;
+        <div style="
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 80px;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        ">❌</div>
+        <style>
+            @keyframes popIn {
+                0% { transform: scale(0.3); opacity: 0; }
+                70% { transform: scale(1.2); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        </style>
+    `;
             }
 
             sceneEl.classList.remove('active');
@@ -674,7 +743,7 @@
             }, 320);
         }
 
-        window.handleChoice = function(nextId, choiceIndex = null) {
+        window.handleChoice = function (nextId, choiceIndex = null) {
             // Обработка DICE
             if (nextId.startsWith("DICE:")) {
                 const parts = nextId.slice(5).split(',');
@@ -689,12 +758,10 @@
             if (choiceIndex !== null && currentNodeId) {
                 const choice = story[currentNodeId].choices[choiceIndex];
                 if (choice && choice.collect) {
-                    // Проверка: уже есть?
                     if (collectedKeys[choice.collect.id]) {
                         alert("Здесь ничего нет. Вы уже осматривали это место.");
                         return;
                     }
-                    // Показать анимацию, остаться на ТЕКУЩЕЙ ноде
                     showKeyAnimation(choice.collect, currentNodeId);
                     return;
                 }
@@ -715,7 +782,6 @@
             // Обработка перехода
             if (nextId === "main_story") {
                 localStorage.removeItem('lingame_lastNode');
-                // localStorage.removeItem('lingame_keys'); // ← закомментировано
                 collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
             }
 
