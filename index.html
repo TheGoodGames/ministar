@@ -224,7 +224,7 @@
         .key-icon {
             font-size: 64px;
             margin-bottom: 10px;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
         }
 
         .key-label {
@@ -276,13 +276,26 @@
         }
 
         @keyframes keyPop {
-            0% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
-            70% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-            100% { transform: scale(1) rotate(0); opacity: 1; }
+            0% {
+                transform: scale(0.2) rotate(-30deg);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 1;
+            }
         }
 
         @keyframes fadeIn {
-            to { opacity: 1; }
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -354,8 +367,16 @@
             }
         }
 
-        function hasKey(keyId) {
-            return !!collectedKeys[keyId];
+        function hasAllKeys(requiredKeys) {
+            if (!requiredKeys) return true;
+            if (typeof requiredKeys === 'string') {
+                // Поддержка старого формата: "requires": "single_key"
+                requiredKeys = [requiredKeys];
+            }
+            if (!Array.isArray(requiredKeys)) {
+                return false;
+            }
+            return requiredKeys.every(keyId => !!collectedKeys[keyId]);
         }
 
         function showInventory() {
@@ -514,7 +535,7 @@
                             <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
                         `;
 
-                        window.proceedAfterDice = function(total) {
+                        window.proceedAfterDice = function (total) {
                             diceScreen.style.display = 'none';
                             sceneEl.style.display = 'block';
 
@@ -585,8 +606,8 @@
                 collectKey(node.collect);
             }
 
-            // 🔒 Проверка доступа
-            if (node.requires && !hasKey(node.requires)) {
+            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
+            if (node.requires && !hasAllKeys(node.requires)) {
                 const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
                 sceneEl.classList.remove('active');
                 setTimeout(() => {
@@ -767,7 +788,7 @@
                 restartBtn.style.width = '100%';
                 restartBtn.onclick = () => {
                     localStorage.removeItem('lingame_lastNode');
-                    localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
                     collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
                     showNode("0");
                 };
