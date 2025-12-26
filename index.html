@@ -198,7 +198,15 @@
         /* === ИНВЕНТАРЬ === */
         #inventory-screen {
             display: none;
-            padding: 30px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 30px 20px;
             text-align: center;
         }
 
@@ -370,7 +378,6 @@
         function hasAllKeys(requiredKeys) {
             if (!requiredKeys) return true;
             if (typeof requiredKeys === 'string') {
-                // Поддержка старого формата: "requires": "single_key"
                 requiredKeys = [requiredKeys];
             }
             if (!Array.isArray(requiredKeys)) {
@@ -379,43 +386,20 @@
             return requiredKeys.every(keyId => !!collectedKeys[keyId]);
         }
 
+        function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
+            if (!requiredKeys) return [];
+            const keys = Array.isArray(requiredKeys) ? requiredKeys : [requiredKeys];
+            return keys
+                .filter(keyId => !collectedKeys[keyId])
+                .map(keyId => missingMessages[keyId] || `Требуется предмет: ${keyId}`);
+        }
+
         function showInventory() {
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
             inventoryScreen.style.display = 'block';
-
-            keysContainer.innerHTML = '';
-            const keys = Object.entries(collectedKeys);
-            if (keys.length === 0) {
-                keysContainer.innerHTML = '<p>У вас пока нет ключей.</p>';
-            } else {
-                const iconMap = {
-                    'card': '🃏',
-                    'old': '🔑',
-                    'digital': '💾',
-                    'regular': '🗝️'
-                };
-
-                for (const [id, data] of keys) {
-                    const { label, type = 'regular' } = data;
-                    const icon = iconMap[type] || iconMap.regular;
-
-                    const keyEl = document.createElement('div');
-                    keyEl.className = 'key-item';
-                    keyEl.innerHTML = `
-                        <div class="key-icon">${icon}</div>
-                        <div class="key-label">${label}</div>
-                    `;
-                    keysContainer.appendChild(keyEl);
-                }
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function closeInventory() {
             inventoryScreen.style.display = 'none';
-            sceneEl.style.display = 'block';
         }
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
@@ -430,7 +414,6 @@
             };
             const icon = iconMap[keyData.type || 'regular'] || iconMap.regular;
 
-            // Сброс предыдущей анимации
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
             sceneEl.style.display = 'none';
@@ -441,7 +424,6 @@
             animKeyIcon.textContent = icon;
             animKeyLabel.textContent = keyData.label;
 
-            // Через 2.2 сек — переход
             autoAdvanceTimeout = setTimeout(() => {
                 keyAnimScreen.style.display = 'none';
                 showNode(nextNodeId);
@@ -535,7 +517,7 @@
                             <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
                         `;
 
-                        window.proceedAfterDice = function (total) {
+                        window.proceedAfterDice = function(total) {
                             diceScreen.style.display = 'none';
                             sceneEl.style.display = 'block';
 
@@ -583,7 +565,6 @@
         }
 
         function showNode(nodeId) {
-            // Отмена предыдущего таймера
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
             sceneEl.style.display = 'block';
@@ -601,12 +582,7 @@
             currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
 
-            // 🔑 Сбор ключа
-            if (node.collect) {
-                collectKey(node.collect);
-            }
-
-            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
+            // Проверка доступа на уровне УЗЛА (оставлена для совместимости)
             if (node.requires && !hasAllKeys(node.requires)) {
                 const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
                 sceneEl.classList.remove('active');
@@ -634,43 +610,17 @@
             const formattedText = formatText(node.text);
 
             const hasChoices = node.choices && node.choices.length > 0;
-            let showAnimation = false;
-            let nextAfterCollect = null;
 
-            // 🎬 Проверка: один выбор + есть collect → анимация!
-            if (node.collect && node.choices && node.choices.length === 1) {
-                showAnimation = true;
-                nextAfterCollect = node.choices[0].next;
-            }
-
-            if (showAnimation) {
-                // Показываем анимацию вместо кнопки
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene';
-                    sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>`;
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                    // Запуск анимации ключа
-                    setTimeout(() => {
-                        showKeyAnimation(node.collect, nextAfterCollect);
-                    }, 600);
-                }, 320);
-                return;
-            }
-
-            // Обычное отображение
             let choicesHtml = '';
             if (hasChoices && !isRestartNode) {
                 let choices = [...node.choices];
                 if (!hasRestartOption) {
                     choices = shuffleArray(choices);
                 }
-                choicesHtml = choices.map(c => {
+                choicesHtml = choices.map((c, index) => {
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}')">${c.text}</button>`;
+                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${index})">${c.text}</button>`;
                 }).join('');
             }
 
@@ -724,7 +674,8 @@
             }, 320);
         }
 
-        window.handleChoice = function (nextId) {
+        window.handleChoice = function(nextId, choiceIndex = null) {
+            // Обработка DICE
             if (nextId.startsWith("DICE:")) {
                 const parts = nextId.slice(5).split(',');
                 const success = parts[0] || null;
@@ -734,6 +685,34 @@
                 return;
             }
 
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    // Проверка: уже есть?
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    // Показать анимацию, остаться на ТЕКУЩЕЙ ноде
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
             if (nextId === "main_story") {
                 localStorage.removeItem('lingame_lastNode');
                 // localStorage.removeItem('lingame_keys'); // ← закомментировано
