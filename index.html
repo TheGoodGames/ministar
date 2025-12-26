@@ -767,7 +767,7 @@
                 restartBtn.style.width = '100%';
                 restartBtn.onclick = () => {
                     localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    localStorage.removeItem('lingame_keys'); // ← закомментировано
                     collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
                     showNode("0");
                 };
