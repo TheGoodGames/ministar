@@ -1,0 +1,34 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]  # или master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure config.js
+        run: |
+          echo "window.GAME_CONFIG = {" > config.js
+          echo "  BOT_TOKEN: '$BOT_TOKEN'," >> config.js
+          echo "  PUBLIC_CHAT_ID: '@$BOT_USERNAME'" >> config.js
+          echo "};" >> config.js
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
+
+      - name: Setup Pages
+        uses: actions/configure-page@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
