@@ -1,0 +1,14 @@
+# Secrets
+config.js
+.env
+*.env
+
+# Build artifacts
+dist/
+build/
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
