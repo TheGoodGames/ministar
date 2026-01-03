@@ -25,7 +25,7 @@ jobs:
           BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
 
       - name: Setup Pages
-        uses: actions/configure-page@v3
+        uses: actions/configure-pages@v3
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
