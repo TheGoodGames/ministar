@@ -14,10 +14,12 @@ jobs:
 
       - name: Configure config.js
         run: |
-          echo "window.GAME_CONFIG = {" > config.js
+          echo "// Auto-generated config" > config.js
+          echo "window.GAME_CONFIG = {" >> config.js
           echo "  BOT_TOKEN: '$BOT_TOKEN'," >> config.js
           echo "  PUBLIC_CHAT_ID: '@$BOT_USERNAME'" >> config.js
           echo "};" >> config.js
+          cat config.js  # <-- ДОБАВЬТЕ ЭТУ СТРОКУ ДЛЯ ОТЛАДКИ
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
