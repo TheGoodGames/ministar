@@ -790,7 +790,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        chat_id: NOTIFICATION_CONFIG.PUBLIC_CHAT_ID,
+                        chat_id: `@${NOTIFICATION_CONFIG.PUBLIC_CHAT_ID}`,
                         text: message,
                         disable_web_page_preview: true,
                         disable_notification: false // Важно: true для тихих уведомлений
@@ -970,12 +970,13 @@
             // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
             let notificationBanner = '';
             if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-                <div class="notification-banner">
-                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Вы можете видеть прогресс других игроков в нашем боте!</p>
-                </div>
-                `;
+              notificationBanner = `
+              <div class="notification-banner">
+                <button class="close-btn" onclick="hideNotificationBanner()">×</button>
+                <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                   <a href="https://t.me/lin_drake_events" target="_blank">@lin_drake_events</a></p>
+              </div>
+              `;
             }
             // END NOTIFICATION SYSTEM
 
