@@ -23,24 +23,21 @@ jobs:
 
       - name: Configure config.js
         run: |
-          cat <<EOF > config.js
-          window.GAME_CONFIG = {
-            BOT_TOKEN: '${BOT_TOKEN}',
-            PUBLIC_CHAT_ID: '${BOT_USERNAME}'
-          };
-          EOF
-        env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
+          echo "window.GAME_CONFIG = {" > config.js
+          echo "  BOT_TOKEN: '${{ secrets.BOT_TOKEN }}'," >> config.js
+          echo "  PUBLIC_CHAT_ID: ${{ secrets.BOT_USERNAME }}" >> config.js
+          echo "};" >> config.js
+          echo "console.log('[CONFIG] Загружена конфигурация для канала:', window.GAME_CONFIG.PUBLIC_CHAT_ID);" >> config.js
+          cat config.js
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4  # Обновлено до v4
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3  # Обновлено до v3 (последняя версия)
+        uses: actions/upload-pages-artifact@v4  # Обновлено до v4 (актуальная версия)
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4  # Обновлено до v4
+        uses: actions/deploy-pages@v4
