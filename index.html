@@ -785,16 +785,16 @@
                 
                 // Отправляем запрос в Bot API
                 const response = await fetch(`https://api.telegram.org/bot${NOTIFICATION_CONFIG.BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        chat_id: `@${NOTIFICATION_CONFIG.PUBLIC_CHAT_ID}`,
-                        text: message,
-                        disable_web_page_preview: true,
-                        disable_notification: false // Важно: true для тихих уведомлений
-                    })
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    chat_id: NOTIFICATION_CONFIG.PUBLIC_CHAT_ID, // Просто число!
+                    text: message,
+                    disable_web_page_preview: true,
+                    disable_notification: false
+                  })
                 });
                 
                 const result = await response.json();
