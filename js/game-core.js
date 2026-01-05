@@ -5,35 +5,17 @@ let diceAnimationInterval = null;
 let autoAdvanceTimeout = null;
 let isAudioPlaying = false;
 
-// Глобальные переменные для модулей
-window.collectedKeys = collectedKeys;
-window.story = story;
-window.currentNodeId = currentNodeId;
-window.showNode = showNode;
-
-// DOM элементы (будут инициализированы после загрузки DOM)
-let sceneEl, diceScreen, keyAnimScreen, audioEl, audioBtn, moduleContainer;
+// Инициализируем DOM-элементы как null
+let sceneEl = null;
+let diceScreen = null;
+let keyAnimScreen = null;
+let audioEl = null;
+let audioBtn = null;
+let moduleContainer = null;
 
 // === СИСТЕМА КЛЮЧЕЙ ===
-let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-
-// Инициализация DOM-элементов
-function initDOMElements() {
-    sceneEl = document.getElementById('scene');
-    diceScreen = document.getElementById('dice-screen');
-    keyAnimScreen = document.getElementById('key-animation');
-    audioEl = document.getElementById('ambient-audio');
-    audioBtn = document.getElementById('audio-control');
-    moduleContainer = document.getElementById('module-container');
-    
-    // Проверка всех необходимых элементов
-    if (!sceneEl || !diceScreen || !keyAnimScreen || !audioEl || !audioBtn || !moduleContainer) {
-        console.error('❌ Не все DOM-элементы найдены. Проверьте HTML-разметку.');
-        return false;
-    }
-    
-    return true;
-}
+// Инициализируем collectedKeys в самом начале
+const collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
 
 function saveKeys() {
     localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
@@ -69,15 +51,37 @@ function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
         .map(keyId => missingMessages[keyId] || `Требуется предмет: ${keyId}`);
 }
 
+// === ИНИЦИАЛИЗАЦИЯ DOM-ЭЛЕМЕНТОВ ===
+function initDOMElements() {
+    sceneEl = document.getElementById('scene');
+    diceScreen = document.getElementById('dice-screen');
+    keyAnimScreen = document.getElementById('key-animation');
+    audioEl = document.getElementById('ambient-audio');
+    audioBtn = document.getElementById('audio-control');
+    moduleContainer = document.getElementById('module-container');
+    
+    // Проверка всех необходимых элементов
+    const missingElements = [];
+    if (!sceneEl) missingElements.push('#scene');
+    if (!diceScreen) missingElements.push('#dice-screen');
+    if (!keyAnimScreen) missingElements.push('#key-animation');
+    if (!audioEl) missingElements.push('#ambient-audio');
+    if (!audioBtn) missingElements.push('#audio-control');
+    if (!moduleContainer) missingElements.push('#module-container');
+    
+    if (missingElements.length > 0) {
+        console.error('❌ Не найдены DOM-элементы:', missingElements);
+        return false;
+    }
+    
+    return true;
+}
+
 // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 function showKeyAnimation(keyData, nextNodeId) {
     if (!keyData || !keyData.id || !keyData.label) return;
 
-    collectedKeys[keyData.id] = {
-        label: keyData.label,
-        type: keyData.type || 'regular'
-    };
-    saveKeys();
+    collectKey(keyData);
 
     const iconMap = {
         'card': '🃏',
@@ -98,7 +102,11 @@ function showKeyAnimation(keyData, nextNodeId) {
 
     autoAdvanceTimeout = setTimeout(() => {
         keyAnimScreen.style.display = 'none';
-        showNode(nextNodeId);
+        if (nextNodeId) {
+            showNode(nextNodeId);
+        } else {
+            sceneEl.style.display = 'block';
+        }
     }, 2200);
 }
 
@@ -118,49 +126,51 @@ function rollDice(successTarget, partialTarget, failTarget) {
     `;
 
     const newRollButton = document.getElementById('roll-button');
-    newRollButton.onclick = () => {
-        let animCount = 0;
-        diceAnimationInterval = setInterval(() => {
-            const d1 = Math.floor(Math.random() * 6) + 1;
-            const d2 = Math.floor(Math.random() * 6) + 1;
-            diceScreen.innerHTML = `
-                <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
-                <div class="result">Бросок...</div>
-                <button class="choice-btn" disabled>Хоть-бы... хоть-бы...</button>
-            `;
-            animCount++;
-            if (animCount > 12) {
-                clearInterval(diceAnimationInterval);
-                diceAnimationInterval = null;
-                const total = d1 + d2;
+    if (newRollButton) {
+        newRollButton.onclick = () => {
+            let animCount = 0;
+            diceAnimationInterval = setInterval(() => {
+                const d1 = Math.floor(Math.random() * 6) + 1;
+                const d2 = Math.floor(Math.random() * 6) + 1;
                 diceScreen.innerHTML = `
                     <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
-                    <div class="result">Выпало: <strong>${total}</strong></div>
-                    <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
+                    <div class="result">Бросок...</div>
+                    <button class="choice-btn" disabled>Хоть-бы... хоть-бы...</button>
                 `;
+                animCount++;
+                if (animCount > 12) {
+                    clearInterval(diceAnimationInterval);
+                    diceAnimationInterval = null;
+                    const total = d1 + d2;
+                    diceScreen.innerHTML = `
+                        <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+                        <div class="result">Выпало: <strong>${total}</strong></div>
+                        <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
+                    `;
 
-                window.proceedAfterDice = function (total) {
-                    diceScreen.style.display = 'none';
-                    sceneEl.style.display = 'block';
+                    window.proceedAfterDice = function (total) {
+                        diceScreen.style.display = 'none';
+                        sceneEl.style.display = 'block';
 
-                    let target;
-                    if (total >= 8) {
-                        target = successTarget;
-                    } else if (total === 7) {
-                        target = partialTarget;
-                    } else {
-                        target = failTarget;
-                    }
+                        let target;
+                        if (total >= 8) {
+                            target = successTarget;
+                        } else if (total === 7) {
+                            target = partialTarget;
+                        } else {
+                            target = failTarget;
+                        }
 
-                    if (target && story[target]) {
-                        showNode(target);
-                    } else {
-                        showNode('0');
-                    }
-                };
-            }
-        }, 100);
-    };
+                        if (target && story[target]) {
+                            showNode(target);
+                        } else {
+                            showNode('0');
+                        }
+                    };
+                }
+            }, 100);
+        };
+    }
 }
 
 // === ОСНОВНАЯ ЛОГИКА ===
@@ -201,13 +211,32 @@ function showNode(nodeId) {
     diceScreen.style.display = 'none';
     keyAnimScreen.style.display = 'none';
 
-    // Скрываем модули
-    if (window.closeInventory) inventoryScreen.style.display = 'none';
-    if (window.closeMap) mapScreen.style.display = 'none';
+    // Скрываем модули если они существуют
+    if (window.closeInventory && typeof window.closeInventory === 'function') {
+        try {
+            const inventoryScreen = document.getElementById('inventory-screen');
+            if (inventoryScreen) inventoryScreen.style.display = 'none';
+        } catch (e) {
+            console.log('Инвентарь не инициализирован');
+        }
+    }
+    
+    if (window.closeMap && typeof window.closeMap === 'function') {
+        try {
+            const mapScreen = document.getElementById('map-screen');
+            if (mapScreen) mapScreen.style.display = 'none';
+        } catch (e) {
+            console.log('Карта не инициализирована');
+        }
+    }
 
-    if (!story[nodeId]) {
+    if (!story || !story[nodeId]) {
         console.error(`Узел "${nodeId}" не найден`);
-        showNode(Object.keys(story)[0]);
+        if (story && Object.keys(story).length > 0) {
+            showNode(Object.keys(story)[0]);
+        } else {
+            sceneEl.innerHTML = '<div class="text">Ошибка: история не загружена</div>';
+        }
         return;
     }
 
@@ -217,11 +246,9 @@ function showNode(nodeId) {
 
     // Проверка на ноду с вводом кода
     if (node.input_type === "code") {
-        if (window.showCodeScreen) {
-            showCodeScreen(node);
-        } else {
-            console.warn('❌ Функция showCodeScreen не определена');
-        }
+        // Временно отключаем, так как эта функция не реализована
+        console.warn('❌ Функция showCodeScreen не реализована');
+        showNode('0');
         return;
     }
 
@@ -326,14 +353,16 @@ function showNode(nodeId) {
         }
 
         // Генерируем событие для модулей
-        const event = new CustomEvent('nodeShown', {
-            detail: {
-                nodeId: nodeId,
-                node: node,
-                element: sceneEl
-            }
-        });
-        document.dispatchEvent(event);
+        if (typeof CustomEvent === 'function') {
+            const event = new CustomEvent('nodeShown', {
+                detail: {
+                    nodeId: nodeId,
+                    node: node,
+                    element: sceneEl
+                }
+            });
+            document.dispatchEvent(event);
+        }
     }, 320);
 }
 
@@ -350,7 +379,7 @@ window.handleChoice = function (nextId, choiceIndex = null) {
     }
 
     // Обработка сбора предмета из ВЫБОРА
-    if (choiceIndex !== null && currentNodeId) {
+    if (choiceIndex !== null && currentNodeId && story[currentNodeId]) {
         const choice = story[currentNodeId].choices[choiceIndex];
         if (choice && choice.collect) {
             if (collectedKeys[choice.collect.id]) {
@@ -363,7 +392,7 @@ window.handleChoice = function (nextId, choiceIndex = null) {
     }
 
     // Проверка требований на уровне ВЫБОРА
-    if (choiceIndex !== null && currentNodeId) {
+    if (choiceIndex !== null && currentNodeId && story[currentNodeId]) {
         const choice = story[currentNodeId].choices[choiceIndex];
         if (choice && choice.requires) {
             const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
@@ -377,7 +406,8 @@ window.handleChoice = function (nextId, choiceIndex = null) {
     // Обработка перехода
     if (nextId === "main_story") {
         localStorage.removeItem('lingame_lastNode');
-        collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+        // Не очищаем ключи, как указано в комментарии
+        // localStorage.removeItem('lingame_keys');
     }
 
     if (nextId === "node_end") {
@@ -385,7 +415,7 @@ window.handleChoice = function (nextId, choiceIndex = null) {
         return;
     }
 
-    if (story[nextId]) {
+    if (story && story[nextId]) {
         showNode(nextId);
     } else {
         console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
@@ -430,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Telegram.WebApp.MainButton.show();
         Telegram.WebApp.MainButton.onClick(() => {
             localStorage.removeItem('lingame_lastNode');
-            collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            // Не очищаем ключи
             showNode("0");
         });
     }
@@ -439,4 +469,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStory();
     
     console.log('🎮 Игра инициализирована');
+    
+    // Регистрируем глобальные переменные для модулей
+    window.collectedKeys = collectedKeys;
+    window.story = story;
+    window.currentNodeId = currentNodeId;
+    window.showNode = showNode;
+    window.getIllustrationHtml = getIllustrationHtml;
+    window.formatText = formatText;
 });
