@@ -86,8 +86,8 @@
         "next": "384"
       },
       {
-        "text": "Новый вариант выбора",
-        "next": ""
+        "text": "Новый вариант выбора!!!",
+        "next": "385"
       },
       {
         "text": "Новый вариант выбора",
@@ -3389,13 +3389,31 @@
     "tag": "Введите код"
   },
   "384": {
-    "text": "Новый узел 384.",
+    "text": "",
+    "choices": [],
+    "tag": "Запертая дверь ❌",
+    "input_type": "code",
+    "code_title": "Дверь заперта",
+    "code_hint": "код находится в шкафу",
+    "correct_code": "1111",
+    "case_sensitive": false,
+    "error_message": "Не верный пароль",
+    "success_next": "6"
+  },
+  "385": {
+    "text": "Новый узел 385.",
     "choices": [
       {
         "text": "Вернуться назад",
-        "next": "4"
+        "next": ""
       }
     ],
-    "tag": "Запертая дверь ❌"
+    "input_type": "code",
+    "code_title": "3331",
+    "code_hint": "авафвафва",
+    "correct_code": "1111",
+    "case_sensitive": false,
+    "error_message": "афвыа",
+    "success_next": "6"
   }
 }
