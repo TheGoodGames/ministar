@@ -1,23 +1,98 @@
 // === СИСТЕМА КАРТЫ МИРА ===
-const mapScreen = document.createElement('div');
-mapScreen.id = 'map-screen';
-mapScreen.style.display = 'none';
-mapScreen.innerHTML = `
-    <h2 class="map-title">🗺️ Карта мира</h2>
-    <div class="locations-grid" id="locations-container">
-        <!-- Локации будут добавлены сюда -->
-    </div>
-    <button class="inventory-close">← Назад к игре</button>
-`;
-
-document.getElementById('module-container').appendChild(mapScreen);
-const locationsContainer = document.getElementById('locations-container');
-const mapCloseBtn = mapScreen.querySelector('.inventory-close');
-
+let mapScreen, locationsContainer, mapCloseBtn;
 let visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
 
+function loadVisitedLocations() {
+    try {
+        const saved = localStorage.getItem('lingame_locations');
+        visitedLocations = saved ? JSON.parse(saved) : [];
+        console.log('✅ Загружены посещенные локации:', visitedLocations);
+        return visitedLocations;
+    } catch (e) {
+        console.error('❌ Ошибка загрузки локаций:', e);
+        return [];
+    }
+}
+
 function saveLocations() {
-    localStorage.setItem('lingame_locations', JSON.stringify(visitedLocations));
+    try {
+        localStorage.setItem('lingame_locations', JSON.stringify(visitedLocations));
+        console.log('✅ Локации сохранены:', visitedLocations);
+    } catch (e) {
+        console.error('❌ Ошибка сохранения локаций:', e);
+    }
+}
+
+function initMapModule() {
+    console.log('🗺️ Инициализация модуля карты');
+    
+    // Загружаем локации при инициализации
+    loadVisitedLocations();
+    
+    // Создаем DOM-элементы
+    createMapDOM();
+    
+    // Загружаем стили
+    loadMapStyles();
+    
+    console.log('✅ Модуль карты инициализирован');
+    
+    // Регистрируем глобальные функции
+    window.showMap = showMap;
+    window.closeMap = closeMap;
+    window.addLocation = addLocation;
+    window.isLocationVisited = isLocationVisited;
+    window.updateMapButton = updateMapButton;
+    window.loadVisitedLocations = loadVisitedLocations;
+    window.updateLocationsDisplay = updateLocationsDisplay;
+    
+    // Принудительно обновляем кнопку каждые 5 секунд
+    setInterval(updateMapButton, 5000);
+}
+
+function createMapDOM() {
+    // Создаем экран карты
+    mapScreen = document.createElement('div');
+    mapScreen.id = 'map-screen';
+    mapScreen.style.display = 'none';
+    mapScreen.innerHTML = `
+        <h2 class="map-title">🗺️ Карта мира</h2>
+        <div class="locations-grid" id="locations-container">
+            <!-- Локации будут добавлены сюда -->
+        </div>
+        <button class="inventory-close">← Назад к игре</button>
+    `;
+    
+    // Добавляем в контейнер модулей
+    const moduleContainer = document.getElementById('module-container');
+    if (moduleContainer) {
+        moduleContainer.appendChild(mapScreen);
+    } else {
+        setTimeout(createMapDOM, 100);
+        return;
+    }
+    
+    // Получаем элементы
+    locationsContainer = document.getElementById('locations-container');
+    mapCloseBtn = mapScreen.querySelector('.inventory-close');
+    
+    if (!locationsContainer || !mapCloseBtn) {
+        console.error('❌ Не удалось найти элементы карты');
+        return;
+    }
+    
+    // Обработчики событий
+    mapCloseBtn.addEventListener('click', closeMap);
+}
+
+function loadMapStyles() {
+    const mapStyle = document.createElement('link');
+    mapStyle.rel = 'stylesheet';
+    mapStyle.href = 'css/map.css';
+    mapStyle.onload = () => {
+        console.log('✅ Стили карты загружены');
+    };
+    document.head.appendChild(mapStyle);
 }
 
 function addLocation(nodeId) {
@@ -25,30 +100,52 @@ function addLocation(nodeId) {
     
     visitedLocations.push(nodeId);
     saveLocations();
-    console.log(`🗺️ Открыта новая локация: ${story[nodeId]?.location_name || nodeId}`);
+    console.log(`🗺️ Открыта новая локация: ${nodeId}`);
 }
 
 function isLocationVisited(nodeId) {
+    loadVisitedLocations(); // Всегда загружаем свежие данные
     return visitedLocations.includes(nodeId);
 }
 
 function showMap() {
-    diceScreen.style.display = 'none';
-    keyAnimScreen.style.display = 'none';
-    if (window.showInventory) inventoryScreen.style.display = 'none';
-    sceneEl.style.display = 'none';
+    if (!mapScreen) {
+        console.error('❌ Экран карты не инициализирован');
+        return;
+    }
+    
+    // Скрываем другие экраны
+    const screens = ['dice-screen', 'key-animation', 'scene'];
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    
+    // Показываем карту
     mapScreen.style.display = 'block';
     
+    // Обновляем содержимое
     updateLocationsDisplay();
 }
 
 function closeMap() {
+    if (!mapScreen) return;
     mapScreen.style.display = 'none';
-    sceneEl.style.display = 'block';
+    
+    const scene = document.getElementById('scene');
+    if (scene) scene.style.display = 'block';
 }
 
 function updateLocationsDisplay() {
+    if (!locationsContainer) {
+        console.error('❌ locationsContainer не инициализирован');
+        return;
+    }
+    
     locationsContainer.innerHTML = '';
+    
+    // Загружаем свежие данные
+    loadVisitedLocations();
     
     if (visitedLocations.length === 0) {
         locationsContainer.innerHTML = `
@@ -58,131 +155,127 @@ function updateLocationsDisplay() {
         return;
     }
     
-    // Группируем локации по категориям
-    const locationsByCategory = {};
+    // Проверяем наличие story
+    const story = window.story;
+    if (!story) {
+        locationsContainer.innerHTML = `
+            <p style="color: #ff9800; margin: 40px 0; font-size: 18px;">
+                ⚠️ История не загружена. Закройте карту и перезагрузите игру.
+            </p>
+        `;
+        return;
+    }
+    
+    // Отображаем все посещенные локации
+    locationsContainer.innerHTML = `<h3 class="category-title">📍 Открытые локации</h3>`;
+    
+    let locationFound = false;
     
     for (const nodeId of visitedLocations) {
         const node = story[nodeId];
-        if (!node || !node.is_location) continue;
+        if (!node) continue;
         
-        const category = node.location_category || 'other';
-        if (!locationsByCategory[category]) {
-            locationsByCategory[category] = [];
+        locationFound = true;
+        
+        const locationEl = document.createElement('div');
+        locationEl.className = 'location-item';
+        if (nodeId === window.currentNodeId) {
+            locationEl.classList.add('current-location');
         }
-        locationsByCategory[category].push(nodeId);
+        
+        const icon = node.location_icon || '📍';
+        const name = node.location_name || nodeId.replace(/_/g, ' ');
+        const description = node.location_description || '';
+        
+        locationEl.innerHTML = `
+            <div class="location-icon">${icon}</div>
+            <div class="location-name">${name}</div>
+            ${description ? `<div class="location-description">${description}</div>` : ''}
+        `;
+        
+        locationEl.onclick = function() {
+            closeMap();
+            setTimeout(() => {
+                if (window.showNode && story[nodeId]) {
+                    window.showNode(nodeId);
+                } else {
+                    console.error(`❌ Локация "${nodeId}" не найдена в story`);
+                }
+            }, 100);
+        };
+        
+        locationsContainer.appendChild(locationEl);
     }
     
-    // Отображаем локации по категориям
-    for (const [category, locationIds] of Object.entries(locationsByCategory)) {
-        if (locationIds.length === 0) continue;
-        
-        let categoryTitle = 'Другие места';
-        if (story[locationIds[0]]?.category_name) {
-            categoryTitle = story[locationIds[0]].category_name;
-        } else {
-            const defaultTitles = {
-                'town': '🏰 Города и поселения',
-                'wilderness': '🌲 Дикие земли',
-                'dungeon': '⚔️ Подземелья',
-                'ship': '⚓ Корабли',
-                'space': '🚀 Космос'
-            };
-            categoryTitle = defaultTitles[category] || categoryTitle;
-        }
-        
-        locationsContainer.innerHTML += `<h3 class="category-title">${categoryTitle}</h3>`;
-        
-        for (const nodeId of locationIds) {
-            const node = story[nodeId];
-            if (!node) continue;
-            
-            const locationEl = document.createElement('div');
-            locationEl.className = 'location-item';
-            if (nodeId === currentNodeId) {
-                locationEl.classList.add('current-location');
-            }
-            
-            const icon = node.location_icon || '📍';
-            const name = node.location_name || nodeId.replace(/_/g, ' ');
-            const description = node.location_description || '';
-            
-            locationEl.innerHTML = `
-                <div class="location-icon">${icon}</div>
-                <div class="location-name">${name}</div>
-                ${description ? `<div class="location-description">${description}</div>` : ''}
-            `;
-            
-            locationEl.onclick = function() {
-                closeMap();
-                setTimeout(() => {
-                    showNode(nodeId);
-                }, 100);
-            };
-            
-            locationsContainer.appendChild(locationEl);
-        }
-    }
-    
-    if (visitedLocations.length > 0) {
-        locationsContainer.innerHTML += `
-            <div class="map-info" style="margin-top: 30px; grid-column: 1 / -1;">
-                <p>Выберите локацию, чтобы телепортироваться к ней</p>
-                <p style="font-style: italic; margin-top: 8px;">Текущее местоположение выделено зеленой рамкой</p>
-            </div>
+    if (!locationFound) {
+        locationsContainer.innerHTML = `
+            <p style="color: #ff9800; margin: 40px 0; font-size: 18px;">
+                🔍 Не найдено локаций в истории
+            </p>
         `;
     }
 }
 
-// События
-mapCloseBtn.addEventListener('click', closeMap);
-
-// Добавляем жест свайпа для открытия карты
-let startY = 0;
-let isDragging = false;
-
-document.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    isDragging = true;
-}, { passive: true });
-
-document.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
+function updateMapButton() {
+    const sceneEl = document.getElementById('scene');
+    if (!sceneEl) return;
     
-    const deltaY = e.touches[0].clientY - startY;
-    if (deltaY > 100 && sceneEl.style.display === 'block' && visitedLocations.length > 0) {
-        showMap();
-        isDragging = false;
+    // Удаляем старую кнопку если она есть
+    const existingButton = document.getElementById('map-button-container');
+    if (existingButton) existingButton.remove();
+    
+    // Добавляем кнопку только если есть посещенные локации
+    if (visitedLocations.length > 0) {
+        const mapButtonContainer = document.createElement('div');
+        mapButtonContainer.id = 'map-button-container';
+        mapButtonContainer.style.textAlign = 'center';
+        mapButtonContainer.style.marginTop = '12px';
+        
+        mapButtonContainer.innerHTML = `
+            <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">
+                🗺️ Карта мира (${visitedLocations.length})
+            </button>
+        `;
+        
+        // Находим место для вставки
+        const choicesContainer = sceneEl.querySelector('.choices');
+        if (choicesContainer) {
+            choicesContainer.parentNode.insertBefore(mapButtonContainer, choicesContainer.nextSibling);
+        } else {
+            const textElements = sceneEl.querySelectorAll('.text');
+            if (textElements.length > 0) {
+                const lastText = textElements[textElements.length - 1];
+                lastText.parentNode.insertBefore(mapButtonContainer, lastText.nextSibling);
+            } else {
+                sceneEl.appendChild(mapButtonContainer);
+            }
+        }
     }
-}, { passive: true });
+}
 
-document.addEventListener('touchend', () => {
-    isDragging = false;
-});
-
-// Добавляем карту в основную игру
+// Инициализация модуля
 document.addEventListener('DOMContentLoaded', () => {
-    // Активируем стили для карты
-    document.getElementById('map-styles').disabled = false;
+    console.log('🌍 DOM загружен, инициализация карты');
+    initMapModule();
     
-    // Интеграция с основной игрой
-    window.addEventListener('nodeShown', (e) => {
+    // Обработка события nodeShown
+    document.addEventListener('nodeShown', (e) => {
+        console.log('📍 Событие nodeShown в карте');
+        
         const node = e.detail.node;
         const nodeId = e.detail.nodeId;
         
-        // Отмечаем посещенные локации
-        if (node.is_location && !isLocationVisited(nodeId)) {
-            addLocation(nodeId);
+        if (node.is_location && window.isLocationVisited && window.addLocation) {
+            if (!window.isLocationVisited(nodeId)) {
+                window.addLocation(nodeId);
+            }
         }
         
-        // Добавляем кнопку карты всегда (ИСПРАВЛЕНО)
-        if (true) {
-            const mapButton = document.createElement('div');
-            mapButton.style.textAlign = 'center';
-            mapButton.style.marginTop = '12px';
-            mapButton.innerHTML = `
-                <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
-            `;
-            e.detail.element.querySelector('.choices')?.parentNode.appendChild(mapButton);
+        // Принудительно обновляем кнопку
+        if (window.updateMapButton) {
+            window.updateMapButton();
         }
     });
 });
+
+console.log('🔧 Модуль карты загружен');
