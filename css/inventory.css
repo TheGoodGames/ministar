@@ -16,6 +16,8 @@
 #inventory-screen h2 {
     margin-bottom: 24px;
     font-size: 28px;
+    color: #6a5acd;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .keys-grid {
@@ -30,12 +32,25 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    background: rgba(106, 90, 205, 0.15);
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.key-item:hover {
+    transform: scale(1.03);
+    border-color: var(--accent);
+    background: rgba(106, 90, 205, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .key-icon {
     font-size: 64px;
     margin-bottom: 10px;
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .key-label {
@@ -48,6 +63,8 @@
     width: 100%;
     box-sizing: border-box;
     text-align: center;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .inventory-close {
@@ -59,8 +76,17 @@
     padding: 12px 24px;
     font-size: 17px;
     cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Merriweather', sans-serif;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .inventory-close:hover {
     background: #5a4ab0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.inventory-close:active {
+    transform: translateY(1px);
 }
