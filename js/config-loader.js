@@ -1,9 +1,11 @@
 // === ЗАГРУЗКА КОНФИГУРАЦИИ ===
-let NOTIFICATION_CONFIG = {
+// Инициализируем конфигурацию с безопасными значениями по умолчанию
+const NOTIFICATION_CONFIG = {
     BOT_TOKEN: '',
     PUBLIC_CHAT_ID: '',
     isEnabled: false
 };
+
 let lastNotificationTime = 0;
 const NOTIFICATION_COOLDOWN = 3000;
 
@@ -33,11 +35,9 @@ async function loadNotificationConfig() {
                 
                 // Проверяем глобальные переменные
                 if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
+                    NOTIFICATION_CONFIG.BOT_TOKEN = window.GAME_CONFIG.BOT_TOKEN;
+                    NOTIFICATION_CONFIG.PUBLIC_CHAT_ID = window.GAME_CONFIG.PUBLIC_CHAT_ID;
+                    NOTIFICATION_CONFIG.isEnabled = true;
                     console.log('🔔 Конфигурация загружена из config.js');
                 } else {
                     // Пытаемся получить из URL параметров (для тестирования)
@@ -46,11 +46,9 @@ async function loadNotificationConfig() {
                     const chatId = urlParams.get('chat_id');
                     
                     if (botToken && chatId) {
-                        NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
-                            isEnabled: true
-                        };
+                        NOTIFICATION_CONFIG.BOT_TOKEN = botToken;
+                        NOTIFICATION_CONFIG.PUBLIC_CHAT_ID = chatId;
+                        NOTIFICATION_CONFIG.isEnabled = true;
                         console.log('🔔 Конфигурация загружена из URL параметров');
                     } else {
                         console.log('🔔 Конфигурация не найдена, уведомления отключены');
@@ -171,6 +169,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Добавляем обработчик для уведомлений
     document.addEventListener('nodeShown', (e) => {
+        if (!window.sendGlobalNotification || !window.NOTIFICATION_CONFIG) return;
+        
         const node = e.detail.node;
         const nodeId = e.detail.nodeId;
         
