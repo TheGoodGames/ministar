@@ -54,5 +54,14 @@
     <!-- И только потом модули -->
     <script src="modules/inventory.js" defer></script>
     <script src="modules/map.js" defer></script>
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM загружен');
+    console.log('🔍 Проверка элементов:');
+    console.log('  #scene:', document.getElementById('scene') ? '✅ найден' : '❌ отсутствует');
+    console.log('  #dice-screen:', document.getElementById('dice-screen') ? '✅ найден' : '❌ отсутствует');
+    console.log('  #module-container:', document.getElementById('module-container') ? '✅ найден' : '❌ отсутствует');
+  });
+</script>
 </body>
 </html>
