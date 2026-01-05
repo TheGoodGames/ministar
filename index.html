@@ -834,8 +834,13 @@
         }
 
         function closeMap() {
-            mapScreen.style.display = 'none';
-            sceneEl.style.display = 'block';
+            mapScreen.style.opacity = '0';
+            mapScreen.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                mapScreen.style.display = 'none';
+                sceneEl.style.display = 'block';
+            }, 250);
         }
 
         function updateLocationsDisplay() {
