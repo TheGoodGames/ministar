@@ -450,6 +450,9 @@
             transition: all 0.2s;
             border: 2px solid transparent;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: rgba(106, 90, 205, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .location-item:hover {
@@ -823,7 +826,7 @@
         }
 
         function showMap() {
-            // ✅ ИСПРАВЛЕНИЕ: Сохраняем позицию скролла
+            // ✅ СОХРАНЯЕМ позицию скролла
             window.savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 
             // Скрываем другие экраны
@@ -844,13 +847,12 @@
             mapScreen.style.display = 'none';
             sceneEl.style.display = 'block';
 
-            // ✅ ИСПРАВЛЕНИЕ: Восстанавливаем позицию скролла
+            // ✅ ВОССТАНАВЛИВАЕМ позицию скролла
             if (window.savedScrollPosition !== undefined) {
                 window.scrollTo({ top: window.savedScrollPosition, behavior: 'instant' });
                 window.savedScrollPosition = undefined;
             }
         }
-
 
         function updateLocationsDisplay() {
             locationsContainer.innerHTML = '';
@@ -962,27 +964,7 @@
                 `;
             }
         }
-        let startY = 0;
-        let isDragging = false;
-
-        document.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].clientY;
-            isDragging = true;
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-
-            const deltaY = e.touches[0].clientY - startY;
-            if (deltaY > 100 && sceneEl.style.display === 'block' && visitedLocations.length > 0) {
-                showMap();
-                isDragging = false;
-            }
-        }, { passive: true });
-
-        document.addEventListener('touchend', () => {
-            isDragging = false;
-        });
+        // Свайп удалён (работал нестабильно на мобильных)
         // END СИСТЕМА КАРТЫ МИРА
 
         // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
@@ -1340,9 +1322,7 @@
             let inventoryButtonHtml = '';
             if (Object.keys(collectedKeys).length > 0 || hasChoices) {
                 inventoryButtonHtml = `
-        <div style="text-align:center; margin-top:16px;">
-            <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">Инвентарь</button>
-        </div>
+        <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
     `;
             }
 
@@ -1350,9 +1330,7 @@
             let mapButtonHtml = '';
             if (visitedLocations.length > 0) {
                 mapButtonHtml = `
-        <div style="text-align:center; margin-top:12px;">
-            <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
-        </div>
+        <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
     `;
             }
             // END КАРТА МИРА
@@ -1396,7 +1374,12 @@
                 if (!hasChoices || isRestartNode) {
                     sceneEl.className += ' deadend';
                 }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml}${mapButtonHtml}`;
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
                 sceneEl.classList.add('active');
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
