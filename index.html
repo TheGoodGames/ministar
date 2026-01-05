@@ -830,6 +830,10 @@
             sceneEl.style.display = 'none';
             mapScreen.style.display = 'block';
 
+            // ✅ ИСПРАВЛЕНИЕ: Сбрасываем стили анимации
+            mapScreen.style.opacity = '1';
+            mapScreen.style.transform = 'translateY(0)';
+
             updateLocationsDisplay();
         }
 
@@ -905,32 +909,35 @@
                         ${description ? `<div class="location-description">${description}</div>` : ''}
                     `;
 
-                    locationEl.onclick = function () {
-                        const targetNodeId = nodeId;
+                    locationEl.onclick = (function(targetId) {
+                        return function() {
+                            console.log('🖱️ Клик по локации:', targetId);
 
-                        // Плавное закрытие карты
-                        mapScreen.style.opacity = '0';
-                        mapScreen.style.transform = 'translateY(20px)';
+                            // Плавное закрытие карты
+                            mapScreen.style.opacity = '0';
+                            mapScreen.style.transform = 'translateY(20px)';
 
-                        setTimeout(() => {
-                            mapScreen.style.display = 'none';
-                            sceneEl.style.display = 'block';
+                            setTimeout(() => {
+                                mapScreen.style.display = 'none';
+                                sceneEl.style.display = 'block';
 
-                            // Проверяем существование узла перед переходом
-                            if (story[targetNodeId]) {
-                                console.log(`🗺️ Переход к локации: ${targetNodeId}`);
-                                showNode(targetNodeId);
-                            } else {
-                                console.error(`❌ Узел "${targetNodeId}" не найден в story.json`);
-                                sceneEl.innerHTML += `
+                                // Проверяем существование узла перед переходом
+                                if (story && story[targetId]) {
+                                    console.log(`🗺️ Переход к локации: ${targetId}`);
+                                    showNode(targetId);
+                                } else {
+                                    console.error(`❌ Узел "${targetId}" не найден в story.json`);
+                                    sceneEl.innerHTML += `
                 <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
                     padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
-                    <p>❌ Ошибка: локация "${targetNodeId}" не найдена в игре</p>
+                    <p>❌ Ошибка: локация "${targetId}" не найдена в игре</p>
+                    <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль (F12)</p>
                 </div>
             `;
-                            }
-                        }, 250); // Задержка для плавной анимации
-                    };
+                                }
+                            }, 250);
+                        };
+                    })(nodeId); // ✅ IIFE - передаём nodeId сразу
 
                     locationsContainer.appendChild(locationEl);
                 }
@@ -948,7 +955,7 @@
         }
 
         // Добавляем открытие карты по жесту (свайп вверх)
-        // Свайп для открытия карты удалён
+        // Свайп удалён (работал нестабильно)
         // END СИСТЕМА КАРТЫ МИРА
 
         // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
