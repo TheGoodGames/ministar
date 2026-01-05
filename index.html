@@ -908,28 +908,25 @@
                     locationEl.onclick = function () {
                         const targetNodeId = nodeId;
 
-                        // Плавное закрытие карты
-                        mapScreen.style.opacity = '0';
-                        mapScreen.style.transform = 'translateY(20px)';
+                        // Сразу скрываем карту без анимации для быстрого перехода
+                        mapScreen.style.display = 'none';
+                        sceneEl.style.display = 'block';
 
+                        // Добавляем небольшую задержку для гарантии отображения сцены
                         setTimeout(() => {
-                            mapScreen.style.display = 'none';
-                            sceneEl.style.display = 'block';
-
-                            // Проверяем существование узла перед переходом
-                            if (story[targetNodeId]) {
-                                console.log(`🗺️ Переход к локации: ${targetNodeId}`);
-                                showNode(targetNodeId);
-                            } else {
-                                console.error(`❌ Узел "${targetNodeId}" не найден в story.json`);
-                                sceneEl.innerHTML += `
-                <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
-                    padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
-                    <p>❌ Ошибка: локация "${targetNodeId}" не найдена в игре</p>
-                </div>
-            `;
+                            try {
+                                if (story[targetNodeId]) {
+                                    console.log(`🗺️ Переход к локации: ${targetNodeId}`);
+                                    showNode(targetNodeId);
+                                } else {
+                                    console.error(`❌ Узел "${targetNodeId}" не найден`);
+                                    showNode('0'); // Возврат к началу при ошибке
+                                }
+                            } catch (error) {
+                                console.error('Ошибка перехода к локации:', error);
+                                showNode('0');
                             }
-                        }, 250); // Задержка для плавной анимации
+                        }, 50); // Минимальная задержка для корректной работы DOM
                     };
 
                     locationsContainer.appendChild(locationEl);
