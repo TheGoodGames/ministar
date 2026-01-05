@@ -15,11 +15,6 @@
     
     <!-- Базовые стили -->
     <link rel="stylesheet" href="css/base.css">
-    
-    <!-- Модульные стили (загружаются по необходимости) -->
-    <link rel="stylesheet" href="css/inventory.css" id="inventory-styles" disabled>
-    <link rel="stylesheet" href="css/map.css" id="map-styles" disabled>
-    <link rel="stylesheet" href="css/notifications.css" id="notifications-styles" disabled>
 </head>
 <body>
     <div id="app">
@@ -27,7 +22,20 @@
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
 
-    <!-- Экраны модулей будут загружены динамически -->
+    <!-- Экран броска кубиков -->
+    <div id="dice-screen" style="display: none;">
+        <div class="dice">🎲 🎲</div>
+        <div class="result">Бросьте кости, чтобы определить исход.</div>
+        <button class="choice-btn" id="roll-button">Бросить кости</button>
+    </div>
+
+    <!-- Экран анимации ключа -->
+    <div id="key-animation" style="display: none; text-align: center; padding: 40px 20px;">
+        <div class="icon" id="anim-key-icon" style="font-size: 120px; margin-bottom: 20px; opacity: 0; animation: keyPop 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">🗝️</div>
+        <div class="label" id="anim-key-label" style="font-size: 22px; margin-bottom: 30px; opacity: 0; animation: fadeIn 0.8s 0.4s forwards;">Новый ключ!</div>
+    </div>
+
+    <!-- Контейнер для динамических модулей -->
     <div id="module-container"></div>
 
     <audio id="ambient-audio" loop preload="auto">
@@ -37,11 +45,11 @@
     <!-- Основные скрипты -->
     <script src="js/utils.js"></script>
     <script src="js/game-core.js"></script>
+    <script src="js/config-loader.js"></script>
     
-    <!-- Модульные скрипты (загружаются по необходимости) -->
+    <!-- Модули загружаются после основных скриптов -->
     <script src="modules/inventory.js" defer></script>
     <script src="modules/map.js" defer></script>
     <script src="modules/notifications.js" defer></script>
-    <script src="js/config-loader.js" defer></script>
 </body>
 </html>
