@@ -499,16 +499,6 @@
             filter: grayscale(0);
         }
 
-        .location-item {
-            pointer-events: all !important;
-            z-index: 1001 !important;
-            position: relative;
-        }
-
-        .location-item * {
-            pointer-events: all !important;
-        }
-
         .map-info {
             color: #aaa;
             font-size: 15px;
@@ -915,37 +905,46 @@
                         ${description ? `<div class="location-description">${description}</div>` : ''}
                     `;
 
-                    locationEl.addEventListener('click', function (event) {
-                        event.stopPropagation();
-                        event.preventDefault();
+                    locationEl.onclick = function () {
+                        const targetNodeId = nodeId;
 
-                        console.log(`🔍 Клик по локации: ${nodeId}`);
+                        // Плавное закрытие карты
+                        mapScreen.style.opacity = '0';
+                        mapScreen.style.transform = 'translateY(20px)';
 
-                        // Проверяем, что элемент видим
-                        if (mapScreen.style.display !== 'block') {
-                            console.log('❌ Карта закрыта, переход невозможен');
-                            return;
-                        }
+                        setTimeout(() => {
+                            mapScreen.style.display = 'none';
+                            sceneEl.style.display = 'block';
 
-                        // Прямо переходим к локации
-                        closeMap();
-                        showNode(nodeId);
-                    }, false);
-                };
+                            // Проверяем существование узла перед переходом
+                            if (story[targetNodeId]) {
+                                console.log(`🗺️ Переход к локации: ${targetNodeId}`);
+                                showNode(targetNodeId);
+                            } else {
+                                console.error(`❌ Узел "${targetNodeId}" не найден в story.json`);
+                                sceneEl.innerHTML += `
+                <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
+                    padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
+                    <p>❌ Ошибка: локация "${targetNodeId}" не найдена в игре</p>
+                </div>
+            `;
+                            }
+                        }, 250); // Задержка для плавной анимации
+                    };
 
-                locationsContainer.appendChild(locationEl);
+                    locationsContainer.appendChild(locationEl);
+                }
             }
-        }
 
-        // Добавляем информацию внизу
-        if (visitedLocations.length > 0) {
-            locationsContainer.innerHTML += `
+            // Добавляем информацию внизу
+            if (visitedLocations.length > 0) {
+                locationsContainer.innerHTML += `
                     <div class="map-info" style="margin-top: 30px; grid-column: 1 / -1;">
                         <p>Выберите локацию, чтобы телепортироваться к ней</p>
                         <p style="font-style: italic; margin-top: 8px;">Текущее местоположение выделено зеленой рамкой</p>
                     </div>
                 `;
-        }
+            }
         }
 
         // Добавляем открытие карты по жесту (свайп вверх)
@@ -1206,9 +1205,6 @@
         }
 
         function showNode(nodeId) {
-            console.log(`🔄 Запрос показа узла: "${nodeId}"`);
-            console.log(`🔍 Доступные узлы:`, Object.keys(story));
-            console.log(`📍 Текущий узел: "${currentNodeId}"`);
             // Отмена предыдущего таймера
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
