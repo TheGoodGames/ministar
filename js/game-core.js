@@ -5,6 +5,12 @@ let diceAnimationInterval = null;
 let autoAdvanceTimeout = null;
 let isAudioPlaying = false;
 
+// Глобальные переменные для модулей
+window.collectedKeys = collectedKeys;
+window.story = story;
+window.currentNodeId = currentNodeId;
+window.showNode = showNode;
+
 // DOM элементы (будут инициализированы после загрузки DOM)
 let sceneEl, diceScreen, keyAnimScreen, audioEl, audioBtn, moduleContainer;
 
