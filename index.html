@@ -1209,6 +1209,7 @@
             inventoryScreen.style.display = 'none';
             keyAnimScreen.style.display = 'none';
             mapScreen.style.display = 'none';
+            codeScreen.style.display = 'none';  // ✅ ИСПРАВЛЕНИЕ: Скрываем экран ввода кода
 
             if (!story[nodeId]) {
                 console.error(`Узел "${nodeId}" не найден`);
@@ -1653,64 +1654,7 @@
             }
         }
         // END NOTIFICATION SYSTEM
-    
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
-                return;
-            }
-
-            console.log('🔄 Сброс прогресса игры...');
-
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            choices = {};
-
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-
-            // Перезагружаем страницу
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
     </script>
-
-    <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
-    <div id="resetButton" style="
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10000;
-        text-align: center;
-    ">
-        <button onclick="resetProgress()" style="
-            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
-            color: white;
-            border: 2px solid #ff5252;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
-            transition: all 0.3s;
-        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(211, 47, 47, 0.6)'" 
-           onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211, 47, 47, 0.4)'">
-            🔄 СБРОСИТЬ ВСЁ (отладка)
-        </button>
-    </div>
-
 </body>
 
 </html>
