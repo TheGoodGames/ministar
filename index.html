@@ -15,6 +15,9 @@
     
     <!-- Базовые стили -->
     <link rel="stylesheet" href="css/base.css">
+    
+    <!-- Стили для карты (загружаем сразу для отладки) -->
+    <link rel="stylesheet" href="css/map.css">
 </head>
 <body>
     <div id="app">
@@ -54,14 +57,48 @@
     <!-- И только потом модули -->
     <script src="modules/inventory.js" defer></script>
     <script src="modules/map.js" defer></script>
+    
+    <!-- Скрипт отладки -->
     <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('✅ DOM загружен');
-    console.log('🔍 Проверка элементов:');
-    console.log('  #scene:', document.getElementById('scene') ? '✅ найден' : '❌ отсутствует');
-    console.log('  #dice-screen:', document.getElementById('dice-screen') ? '✅ найден' : '❌ отсутствует');
-    console.log('  #module-container:', document.getElementById('module-container') ? '✅ найден' : '❌ отсутствует');
-  });
-</script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('✅ DOM полностью загружен');
+            console.log('🔍 Проверка элементов:');
+            console.log('  #scene:', document.getElementById('scene') ? '✅ найден' : '❌ отсутствует');
+            console.log('  #dice-screen:', document.getElementById('dice-screen') ? '✅ найден' : '❌ отсутствует');
+            console.log('  #module-container:', document.getElementById('module-container') ? '✅ найден' : '❌ отсутствует');
+            
+            // Добавляем отладочные кнопки
+            setTimeout(() => {
+                const debugContainer = document.createElement('div');
+                debugContainer.style.position = 'fixed';
+                debugContainer.style.bottom = '20px';
+                debugContainer.style.left = '20px';
+                debugContainer.style.zIndex = '1000';
+                debugContainer.style.backgroundColor = 'rgba(40, 40, 40, 0.8)';
+                debugContainer.style.padding = '10px';
+                debugContainer.style.borderRadius = '5px';
+                debugContainer.style.color = 'white';
+                debugContainer.style.fontSize = '12px';
+                
+                debugContainer.innerHTML = `
+                    <button onclick="debugMapModule()" style="margin: 5px; padding: 5px 10px; background: #3a3c6d; color: white; border: none; border-radius: 3px; cursor: pointer;">🔍 Отладка карты</button>
+                    <button onclick="addTestLocation()" style="margin: 5px; padding: 5px 10px; background: #4caf50; color: white; border: none; border-radius: 3px; cursor: pointer;">📍 Тестовая локация</button>
+                `;
+                
+                document.body.appendChild(debugContainer);
+            }, 1000);
+        });
+        
+        // Функция для добавления тестовой локации
+        function addTestLocation() {
+            if (window.addLocation) {
+                window.addLocation('test_location');
+                alert('✅ Тестовая локация добавлена!');
+                window.debugMapModule();
+            } else {
+                alert('❌ Модуль карты не загружен');
+            }
+        }
+    </script>
 </body>
 </html>
