@@ -830,10 +830,6 @@
             sceneEl.style.display = 'none';
             mapScreen.style.display = 'block';
 
-            // ✅ ИСПРАВЛЕНИЕ: Сбрасываем стили анимации
-            mapScreen.style.opacity = '1';
-            mapScreen.style.transform = 'translateY(0)';
-
             updateLocationsDisplay();
         }
 
@@ -871,10 +867,12 @@
             for (const [category, locationIds] of Object.entries(locationsByCategory)) {
                 if (locationIds.length === 0) continue;
 
+                // Получаем название категории из первой локации этой категории
                 let categoryTitle = 'Другие места';
                 if (story[locationIds[0]]?.category_name) {
                     categoryTitle = story[locationIds[0]].category_name;
                 } else {
+                    // Стандартные названия для известных категорий
                     const defaultTitles = {
                         'town': '🏰 Города и поселения',
                         'wilderness': '🌲 Дикие земли',
@@ -907,72 +905,50 @@
                         ${description ? `<div class="location-description">${description}</div>` : ''}
                     `;
 
-                    // ✅ ИСПРАВЛЕНИЕ: Используем IIFE для правильного замыкания
-                    locationEl.onclick = (function(targetId) {
-                        return function() {
-                            console.log('🖱️ Клик по локации:', targetId);
-                            console.log('📦 story существует:', !!story);
-                            console.log('🎯 Узел существует:', !!story[targetId]);
+                    locationEl.onclick = function () {
+                        const targetNodeId = nodeId;
 
-                            // Плавное закрытие карты
-                            mapScreen.style.opacity = '0';
-                            mapScreen.style.transform = 'translateY(20px)';
+                        // Плавное закрытие карты
+                        mapScreen.style.opacity = '0';
+                        mapScreen.style.transform = 'translateY(20px)';
 
-                            setTimeout(() => {
-                                mapScreen.style.display = 'none';
-                                sceneEl.style.display = 'block';
+                        setTimeout(() => {
+                            mapScreen.style.display = 'none';
+                            sceneEl.style.display = 'block';
 
-                                if (story && story[targetId]) {
-                                    console.log(`🗺️ Переход к локации: ${targetId}`);
-                                    showNode(targetId);
-                                } else {
-                                    console.error(`❌ Узел "${targetId}" не найден в story.json`);
-                                    sceneEl.innerHTML += `
-                    <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
-                        padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
-                        <p>❌ Ошибка: локация "${targetId}" не найдена в файле игры</p>
-                        <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль разработчика (F12)</p>
-                    </div>
-                `;
-                                }
-                            }, 250);
-                        };
-                    })(nodeId); // Передаём nodeId как параметр
+                            // Проверяем существование узла перед переходом
+                            if (story[targetNodeId]) {
+                                console.log(`🗺️ Переход к локации: ${targetNodeId}`);
+                                showNode(targetNodeId);
+                            } else {
+                                console.error(`❌ Узел "${targetNodeId}" не найден в story.json`);
+                                sceneEl.innerHTML += `
+                <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
+                    padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
+                    <p>❌ Ошибка: локация "${targetNodeId}" не найдена в игре</p>
+                </div>
+            `;
+                            }
+                        }, 250); // Задержка для плавной анимации
+                    };
 
                     locationsContainer.appendChild(locationEl);
                 }
             }
 
-            if (locationsContainer.children.length === 0) {
-                locationsContainer.innerHTML = `
+            // Добавляем информацию внизу
+            if (visitedLocations.length > 0) {
+                locationsContainer.innerHTML += `
                     <div class="map-info" style="margin-top: 30px; grid-column: 1 / -1;">
-                        <p>🗺️ Локации добавлены, но не отображаются</p>
-                        <p style="font-style: italic; margin-top: 8px;">Проверьте, что узлы имеют is_location = true</p>
+                        <p>Выберите локацию, чтобы телепортироваться к ней</p>
+                        <p style="font-style: italic; margin-top: 8px;">Текущее местоположение выделено зеленой рамкой</p>
                     </div>
                 `;
             }
         }
-        let startY = 0;
-        let isDragging = false;
 
-        document.addEventListener('touchstart', (e) => {
-            startY = e.touches[0].clientY;
-            isDragging = true;
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-
-            const deltaY = e.touches[0].clientY - startY;
-            if (deltaY > 100 && sceneEl.style.display === 'block' && visitedLocations.length > 0) {
-                showMap();
-                isDragging = false;
-            }
-        }, { passive: true });
-
-        document.addEventListener('touchend', () => {
-            isDragging = false;
-        });
+        // Добавляем открытие карты по жесту (свайп вверх)
+        // Свайп для открытия карты удалён
         // END СИСТЕМА КАРТЫ МИРА
 
         // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
@@ -1330,9 +1306,7 @@
             let inventoryButtonHtml = '';
             if (Object.keys(collectedKeys).length > 0 || hasChoices) {
                 inventoryButtonHtml = `
-        <div style="text-align:center; margin-top:16px;">
-            <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">Инвентарь</button>
-        </div>
+        <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
     `;
             }
 
@@ -1340,9 +1314,7 @@
             let mapButtonHtml = '';
             if (visitedLocations.length > 0) {
                 mapButtonHtml = `
-        <div style="text-align:center; margin-top:12px;">
-            <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
-        </div>
+        <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
     `;
             }
             // END КАРТА МИРА
@@ -1386,7 +1358,12 @@
                 if (!hasChoices || isRestartNode) {
                     sceneEl.className += ' deadend';
                 }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml}${mapButtonHtml}`;
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
                 sceneEl.classList.add('active');
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
