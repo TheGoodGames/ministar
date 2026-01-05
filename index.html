@@ -42,14 +42,17 @@
         <source src="audio/ambient-loop.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Основные скрипты -->
+    <!-- Сначала загружаем утилиты -->
     <script src="js/utils.js"></script>
+    
+    <!-- Потом основную логику -->
     <script src="js/game-core.js"></script>
+    
+    <!-- Затем конфигурацию -->
     <script src="js/config-loader.js"></script>
     
-    <!-- Модули загружаются после основных скриптов -->
+    <!-- И только потом модули -->
     <script src="modules/inventory.js" defer></script>
     <script src="modules/map.js" defer></script>
-    <script src="modules/notifications.js" defer></script>
 </body>
 </html>
