@@ -450,6 +450,9 @@
             transition: all 0.2s;
             border: 2px solid transparent;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: rgba(106, 90, 205, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .location-item:hover {
@@ -871,12 +874,10 @@
             for (const [category, locationIds] of Object.entries(locationsByCategory)) {
                 if (locationIds.length === 0) continue;
 
-                // Получаем название категории из первой локации этой категории
                 let categoryTitle = 'Другие места';
                 if (story[locationIds[0]]?.category_name) {
                     categoryTitle = story[locationIds[0]].category_name;
                 } else {
-                    // Стандартные названия для известных категорий
                     const defaultTitles = {
                         'town': '🏰 Города и поселения',
                         'wilderness': '🌲 Дикие земли',
@@ -909,9 +910,12 @@
                         ${description ? `<div class="location-description">${description}</div>` : ''}
                     `;
 
+                    // ✅ ИСПРАВЛЕНИЕ: Используем IIFE для правильного замыкания
                     locationEl.onclick = (function(targetId) {
                         return function() {
                             console.log('🖱️ Клик по локации:', targetId);
+                            console.log('📦 story существует:', !!story);
+                            console.log('🎯 Узел существует:', !!story[targetId]);
 
                             // Плавное закрытие карты
                             mapScreen.style.opacity = '0';
@@ -921,41 +925,37 @@
                                 mapScreen.style.display = 'none';
                                 sceneEl.style.display = 'block';
 
-                                // Проверяем существование узла перед переходом
                                 if (story && story[targetId]) {
                                     console.log(`🗺️ Переход к локации: ${targetId}`);
                                     showNode(targetId);
                                 } else {
                                     console.error(`❌ Узел "${targetId}" не найден в story.json`);
                                     sceneEl.innerHTML += `
-                <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
-                    padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
-                    <p>❌ Ошибка: локация "${targetId}" не найдена в игре</p>
-                    <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль (F12)</p>
-                </div>
-            `;
+                    <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
+                        padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
+                        <p>❌ Ошибка: локация "${targetId}" не найдена в файле игры</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль разработчика (F12)</p>
+                    </div>
+                `;
                                 }
                             }, 250);
                         };
-                    })(nodeId); // ✅ IIFE - передаём nodeId сразу
+                    })(nodeId); // Передаём nodeId как параметр
 
                     locationsContainer.appendChild(locationEl);
                 }
             }
 
-            // Добавляем информацию внизу
-            if (visitedLocations.length > 0) {
-                locationsContainer.innerHTML += `
+            if (locationsContainer.children.length === 0) {
+                locationsContainer.innerHTML = `
                     <div class="map-info" style="margin-top: 30px; grid-column: 1 / -1;">
-                        <p>Выберите локацию, чтобы телепортироваться к ней</p>
-                        <p style="font-style: italic; margin-top: 8px;">Текущее местоположение выделено зеленой рамкой</p>
+                        <p>🗺️ Локации добавлены, но не отображаются</p>
+                        <p style="font-style: italic; margin-top: 8px;">Проверьте, что узлы имеют is_location = true</p>
                     </div>
                 `;
             }
         }
-
-        // Добавляем открытие карты по жесту (свайп вверх)
-        // Свайп удалён (работал нестабильно)
+        // Свайп удалён (работал нестабильно на мобильных)
         // END СИСТЕМА КАРТЫ МИРА
 
         // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
