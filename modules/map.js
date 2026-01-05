@@ -5,8 +5,9 @@ let visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '
 function initMapModule() {
     console.log('🗺️ Инициализация модуля карты');
     
-    // Создаем DOM-элементы только после полной загрузки страницы
+    // Проверяем, что DOM загружен
     if (!document.getElementById('module-container')) {
+        console.log('⏳ DOM еще не загружен, откладываем инициализацию карты');
         setTimeout(initMapModule, 100);
         return;
     }
@@ -30,13 +31,21 @@ function initMapModule() {
     locationsContainer = document.getElementById('locations-container');
     mapCloseBtn = mapScreen.querySelector('.inventory-close');
     
+    if (!locationsContainer || !mapCloseBtn) {
+        console.error('❌ Не удалось найти элементы карты');
+        return;
+    }
+    
     // Обработчики событий
     mapCloseBtn.addEventListener('click', closeMap);
     
-    // Активируем стили
+    // Загружаем стили
     const mapStyle = document.createElement('link');
     mapStyle.rel = 'stylesheet';
     mapStyle.href = 'css/map.css';
+    mapStyle.onload = () => {
+        console.log('✅ Стили карты загружены');
+    };
     document.head.appendChild(mapStyle);
     
     console.log('✅ Модуль карты инициализирован');
@@ -71,9 +80,15 @@ function showMap() {
     }
     
     // Скрываем другие экраны
-    document.getElementById('dice-screen').style.display = 'none';
-    document.getElementById('key-animation').style.display = 'none';
-    document.getElementById('scene').style.display = 'none';
+    if (document.getElementById('dice-screen')) {
+        document.getElementById('dice-screen').style.display = 'none';
+    }
+    if (document.getElementById('key-animation')) {
+        document.getElementById('key-animation').style.display = 'none';
+    }
+    if (document.getElementById('scene')) {
+        document.getElementById('scene').style.display = 'none';
+    }
     
     // Показываем карту
     mapScreen.style.display = 'block';
@@ -85,7 +100,9 @@ function showMap() {
 function closeMap() {
     if (!mapScreen) return;
     mapScreen.style.display = 'none';
-    document.getElementById('scene').style.display = 'block';
+    if (document.getElementById('scene')) {
+        document.getElementById('scene').style.display = 'block';
+    }
 }
 
 function updateLocationsDisplay() {
@@ -182,11 +199,14 @@ function updateLocationsDisplay() {
 }
 
 // Инициализация модуля после загрузки DOM
-document.addEventListener('DOMContentLoaded', initMapModule);
+document.addEventListener('DOMContentLoaded', () => {
+    // Откладываем инициализацию, чтобы убедиться, что основной скрипт загружен
+    setTimeout(initMapModule, 300);
+});
 
 // Автоматическое добавление карты и отслеживание локаций
 document.addEventListener('nodeShown', (e) => {
-    if (!window.showMap) return;
+    if (!window.showMap || !window.story || !window.currentNodeId) return;
     
     const node = e.detail.node;
     const nodeId = e.detail.nodeId;
@@ -261,7 +281,7 @@ document.addEventListener('touchmove', (e) => {
     if (!isDragging || !window.showMap || visitedLocations.length === 0) return;
     
     const deltaY = e.touches[0].clientY - startY;
-    if (deltaY > 100 && document.getElementById('scene').style.display === 'block') {
+    if (deltaY > 100 && document.getElementById('scene')?.style.display === 'block') {
         showMap();
         isDragging = false;
     }
