@@ -3,19 +3,31 @@ let story = null;
 let currentNodeId = null;
 let diceAnimationInterval = null;
 let autoAdvanceTimeout = null;
-
-// DOM элементы
-const sceneEl = document.getElementById('scene');
-const diceScreen = document.getElementById('dice-screen');
-const keyAnimScreen = document.getElementById('key-animation');
-const audioEl = document.getElementById('ambient-audio');
-const audioBtn = document.getElementById('audio-control');
-const moduleContainer = document.getElementById('module-container');
-
 let isAudioPlaying = false;
+
+// DOM элементы (будут инициализированы после загрузки DOM)
+let sceneEl, diceScreen, keyAnimScreen, audioEl, audioBtn, moduleContainer;
 
 // === СИСТЕМА КЛЮЧЕЙ ===
 let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+
+// Инициализация DOM-элементов
+function initDOMElements() {
+    sceneEl = document.getElementById('scene');
+    diceScreen = document.getElementById('dice-screen');
+    keyAnimScreen = document.getElementById('key-animation');
+    audioEl = document.getElementById('ambient-audio');
+    audioBtn = document.getElementById('audio-control');
+    moduleContainer = document.getElementById('module-container');
+    
+    // Проверка всех необходимых элементов
+    if (!sceneEl || !diceScreen || !keyAnimScreen || !audioEl || !audioBtn || !moduleContainer) {
+        console.error('❌ Не все DOM-элементы найдены. Проверьте HTML-разметку.');
+        return false;
+    }
+    
+    return true;
+}
 
 function saveKeys() {
     localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
@@ -153,7 +165,11 @@ async function loadStory() {
         story = await res.json();
         initGame();
     } catch (e) {
-        sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
+        if (sceneEl) {
+            sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
+        } else {
+            console.error('❌ Сцена не инициализирована:', e);
+        }
         console.error(e);
     }
 }
@@ -168,11 +184,20 @@ function initGame() {
 }
 
 function showNode(nodeId) {
+    if (!sceneEl || !diceScreen || !keyAnimScreen) {
+        console.error('❌ DOM-элементы не инициализированы');
+        return;
+    }
+
     if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
     sceneEl.style.display = 'block';
     diceScreen.style.display = 'none';
     keyAnimScreen.style.display = 'none';
+
+    // Скрываем модули
+    if (window.closeInventory) inventoryScreen.style.display = 'none';
+    if (window.closeMap) mapScreen.style.display = 'none';
 
     if (!story[nodeId]) {
         console.error(`Узел "${nodeId}" не найден`);
@@ -186,7 +211,11 @@ function showNode(nodeId) {
 
     // Проверка на ноду с вводом кода
     if (node.input_type === "code") {
-        showCodeScreen(node);
+        if (window.showCodeScreen) {
+            showCodeScreen(node);
+        } else {
+            console.warn('❌ Функция showCodeScreen не определена');
+        }
         return;
     }
 
@@ -282,13 +311,23 @@ function showNode(nodeId) {
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        if (isAudioPlaying) {
+        if (isAudioPlaying && audioEl) {
             audioEl.play().catch(e => console.log("Audio play failed:", e));
         }
 
         if (isRestartNode && window.Telegram?.WebApp) {
             Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
         }
+
+        // Генерируем событие для модулей
+        const event = new CustomEvent('nodeShown', {
+            detail: {
+                nodeId: nodeId,
+                node: node,
+                element: sceneEl
+            }
+        });
+        document.dispatchEvent(event);
     }, 320);
 }
 
@@ -349,6 +388,8 @@ window.handleChoice = function (nextId, choiceIndex = null) {
 };
 
 function toggleAudio() {
+    if (!audioEl || !audioBtn) return;
+    
     if (isAudioPlaying) {
         audioEl.pause();
         audioBtn.textContent = '🔇';
@@ -363,11 +404,22 @@ function toggleAudio() {
     }
 }
 
-// Загрузка игры при запуске
+// Загрузка игры при полной загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM полностью загружен');
+    
+    // Инициализация DOM-элементов
+    if (!initDOMElements()) {
+        console.error('❌ Критическая ошибка инициализации DOM');
+        return;
+    }
+    
+    // Инициализация Telegram WebApp
     if (window.Telegram?.WebApp) {
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
+        
+        // Настройка кнопки перезапуска
         Telegram.WebApp.MainButton.setText('Начать заново');
         Telegram.WebApp.MainButton.show();
         Telegram.WebApp.MainButton.onClick(() => {
@@ -377,5 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Загрузка истории
     loadStory();
+    
+    console.log('🎮 Игра инициализирована');
 });
