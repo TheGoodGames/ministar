@@ -830,6 +830,10 @@
             sceneEl.style.display = 'none';
             mapScreen.style.display = 'block';
 
+            // ✅ ИСПРАВЛЕНИЕ: Сбрасываем стили анимации
+            mapScreen.style.opacity = '1';
+            mapScreen.style.transform = 'translateY(0)';
+
             updateLocationsDisplay();
         }
 
@@ -867,7 +871,6 @@
             for (const [category, locationIds] of Object.entries(locationsByCategory)) {
                 if (locationIds.length === 0) continue;
 
-                // Получаем название категории
                 let categoryTitle = 'Другие места';
                 if (story[locationIds[0]]?.category_name) {
                     categoryTitle = story[locationIds[0]].category_name;
@@ -904,7 +907,7 @@
                         ${description ? `<div class="location-description">${description}</div>` : ''}
                     `;
 
-                    // ИСПРАВЛЕНИЕ: Используем IIFE для создания правильного замыкания
+                    // ✅ ИСПРАВЛЕНИЕ: Используем IIFE для правильного замыкания
                     locationEl.onclick = (function(targetId) {
                         return function() {
                             console.log('🖱️ Клик по локации:', targetId);
@@ -919,35 +922,32 @@
                                 mapScreen.style.display = 'none';
                                 sceneEl.style.display = 'block';
 
-                                // Проверяем существование узла перед переходом
                                 if (story && story[targetId]) {
                                     console.log(`🗺️ Переход к локации: ${targetId}`);
                                     showNode(targetId);
                                 } else {
                                     console.error(`❌ Узел "${targetId}" не найден в story.json`);
-                                    console.error('story:', story);
                                     sceneEl.innerHTML += `
                     <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
                         padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
                         <p>❌ Ошибка: локация "${targetId}" не найдена в файле игры</p>
-                        <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль разработчика (F12) для деталей</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль разработчика (F12)</p>
                     </div>
                 `;
                                 }
                             }, 250);
                         };
-                    })(nodeId); // Передаём nodeId как параметр в IIFE
+                    })(nodeId); // Передаём nodeId как параметр
 
                     locationsContainer.appendChild(locationEl);
                 }
             }
 
-            // Сообщение если нет локаций после фильтрации
             if (locationsContainer.children.length === 0) {
                 locationsContainer.innerHTML = `
                     <div class="map-info" style="margin-top: 30px; grid-column: 1 / -1;">
                         <p>🗺️ Локации добавлены, но не отображаются</p>
-                        <p style="font-style: italic; margin-top: 8px;">Проверьте, что узлы имеют свойство is_location = true</p>
+                        <p style="font-style: italic; margin-top: 8px;">Проверьте, что узлы имеют is_location = true</p>
                     </div>
                 `;
             }
