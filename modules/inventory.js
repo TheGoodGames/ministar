@@ -4,8 +4,9 @@ let inventoryScreen, keysContainer, inventoryCloseBtn;
 function initInventoryModule() {
     console.log('📦 Инициализация модуля инвентаря');
     
-    // Создаем DOM-элементы только после полной загрузки страницы
+    // Проверяем, что DOM загружен
     if (!document.getElementById('module-container')) {
+        console.log('⏳ DOM еще не загружен, откладываем инициализацию инвентаря');
         setTimeout(initInventoryModule, 100);
         return;
     }
@@ -29,13 +30,21 @@ function initInventoryModule() {
     keysContainer = document.getElementById('keys-container');
     inventoryCloseBtn = inventoryScreen.querySelector('.inventory-close');
     
+    if (!keysContainer || !inventoryCloseBtn) {
+        console.error('❌ Не удалось найти элементы инвентаря');
+        return;
+    }
+    
     // Обработчики событий
     inventoryCloseBtn.addEventListener('click', closeInventory);
     
-    // Активируем стили
+    // Загружаем стили
     const inventoryStyle = document.createElement('link');
     inventoryStyle.rel = 'stylesheet';
     inventoryStyle.href = 'css/inventory.css';
+    inventoryStyle.onload = () => {
+        console.log('✅ Стили инвентаря загружены');
+    };
     document.head.appendChild(inventoryStyle);
     
     console.log('✅ Модуль инвентаря инициализирован');
@@ -43,6 +52,7 @@ function initInventoryModule() {
     // Регистрируем глобальные функции
     window.showInventory = showInventory;
     window.closeInventory = closeInventory;
+    window.updateInventoryDisplay = updateInventoryDisplay;
 }
 
 function showInventory() {
@@ -52,9 +62,15 @@ function showInventory() {
     }
     
     // Скрываем другие экраны
-    document.getElementById('dice-screen').style.display = 'none';
-    document.getElementById('key-animation').style.display = 'none';
-    document.getElementById('scene').style.display = 'none';
+    if (document.getElementById('dice-screen')) {
+        document.getElementById('dice-screen').style.display = 'none';
+    }
+    if (document.getElementById('key-animation')) {
+        document.getElementById('key-animation').style.display = 'none';
+    }
+    if (document.getElementById('scene')) {
+        document.getElementById('scene').style.display = 'none';
+    }
     
     // Показываем инвентарь
     inventoryScreen.style.display = 'block';
@@ -66,7 +82,9 @@ function showInventory() {
 function closeInventory() {
     if (!inventoryScreen) return;
     inventoryScreen.style.display = 'none';
-    document.getElementById('scene').style.display = 'block';
+    if (document.getElementById('scene')) {
+        document.getElementById('scene').style.display = 'block';
+    }
 }
 
 function updateInventoryDisplay() {
@@ -102,11 +120,14 @@ function updateInventoryDisplay() {
 }
 
 // Инициализация модуля после загрузки DOM
-document.addEventListener('DOMContentLoaded', initInventoryModule);
+document.addEventListener('DOMContentLoaded', () => {
+    // Откладываем инициализацию, чтобы убедиться, что основной скрипт загружен
+    setTimeout(initInventoryModule, 200);
+});
 
 // Автоматическое добавление кнопки инвентаря в игровой интерфейс
 document.addEventListener('nodeShown', (e) => {
-    if (!window.showInventory) return;
+    if (!window.showInventory || !window.collectedKeys) return;
     
     const node = e.detail.node;
     const sceneEl = e.detail.element;
