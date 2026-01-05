@@ -239,6 +239,37 @@ function showNode(nodeId) {
         }
         return;
     }
+    const node = story[nodeId];
+    currentNodeId = nodeId;
+    localStorage.setItem('lingame_lastNode', nodeId);
+    
+    // === СИСТЕМА КАРТЫ: ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ===
+    window.currentNodeId = nodeId;
+    window.story = story;
+    
+    // Отмечаем посещенные локации
+    if (node.is_location) {
+        // Загружаем актуальные данные
+        if (window.loadVisitedLocations) {
+            window.loadVisitedLocations();
+        }
+        
+        // Добавляем локацию через глобальную функцию
+        if (window.addLocation && !window.isLocationVisited?.(nodeId)) {
+            window.addLocation(nodeId);
+            console.log(`🌍 Локация "${nodeId}" добавлена в карту`);
+            
+            // Показываем уведомление
+            setTimeout(() => {
+                sceneEl.innerHTML += `
+                    <div style="background: rgba(76, 175, 80, 0.3); border-left: 3px solid #4CAF50; 
+                        padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
+                        <p>📍 "${node.location_name || nodeId}" добавлена на карту мира!</p>
+                    </div>
+                `;
+            }, 300);
+        }
+    }
 
     const node = story[nodeId];
     currentNodeId = nodeId;
