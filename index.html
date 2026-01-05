@@ -905,11 +905,31 @@
                         ${description ? `<div class="location-description">${description}</div>` : ''}
                     `;
 
-                    locationEl.onclick = () => {
-                        closeMap();
+                    locationEl.onclick = function () {
+                        const targetNodeId = nodeId;
+
+                        // Плавное закрытие карты
+                        mapScreen.style.opacity = '0';
+                        mapScreen.style.transform = 'translateY(20px)';
+
                         setTimeout(() => {
-                            showNode(nodeId);
-                        }, 300);
+                            mapScreen.style.display = 'none';
+                            sceneEl.style.display = 'block';
+
+                            // Проверяем существование узла перед переходом
+                            if (story[targetNodeId]) {
+                                console.log(`🗺️ Переход к локации: ${targetNodeId}`);
+                                showNode(targetNodeId);
+                            } else {
+                                console.error(`❌ Узел "${targetNodeId}" не найден в story.json`);
+                                sceneEl.innerHTML += `
+                <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
+                    padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
+                    <p>❌ Ошибка: локация "${targetNodeId}" не найдена в игре</p>
+                </div>
+            `;
+                            }
+                        }, 250); // Задержка для плавной анимации
                     };
 
                     locationsContainer.appendChild(locationEl);
