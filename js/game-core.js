@@ -5,17 +5,16 @@ let diceAnimationInterval = null;
 let autoAdvanceTimeout = null;
 let isAudioPlaying = false;
 
-// Инициализируем DOM-элементы как null
-let sceneEl = null;
-let diceScreen = null;
-let keyAnimScreen = null;
-let audioEl = null;
-let audioBtn = null;
-let moduleContainer = null;
+// DOM элементы
+const sceneEl = document.getElementById('scene');
+const diceScreen = document.getElementById('dice-screen');
+const keyAnimScreen = document.getElementById('key-animation');
+const audioEl = document.getElementById('ambient-audio');
+const audioBtn = document.getElementById('audio-control');
+const moduleContainer = document.getElementById('module-container');
 
 // === СИСТЕМА КЛЮЧЕЙ ===
-// Инициализируем collectedKeys в самом начале
-const collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
 
 function saveKeys() {
     localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
@@ -51,37 +50,15 @@ function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
         .map(keyId => missingMessages[keyId] || `Требуется предмет: ${keyId}`);
 }
 
-// === ИНИЦИАЛИЗАЦИЯ DOM-ЭЛЕМЕНТОВ ===
-function initDOMElements() {
-    sceneEl = document.getElementById('scene');
-    diceScreen = document.getElementById('dice-screen');
-    keyAnimScreen = document.getElementById('key-animation');
-    audioEl = document.getElementById('ambient-audio');
-    audioBtn = document.getElementById('audio-control');
-    moduleContainer = document.getElementById('module-container');
-    
-    // Проверка всех необходимых элементов
-    const missingElements = [];
-    if (!sceneEl) missingElements.push('#scene');
-    if (!diceScreen) missingElements.push('#dice-screen');
-    if (!keyAnimScreen) missingElements.push('#key-animation');
-    if (!audioEl) missingElements.push('#ambient-audio');
-    if (!audioBtn) missingElements.push('#audio-control');
-    if (!moduleContainer) missingElements.push('#module-container');
-    
-    if (missingElements.length > 0) {
-        console.error('❌ Не найдены DOM-элементы:', missingElements);
-        return false;
-    }
-    
-    return true;
-}
-
 // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 function showKeyAnimation(keyData, nextNodeId) {
     if (!keyData || !keyData.id || !keyData.label) return;
 
-    collectKey(keyData);
+    collectedKeys[keyData.id] = {
+        label: keyData.label,
+        type: keyData.type || 'regular'
+    };
+    saveKeys();
 
     const iconMap = {
         'card': '🃏',
@@ -102,11 +79,7 @@ function showKeyAnimation(keyData, nextNodeId) {
 
     autoAdvanceTimeout = setTimeout(() => {
         keyAnimScreen.style.display = 'none';
-        if (nextNodeId) {
-            showNode(nextNodeId);
-        } else {
-            sceneEl.style.display = 'block';
-        }
+        showNode(nextNodeId);
     }, 2200);
 }
 
@@ -126,73 +99,72 @@ function rollDice(successTarget, partialTarget, failTarget) {
     `;
 
     const newRollButton = document.getElementById('roll-button');
-    if (newRollButton) {
-        newRollButton.onclick = () => {
-            let animCount = 0;
-            diceAnimationInterval = setInterval(() => {
-                const d1 = Math.floor(Math.random() * 6) + 1;
-                const d2 = Math.floor(Math.random() * 6) + 1;
+    newRollButton.onclick = () => {
+        let animCount = 0;
+        diceAnimationInterval = setInterval(() => {
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            const d2 = Math.floor(Math.random() * 6) + 1;
+            diceScreen.innerHTML = `
+                <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+                <div class="result">Бросок...</div>
+                <button class="choice-btn" disabled>Хоть-бы... хоть-бы...</button>
+            `;
+            animCount++;
+            if (animCount > 12) {
+                clearInterval(diceAnimationInterval);
+                diceAnimationInterval = null;
+                const total = d1 + d2;
                 diceScreen.innerHTML = `
                     <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
-                    <div class="result">Бросок...</div>
-                    <button class="choice-btn" disabled>Хоть-бы... хоть-бы...</button>
+                    <div class="result">Выпало: <strong>${total}</strong></div>
+                    <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
                 `;
-                animCount++;
-                if (animCount > 12) {
-                    clearInterval(diceAnimationInterval);
-                    diceAnimationInterval = null;
-                    const total = d1 + d2;
-                    diceScreen.innerHTML = `
-                        <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
-                        <div class="result">Выпало: <strong>${total}</strong></div>
-                        <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
-                    `;
 
-                    window.proceedAfterDice = function (total) {
-                        diceScreen.style.display = 'none';
-                        sceneEl.style.display = 'block';
+                window.proceedAfterDice = function (total) {
+                    diceScreen.style.display = 'none';
+                    sceneEl.style.display = 'block';
 
-                        let target;
-                        if (total >= 8) {
-                            target = successTarget;
-                        } else if (total === 7) {
-                            target = partialTarget;
-                        } else {
-                            target = failTarget;
-                        }
+                    let target;
+                    if (total >= 8) {
+                        target = successTarget;
+                    } else if (total === 7) {
+                        target = partialTarget;
+                    } else {
+                        target = failTarget;
+                    }
 
-                        if (target && story[target]) {
-                            showNode(target);
-                        } else {
-                            showNode('0');
-                        }
-                    };
-                }
-            }, 100);
-        };
-    }
+                    if (target && story[target]) {
+                        showNode(target);
+                    } else {
+                        showNode('0');
+                    }
+                };
+            }
+        }, 100);
+    };
 }
 
 // === ОСНОВНАЯ ЛОГИКА ===
 async function loadStory() {
     try {
-        const res = await fetch('story.json');
+        const res = await fetch('story.json?v=' + Date.now());
         if (!res.ok) throw new Error('Файл story.json не найден');
         story = await res.json();
         initGame();
     } catch (e) {
-        if (sceneEl) {
-            sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
-        } else {
-            console.error('❌ Сцена не инициализирована:', e);
-        }
+        sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
         console.error(e);
     }
 }
 
 function initGame() {
+    // Загружаем сохраненные локации для карты
+    if (window.loadVisitedLocations) {
+        window.loadVisitedLocations();
+    }
+    
     const saved = localStorage.getItem('lingame_lastNode');
-    if (saved && story[saved]) {
+    if (saved && story?.[saved]) {
         showNode(saved);
     } else {
         showNode('0');
@@ -200,80 +172,33 @@ function initGame() {
 }
 
 function showNode(nodeId) {
-    if (!sceneEl || !diceScreen || !keyAnimScreen) {
-        console.error('❌ DOM-элементы не инициализированы');
-        return;
-    }
-
     if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
     sceneEl.style.display = 'block';
     diceScreen.style.display = 'none';
     keyAnimScreen.style.display = 'none';
 
-    // Скрываем модули если они существуют
-    if (window.closeInventory && typeof window.closeInventory === 'function') {
-        try {
-            const inventoryScreen = document.getElementById('inventory-screen');
-            if (inventoryScreen) inventoryScreen.style.display = 'none';
-        } catch (e) {
-            console.log('Инвентарь не инициализирован');
-        }
-    }
-    
-    if (window.closeMap && typeof window.closeMap === 'function') {
-        try {
-            const mapScreen = document.getElementById('map-screen');
-            if (mapScreen) mapScreen.style.display = 'none';
-        } catch (e) {
-            console.log('Карта не инициализирована');
-        }
-    }
+    // Скрываем модули
+    const mapScreen = document.getElementById('map-screen');
+    if (mapScreen) mapScreen.style.display = 'none';
 
-    if (!story || !story[nodeId]) {
+    if (!story?.[nodeId]) {
         console.error(`Узел "${nodeId}" не найден`);
-        if (story && Object.keys(story).length > 0) {
-            showNode(Object.keys(story)[0]);
-        } else {
-            sceneEl.innerHTML = '<div class="text">Ошибка: история не загружена</div>';
-        }
+        showNode(Object.keys(story)[0]);
         return;
     }
-    const node = story[nodeId];
-    currentNodeId = nodeId;
-    localStorage.setItem('lingame_lastNode', nodeId);
-    
-    // === СИСТЕМА КАРТЫ: ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ===
-    window.currentNodeId = nodeId;
-    window.story = story;
-    
-    // Отмечаем посещенные локации
-    if (node.is_location) {
-        // Загружаем актуальные данные
-        if (window.loadVisitedLocations) {
-            window.loadVisitedLocations();
-        }
-        
-        // Добавляем локацию через глобальную функцию
-        if (window.addLocation && !window.isLocationVisited?.(nodeId)) {
-            window.addLocation(nodeId);
-            console.log(`🌍 Локация "${nodeId}" добавлена в карту`);
-            
-            // Показываем уведомление
-            setTimeout(() => {
-                sceneEl.innerHTML += `
-                    <div style="background: rgba(76, 175, 80, 0.3); border-left: 3px solid #4CAF50; 
-                        padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
-                        <p>📍 "${node.location_name || nodeId}" добавлена на карту мира!</p>
-                    </div>
-                `;
-            }, 300);
-        }
-    }
 
     const node = story[nodeId];
     currentNodeId = nodeId;
     localStorage.setItem('lingame_lastNode', nodeId);
+
+    // === СИСТЕМА КАРТЫ: Отметка посещенных локаций ===
+    if (node.is_location && window.addLocation && window.isLocationVisited) {
+        if (!window.isLocationVisited(nodeId)) {
+            window.addLocation(nodeId);
+        }
+    }
+    // === END СИСТЕМА КАРТЫ ===
 
     // Проверка на ноду с вводом кода
     if (node.input_type === "code") {
@@ -394,6 +319,11 @@ function showNode(nodeId) {
             });
             document.dispatchEvent(event);
         }
+        
+        // Принудительно обновляем кнопку карты
+        if (window.updateMapButton) {
+            window.updateMapButton();
+        }
     }, 320);
 }
 
@@ -410,7 +340,7 @@ window.handleChoice = function (nextId, choiceIndex = null) {
     }
 
     // Обработка сбора предмета из ВЫБОРА
-    if (choiceIndex !== null && currentNodeId && story[currentNodeId]) {
+    if (choiceIndex !== null && currentNodeId && story?.[currentNodeId]) {
         const choice = story[currentNodeId].choices[choiceIndex];
         if (choice && choice.collect) {
             if (collectedKeys[choice.collect.id]) {
@@ -423,7 +353,7 @@ window.handleChoice = function (nextId, choiceIndex = null) {
     }
 
     // Проверка требований на уровне ВЫБОРА
-    if (choiceIndex !== null && currentNodeId && story[currentNodeId]) {
+    if (choiceIndex !== null && currentNodeId && story?.[currentNodeId]) {
         const choice = story[currentNodeId].choices[choiceIndex];
         if (choice && choice.requires) {
             const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
@@ -437,8 +367,6 @@ window.handleChoice = function (nextId, choiceIndex = null) {
     // Обработка перехода
     if (nextId === "main_story") {
         localStorage.removeItem('lingame_lastNode');
-        // Не очищаем ключи, как указано в комментарии
-        // localStorage.removeItem('lingame_keys');
     }
 
     if (nextId === "node_end") {
@@ -446,7 +374,7 @@ window.handleChoice = function (nextId, choiceIndex = null) {
         return;
     }
 
-    if (story && story[nextId]) {
+    if (story?.[nextId]) {
         showNode(nextId);
     } else {
         console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
@@ -475,11 +403,10 @@ function toggleAudio() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ DOM полностью загружен');
     
-    // Инициализация DOM-элементов
-    if (!initDOMElements()) {
-        console.error('❌ Критическая ошибка инициализации DOM');
-        return;
-    }
+    // Регистрация глобальных переменных
+    window.story = story;
+    window.currentNodeId = currentNodeId;
+    window.showNode = showNode;
     
     // Инициализация Telegram WebApp
     if (window.Telegram?.WebApp) {
@@ -498,14 +425,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Загрузка истории
     loadStory();
-    
-    console.log('🎮 Игра инициализирована');
-    
-    // Регистрируем глобальные переменные для модулей
-    window.collectedKeys = collectedKeys;
-    window.story = story;
-    window.currentNodeId = currentNodeId;
-    window.showNode = showNode;
-    window.getIllustrationHtml = getIllustrationHtml;
-    window.formatText = formatText;
 });
