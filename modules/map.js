@@ -40,13 +40,7 @@ function initMapModule() {
     mapCloseBtn.addEventListener('click', closeMap);
     
     // Загружаем стили
-    const mapStyle = document.createElement('link');
-    mapStyle.rel = 'stylesheet';
-    mapStyle.href = 'css/map.css';
-    mapStyle.onload = () => {
-        console.log('✅ Стили карты загружены');
-    };
-    document.head.appendChild(mapStyle);
+    loadMapStyles();
     
     console.log('✅ Модуль карты инициализирован');
     
@@ -55,6 +49,20 @@ function initMapModule() {
     window.closeMap = closeMap;
     window.addLocation = addLocation;
     window.isLocationVisited = isLocationVisited;
+    window.updateMapButton = updateMapButton; // Добавляем новую функцию
+    
+    // Принудительно проверяем наличие локаций и добавляем кнопку
+    setTimeout(checkAndAddMapButton, 500);
+}
+
+function loadMapStyles() {
+    const mapStyle = document.createElement('link');
+    mapStyle.rel = 'stylesheet';
+    mapStyle.href = 'css/map.css';
+    mapStyle.onload = () => {
+        console.log('✅ Стили карты загружены');
+    };
+    document.head.appendChild(mapStyle);
 }
 
 function saveLocations() {
@@ -67,6 +75,9 @@ function addLocation(nodeId) {
     visitedLocations.push(nodeId);
     saveLocations();
     console.log(`🗺️ Открыта новая локация: ${nodeId}`);
+    
+    // Обновляем кнопку карты после добавления локации
+    updateMapButton();
 }
 
 function isLocationVisited(nodeId) {
@@ -80,15 +91,7 @@ function showMap() {
     }
     
     // Скрываем другие экраны
-    if (document.getElementById('dice-screen')) {
-        document.getElementById('dice-screen').style.display = 'none';
-    }
-    if (document.getElementById('key-animation')) {
-        document.getElementById('key-animation').style.display = 'none';
-    }
-    if (document.getElementById('scene')) {
-        document.getElementById('scene').style.display = 'none';
-    }
+    hideAllScreens();
     
     // Показываем карту
     mapScreen.style.display = 'block';
@@ -100,9 +103,20 @@ function showMap() {
 function closeMap() {
     if (!mapScreen) return;
     mapScreen.style.display = 'none';
-    if (document.getElementById('scene')) {
-        document.getElementById('scene').style.display = 'block';
-    }
+    showMainScene();
+}
+
+function hideAllScreens() {
+    const screens = ['dice-screen', 'key-animation', 'scene', 'inventory-screen'];
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
+function showMainScene() {
+    const scene = document.getElementById('scene');
+    if (scene) scene.style.display = 'block';
 }
 
 function updateLocationsDisplay() {
@@ -198,72 +212,80 @@ function updateLocationsDisplay() {
     }
 }
 
+// === КРИТИЧЕСКАЯ ФУНКЦИЯ: Принудительное добавление кнопки карты ===
+function updateMapButton() {
+    // Ждем, пока основной контейнер будет доступен
+    const sceneEl = document.getElementById('scene');
+    if (!sceneEl || sceneEl.innerHTML.includes('map-button-container')) {
+        return;
+    }
+    
+    // Создаем контейнер для кнопки карты
+    const mapButtonContainer = document.createElement('div');
+    mapButtonContainer.id = 'map-button-container';
+    mapButtonContainer.style.textAlign = 'center';
+    mapButtonContainer.style.marginTop = '12px';
+    mapButtonContainer.style.zIndex = '100';
+    mapButtonContainer.style.position = 'relative';
+    
+    mapButtonContainer.innerHTML = `
+        <button class="choice-btn map-btn" style="background:#3a3c6d; font-size:16px; width: auto; padding: 12px 24px;" onclick="showMap()">
+            🗺️ Карта мира (${visitedLocations.length})
+        </button>
+    `;
+    
+    // Добавляем кнопку в конец сцены
+    sceneEl.appendChild(mapButtonContainer);
+    console.log('✅ Кнопка карты добавлена принудительно');
+}
+
+function checkAndAddMapButton() {
+    const sceneEl = document.getElementById('scene');
+    if (!sceneEl) {
+        setTimeout(checkAndAddMapButton, 200);
+        return;
+    }
+    
+    // Добавляем кнопку если есть посещенные локации
+    if (visitedLocations.length > 0 && !sceneEl.querySelector('#map-button-container')) {
+        updateMapButton();
+    }
+    
+    // Проверяем каждые 2 секунды на случай динамического обновления сцены
+    setTimeout(checkAndAddMapButton, 2000);
+}
+// END КРИТИЧЕСКАЯ ФУНКЦИЯ
+
 // Инициализация модуля после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
-    // Откладываем инициализацию, чтобы убедиться, что основной скрипт загружен
-    setTimeout(initMapModule, 300);
+    console.log('🗺️ DOM загружен, начинаем инициализацию карты');
+    
+    // Инициализируем модуль карты
+    initMapModule();
+    
+    // Также пытаемся добавить кнопку каждые 2 секунды
+    setInterval(checkAndAddMapButton, 2000);
 });
 
-// Автоматическое добавление карты и отслеживание локаций
+// Обработка события nodeShown
 document.addEventListener('nodeShown', (e) => {
-    if (!window.showMap || !window.story || !window.currentNodeId) return;
+    console.log('🗺️ Событие nodeShown получено');
+    
+    if (!window.showMap || !window.story || !window.currentNodeId) {
+        console.log('❌ Модуль карты не готов к работе');
+        return;
+    }
     
     const node = e.detail.node;
     const nodeId = e.detail.nodeId;
-    const sceneEl = e.detail.element;
     
     // Отмечаем посещенные локации
     if (node.is_location && !isLocationVisited(nodeId)) {
         addLocation(nodeId);
-        
-        // Показываем уведомление о новой локации
-        if (!localStorage.getItem('hide_map_tutorial')) {
-            const newLocationBanner = document.createElement('div');
-            newLocationBanner.style.background = 'rgba(76, 175, 80, 0.2)';
-            newLocationBanner.style.borderLeft = '3px solid #4CAF50';
-            newLocationBanner.style.padding = '12px';
-            newLocationBanner.style.borderRadius = '0 8px 8px 0';
-            newLocationBanner.style.margin = '15px 0';
-            newLocationBanner.style.fontSize = '15px';
-            newLocationBanner.style.position = 'relative';
-            newLocationBanner.innerHTML = `
-                <button style="position: absolute; right: 8px; top: 8px; background: rgba(255,255,255,0.1); border: none; width: 20px; height: 20px; border-radius: 50%; color: white; font-size: 12px; cursor: pointer;" onclick="localStorage.setItem('hide_map_tutorial', 'true'); this.parentElement.style.display='none'">×</button>
-                <p>🗺️ <strong>Новая локация открыта!</strong> Нажмите иконку карты ниже, чтобы вернуться сюда позже.</p>
-            `;
-            
-            sceneEl.insertBefore(newLocationBanner, sceneEl.firstChild);
-        }
     }
     
-    // Добавляем кнопку карты если есть посещенные локации
-    if (visitedLocations.length > 0) {
-        // Проверяем, что кнопка еще не добавлена
-        if (!sceneEl.querySelector('.map-button-container')) {
-            const mapButtonContainer = document.createElement('div');
-            mapButtonContainer.className = 'map-button-container';
-            mapButtonContainer.style.textAlign = 'center';
-            mapButtonContainer.style.marginTop = '12px';
-            
-            mapButtonContainer.innerHTML = `
-                <button class="choice-btn" style="background:#3a3c6d; font-size:16px; width: auto; padding: 12px 24px;" onclick="showMap()">
-                    🗺️ Карта мира (${visitedLocations.length})
-                </button>
-            `;
-            
-            // Находим контейнер для кнопок или добавляем после инвентаря
-            const inventoryContainer = sceneEl.querySelector('.inventory-button-container');
-            if (inventoryContainer) {
-                inventoryContainer.parentNode.insertBefore(mapButtonContainer, inventoryContainer.nextSibling);
-            } else {
-                const choicesContainer = sceneEl.querySelector('.choices');
-                if (choicesContainer) {
-                    choicesContainer.parentNode.insertBefore(mapButtonContainer, choicesContainer.nextSibling);
-                } else {
-                    sceneEl.appendChild(mapButtonContainer);
-                }
-            }
-        }
-    }
+    // Принудительно обновляем кнопку карты
+    updateMapButton();
 });
 
 // Жест свайпа для открытия карты
@@ -292,3 +314,21 @@ document.addEventListener('touchend', () => {
 });
 
 console.log('🔧 Модуль карты загружен');
+
+// === ФУНКЦИЯ ОТЛАДКИ ===
+function debugMapModule() {
+    console.log('🔍 Отладка модуля карты:');
+    console.log('  Посещенные локации:', visitedLocations);
+    console.log('  sceneEl.innerHTML:', document.getElementById('scene')?.innerHTML.substring(0, 200) + '...');
+    console.log('  Кнопка карты существует:', !!document.querySelector('#map-button-container'));
+    
+    // Пытаемся принудительно добавить кнопку
+    if (visitedLocations.length > 0) {
+        updateMapButton();
+    }
+}
+// END ФУНКЦИИ ОТЛАДКИ
+
+// Регистрируем функцию отладки в глобальной области видимости
+window.debugMapModule = debugMapModule;
+console.log('🔧 Функция отладки debugMapModule зарегистрирована');
