@@ -599,10 +599,78 @@
         }
 
         /* END NOTIFICATION SYSTEM */
+    
+
+        /* ============================================
+           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC
+           ============================================ */
+
+        #npc-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: npcFadeIn 0.3s ease-out;
+        }
+
+        @keyframes npcFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        #npc-screen.fade-out {
+            animation: npcFadeOut 0.3s ease-out forwards;
+        }
+
+        @keyframes npcFadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        #npc-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        /* Для телефонов - картинка на всю высоту */
+        @media (max-width: 768px) {
+            #npc-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
     </style>
 </head>
 
 <body>
+
+    <!-- Полноэкранный показ NPC -->
+    <div id="npc-screen">
+        <img id="npc-image" src="" alt="NPC">
+    </div>
+
+
     <div id="app">
         <div id="scene" class="loading">Загрузка вселенной…</div>
     </div>
@@ -655,6 +723,64 @@
     </audio>
 
     <script>
+
+        // ============================================
+        // ПОКАЗ NPC КАРТИНОК
+        // ============================================
+
+        function showNPCImage(nodeId) {
+            return new Promise((resolve) => {
+                const npcScreen = document.getElementById('npc-screen');
+                const npcImage = document.getElementById('npc-image');
+
+                // Пробуем загрузить картинку (сначала jpg, потом png)
+                const imgJpg = `img/npc_${nodeId}.jpg`;
+                const imgPng = `img/npc_${nodeId}.png`;
+
+                // Проверяем какой формат существует
+                const img = new Image();
+
+                img.onload = function() {
+                    // Картинка загрузилась
+                    npcImage.src = img.src;
+                    npcScreen.style.display = 'flex';
+                    npcScreen.classList.remove('fade-out');
+
+                    // Через 2 секунды скрываем
+                    setTimeout(() => {
+                        npcScreen.classList.add('fade-out');
+
+                        // После анимации скрытия убираем экран
+                        setTimeout(() => {
+                            npcScreen.style.display = 'none';
+                            npcScreen.classList.remove('fade-out');
+                            resolve();
+                        }, 300); // Время анимации fade-out
+
+                    }, 2000); // 2 секунды показа
+                };
+
+                img.onerror = function() {
+                    // Если jpg не загрузился, пробуем png
+                    if (img.src.endsWith('.jpg')) {
+                        img.src = imgPng;
+                    } else {
+                        // Если и png не загрузился, пропускаем показ
+                        console.log(`NPC картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        resolve();
+                    }
+                };
+
+                // Начинаем с jpg
+                img.src = imgJpg;
+            });
+        }
+
+        function hasNPCTag(node) {
+            return node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
+        }
+
+
         let story = null;
         let currentNodeId = null;
         let diceAnimationInterval = null;
@@ -1201,6 +1327,21 @@
         }
 
         function showNode(nodeId) {
+            // Проверяем есть ли тег 'npc'
+            if (hasNPCTag(node)) {
+                // Показываем NPC картинку, ждём 2 секунды, потом продолжаем
+                showNPCImage(nodeId).then(() => {
+                    // После показа NPC продолжаем обычную загрузку
+                    continueShowNode(node, nodeId);
+                });
+                return; // Выходим, чтобы не показывать контент сразу
+            }
+
+            // Если нет тега 'npc', продолжаем как обычно
+            continueShowNode(node, nodeId);
+        }
+
+        function continueShowNode(node, nodeId) {
             // Отмена предыдущего таймера
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
