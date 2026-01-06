@@ -170,6 +170,10 @@
         "text": "Попытаться выведать информацию другими способами",
         "next": "14"
       }
+    ],
+    "tag": "NPC_STARSMITH",
+    "tags": [
+      "npc"
     ]
   },
   "10": {
@@ -2057,7 +2061,7 @@
     "choices": []
   },
   "197": {
-    "text": "",
+    "text": "нукен",
     "choices": [
       {
         "text": "",
@@ -2067,7 +2071,8 @@
         "text": "",
         "next": "200"
       }
-    ]
+    ],
+    "tag": "ннун"
   },
   "198": {
     "text": "",
@@ -2096,16 +2101,20 @@
     ]
   },
   "200": {
-    "text": "",
+    "text": "екнун",
     "choices": [
       {
-        "text": "",
+        "text": "нуекнуекн",
         "next": "293"
       },
       {
         "text": "",
         "next": "292"
       }
+    ],
+    "tag": "кенуекн",
+    "tags": [
+      "npc"
     ]
   },
   "201": {
@@ -2665,8 +2674,9 @@
     "choices": []
   },
   "293": {
-    "text": "",
-    "choices": []
+    "text": "уцкецуке",
+    "choices": [],
+    "tag": "приант"
   },
   "294": {
     "text": "",
@@ -3391,14 +3401,7 @@
   "384": {
     "text": "",
     "choices": [],
-    "tag": "Запертая дверь ❌",
-    "input_type": "code",
-    "code_title": "Дверь заперта",
-    "code_hint": "код находится в шкафу",
-    "correct_code": "1111",
-    "case_sensitive": false,
-    "error_message": "Не верный пароль",
-    "success_next": "6"
+    "tag": "Запертая дверь ❌"
   },
   "385": {
     "text": "Новый узел 385.",
@@ -3407,13 +3410,6 @@
         "text": "Вернуться назад",
         "next": ""
       }
-    ],
-    "input_type": "code",
-    "code_title": "3331",
-    "code_hint": "авафвафва",
-    "correct_code": "1111",
-    "case_sensitive": false,
-    "error_message": "афвыа",
-    "success_next": "6"
+    ]
   }
 }
