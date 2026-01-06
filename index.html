@@ -614,9 +614,12 @@
             height: 100%;
             background: #000;
             z-index: 5000;
-            display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        #npc-screen.active {
+            display: flex;
             animation: npcFadeIn 0.3s ease-out;
         }
 
@@ -743,7 +746,7 @@
                 img.onload = function() {
                     // Картинка загрузилась
                     npcImage.src = img.src;
-                    npcScreen.style.display = 'flex';
+                    npcScreen.classList.add('active');
                     npcScreen.classList.remove('fade-out');
 
                     // Через 2 секунды скрываем
@@ -752,8 +755,7 @@
 
                         // После анимации скрытия убираем экран
                         setTimeout(() => {
-                            npcScreen.style.display = 'none';
-                            npcScreen.classList.remove('fade-out');
+                            npcScreen.classList.remove('active', 'fade-out');
                             resolve();
                         }, 300); // Время анимации fade-out
 
@@ -777,8 +779,11 @@
         }
 
         function hasNPCTag(node) {
-            return node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
+            return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
         }
+
+        // Сохраняем оригинальную функцию showNode
+        let originalShowNodeCode = null;
 
 
         let story = null;
@@ -1327,21 +1332,6 @@
         }
 
         function showNode(nodeId) {
-            // Проверяем есть ли тег 'npc'
-            if (hasNPCTag(node)) {
-                // Показываем NPC картинку, ждём 2 секунды, потом продолжаем
-                showNPCImage(nodeId).then(() => {
-                    // После показа NPC продолжаем обычную загрузку
-                    continueShowNode(node, nodeId);
-                });
-                return; // Выходим, чтобы не показывать контент сразу
-            }
-
-            // Если нет тега 'npc', продолжаем как обычно
-            continueShowNode(node, nodeId);
-        }
-
-        function continueShowNode(node, nodeId) {
             // Отмена предыдущего таймера
             if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 
@@ -1359,7 +1349,23 @@
             }
 
             const node = story[nodeId];
-            currentNodeId = nodeId;
+
+            // ============================================
+            // ПРОВЕРКА NPC ТЕГА
+            // ============================================
+            if (hasNPCTag(node)) {
+                // Показываем NPC картинку, затем продолжаем
+                showNPCImage(nodeId).then(() => {
+                    loadNodeContent(node, nodeId);
+                });
+                return;
+            }
+
+            // Если нет тега NPC, продолжаем как обычно
+            loadNodeContent(node, nodeId);
+        }
+
+        function loadNodeContent(node, nodeId) {            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
