@@ -672,6 +672,7 @@
             line-height: 1.25;
             text-align: left;
             box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            white-space: pre-wrap;
         }
 
         #npc-speech:empty {
@@ -718,6 +719,11 @@
             text-shadow: 0 8px 18px rgba(0,0,0,0.55);
             font-size: 28px;
             letter-spacing: 0.2px;
+        }
+
+        /* Пока картинка грузится — прячем подсказку продолжения */
+        #npc-screen:not(.ready) #npc-continue {
+            opacity: 0;
         }
 
         .npc-continue-arrow {
@@ -834,46 +840,55 @@
                 const npcImage = document.getElementById('npc-image');
                 const npcSpeech = document.getElementById('npc-speech');
 
+                // Мгновенная реакция на клик: показываем экран сразу
+                npcScreen.classList.add('active');
+                npcScreen.classList.remove('fade-out');
+                npcScreen.classList.remove('ready');
+
                 // Текст из JSON (node.npc_hello)
                 npcSpeech.textContent = (helloText || '').toString().trim();
 
-                // Пробуем загрузить картинку (сначала jpg, потом png)
                 const imgJpg = `img/npc_${nodeId}.jpg`;
                 const imgPng = `img/npc_${nodeId}.png`;
 
                 const img = new Image();
+                let ready = false;
 
                 const hideAndResolve = () => {
                     npcScreen.classList.add('fade-out');
                     setTimeout(() => {
-                        npcScreen.classList.remove('active', 'fade-out');
+                        npcScreen.classList.remove('active', 'fade-out', 'ready');
                         resolve();
                     }, 250);
                 };
 
                 const onClick = () => {
-                    // Любой тап/клик по экрану = продолжить
+                    // Пока картинка не загрузилась — игнорируем тап
+                    if (!ready) return;
                     hideAndResolve();
                 };
 
+                // Один показ = один обработчик (если много кликов по кнопке — это отсекается блокировкой перехода)
+                npcScreen.addEventListener('click', onClick, { once: true });
+                npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
+
                 img.onload = function () {
                     npcImage.src = img.src;
-                    npcScreen.classList.add('active');
-                    npcScreen.classList.remove('fade-out');
-
-                    // Ждём клика пользователя (без автотаймера)
-                    npcScreen.addEventListener('click', onClick, { once: true });
-                    npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
+                    ready = true;
+                    npcScreen.classList.add('ready');
                 };
 
                 img.onerror = function () {
-                    // Если jpg не загрузился, пробуем png
                     if (img.src.endsWith('.jpg')) {
                         img.src = imgPng;
                     } else {
-                        // Если и png не загрузился, не блокируем игру
                         console.log(`NPC картинка не найдена: ${imgJpg} или ${imgPng}`);
-                        resolve();
+                        // Не блокируем игру
+                        npcScreen.classList.add('fade-out');
+                        setTimeout(() => {
+                            npcScreen.classList.remove('active', 'fade-out', 'ready');
+                            resolve();
+                        }, 250);
                     }
                 };
 
@@ -884,6 +899,9 @@
         function hasNPCTag(node) {
             return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
         }
+
+        // Блокировка перехода, чтобы не запускать showNode несколько раз при даблклике
+        window.__nodeTransitionLock = false;
 
         // Сохраняем оригинальную функцию showNode
         let originalShowNodeCode = null;
@@ -1104,6 +1122,10 @@
 
             for (const nodeId of visitedLocations) {
                 const node = story[nodeId];
+
+            // Защита от двойных/тройных кликов по варианту
+            if (window.__nodeTransitionLock) return;
+            window.__nodeTransitionLock = true;
                 if (!node || !node.is_location) continue;
 
                 const category = node.location_category || 'other';
@@ -1135,6 +1157,10 @@
 
                 for (const nodeId of locationIds) {
                     const node = story[nodeId];
+
+            // Защита от двойных/тройных кликов по варианту
+            if (window.__nodeTransitionLock) return;
+            window.__nodeTransitionLock = true;
                     if (!node) continue;
 
                     const locationEl = document.createElement('div');
@@ -1453,12 +1479,18 @@
 
             const node = story[nodeId];
 
+            // Защита от двойных/тройных кликов по варианту
+            if (window.__nodeTransitionLock) return;
+            window.__nodeTransitionLock = true;
+
             // ============================================
             // ПРОВЕРКА NPC ТЕГА
             // ============================================
             if (hasNPCTag(node)) {
                 // Показываем NPC картинку, затем продолжаем
-                showNPCImage(nodeId, node.npc_hello).then(() => { loadNodeContent(node, nodeId); });
+                showNPCImage(nodeId, node.npc_hello).then(() => {
+                    loadNodeContent(node, nodeId);
+                });
                 return;
             }
 
@@ -1466,7 +1498,8 @@
             loadNodeContent(node, nodeId);
         }
 
-        function loadNodeContent(node, nodeId) {            currentNodeId = nodeId;
+        function loadNodeContent(node, nodeId) {
+            window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
