@@ -1942,7 +1942,7 @@
             let mapButtonHtml = '';
             if (visitedLocations.length > 0) {
                 mapButtonHtml = `
-        <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
+        <button id="map-button" class="choice-btn" style="display:none; background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
     `;
             }
             // END КАРТА МИРА
@@ -2178,6 +2178,9 @@
         document.head.appendChild(style);
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация видимости кнопки карты
+            updateMapButtonVisibility();
+
             if (window.Telegram?.WebApp) {
                 Telegram.WebApp.ready();
                 Telegram.WebApp.expand();
