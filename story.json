@@ -31,6 +31,7 @@
     "location_icon": "🚀",
     "location_category": "ship",
     "category_name": "Корабль \"ГАРПУН 3\"",
+    "subcategory_name": "",
     "location_description": "Борт корабля Гарпун 3. Главная каюта."
   },
   "2": {
@@ -51,6 +52,7 @@
     "location_icon": "🚀",
     "location_category": "ship",
     "category_name": "Корабль \"ГАРПУН 3\"",
+    "subcategory_name": "",
     "location_description": "Комната с верстаком"
   },
   "3": {
@@ -95,7 +97,8 @@
     "location_name": "Главный холл станции LEVSKY",
     "location_icon": "🏛️",
     "location_category": "nyx",
-    "category_name": "levsky",
+    "category_name": "NYX",
+    "subcategory_name": "Levsky",
     "location_description": "Космопорт LEVSKY"
   },
   "6": {
