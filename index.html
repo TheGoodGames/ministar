@@ -606,6 +606,7 @@
            ============================================ */
 
         #npc-screen {
+            pointer-events: none;
             display: none;
             position: fixed;
             top: 0;
@@ -621,6 +622,7 @@
         }
 
         #npc-screen.active {
+            pointer-events: auto;
             display: flex;
             animation: npcFadeIn 0.25s ease-out;
         }
@@ -767,6 +769,7 @@
         <img id="npc-image" src="" alt="NPC">
 
         <div id="npc-overlay-ui">
+            <div id="npc-loader" aria-hidden="true">Загрузка…</div>
             <div id="npc-speech" aria-live="polite"></div>
 
             <div id="npc-continue">
@@ -829,146 +832,97 @@
     <script>
 
         // ============================================
-        // NPC/LOCATION SPLASH (из NPC_DIALOG_LOCK)
+        // ПОКАЗ NPC КАРТИНОК
         // ============================================
 
-function showNPCImage(nodeId, helloText) {
+        
+        
+        function showSplashImage(prefix, nodeId, bubbleText) {
             return new Promise((resolve) => {
-                const npcScreen = document.getElementById('npc-screen');
-                const npcImage = document.getElementById('npc-image');
-                const npcSpeech = document.getElementById('npc-speech');
+                const screen = document.getElementById('npc-screen');
+                const imgEl = document.getElementById('npc-image');
+                const speechEl = document.getElementById('npc-speech');
+                const loaderEl = document.getElementById('npc-loader');
 
-                // Мгновенная реакция на клик: показываем экран сразу
-                npcScreen.classList.add('active');
-                npcScreen.classList.remove('fade-out');
-                npcScreen.classList.remove('ready');
+                // Мгновенная реакция
+                screen.classList.add('active');
+                screen.classList.remove('fade-out');
+                screen.classList.remove('ready');
+                screen.classList.add('loading');
 
-                // Текст из JSON (node.npc_hello)
-                npcSpeech.textContent = (helloText || '').toString().trim();
+                // Скрываем "Продолжить" на время загрузки
+                // (покажется когда будет ready)
 
-                const imgJpg = `img/npc_${nodeId}.jpg`;
-                const imgPng = `img/npc_${nodeId}.png`;
+                speechEl.textContent = (bubbleText || '').toString().trim();
+
+                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
+                const imgPng = `img/${prefix}_${nodeId}.png`;
 
                 const img = new Image();
                 let ready = false;
 
-                const hideAndResolve = () => {
-                    npcScreen.classList.add('fade-out');
+                const cleanupAndResolve = () => {
+                    // На время закрытия — гарантированно убираем "Продолжить"
+                    screen.classList.remove('ready');
+                    ready = false;
+
+                    screen.classList.add('fade-out');
                     setTimeout(() => {
-                        npcScreen.classList.remove('active', 'fade-out', 'ready');
+                        screen.classList.remove('active', 'fade-out', 'loading');
                         resolve();
                     }, 250);
                 };
 
                 const onClick = () => {
-                    // Пока картинка не загрузилась — игнорируем тап
                     if (!ready) return;
-                    hideAndResolve();
+                    cleanupAndResolve();
                 };
 
-                // Один показ = один обработчик (если много кликов по кнопке — это отсекается блокировкой перехода)
-                npcScreen.addEventListener('click', onClick, { once: true });
-                npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
+                screen.addEventListener('click', onClick, { once: true });
+                screen.addEventListener('touchstart', onClick, { once: true, passive: true });
 
                 img.onload = function () {
-                    npcImage.src = img.src;
+                    imgEl.src = img.src;
                     ready = true;
-                    npcScreen.classList.add('ready');
+                    screen.classList.remove('loading');
+                    screen.classList.add('ready');
                 };
 
                 img.onerror = function () {
                     if (img.src.endsWith('.jpg')) {
                         img.src = imgPng;
                     } else {
-                        console.log(`NPC картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
                         // Не блокируем игру
-                        npcScreen.classList.add('fade-out');
-                        setTimeout(() => {
-                            npcScreen.classList.remove('active', 'fade-out', 'ready');
-                            resolve();
-                        }, 250);
+                        cleanupAndResolve();
                     }
                 };
 
                 img.src = imgJpg;
             });
+        }
+
+        function showNPCImage(nodeId, helloText) {
+            return showSplashImage('npc', nodeId, helloText);
+        }
+
+        function showLocationImage(nodeId, locationName) {
+            return showSplashImage('location', nodeId, locationName);
         }
 
         function hasNPCTag(node) {
             return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
         }
 
-        // Блокировка перехода, чтобы не запускать showNode несколько раз при даблклике
-        window.__nodeTransitionLock = false;
-
         function isLocationNode(node) {
             return node && node.is_location === true;
         }
 
-        function showLocationImage(nodeId, locationName) {
-            // Локации используют ту же систему, что и NPC, только другая картинка и текст
-            // Картинка: img/location_(id).jpg/png
-            // Текст: node.location_name
-            // Показ до тапа пользователя
-            return new Promise((resolve) => {
-                const npcScreen = document.getElementById('npc-screen');
-                const npcImage = document.getElementById('npc-image');
-                const npcSpeech = document.getElementById('npc-speech');
-
-                npcSpeech.textContent = (locationName || '').toString().trim();
-
-                const imgJpg = `img/location_${nodeId}.jpg`;
-                const imgPng = `img/location_${nodeId}.png`;
-
-                const img = new Image();
-
-                const hideAndResolve = () => {
-                    npcScreen.classList.add('fade-out');
-                    setTimeout(() => {
-                        npcScreen.classList.remove('active', 'fade-out');
-                        resolve();
-                    }, 250);
-                };
-
-                const onClick = () => {
-                    hideAndResolve();
-                };
-
-                img.onload = function() {
-                    npcImage.src = img.src;
-                    npcScreen.classList.add('active');
-                    npcScreen.classList.remove('fade-out');
-                    npcScreen.addEventListener('click', onClick, { once: true });
-                    npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
-                };
-
-                img.onerror = function() {
-                    if (img.src.endsWith('.jpg')) {
-                        img.src = imgPng;
-                    } else {
-                        console.log(`Location картинка не найдена: ${imgJpg} или ${imgPng}`);
-                        resolve();
-                    }
-                };
-
-                img.src = imgJpg;
-            });
-        }
+        // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
+        window.__nodeTransitionLock = false;
 
 
-        // ============================================
-        // ПОКАЗ NPC КАРТИНОК
-        // ============================================
-
-        
-        
-                        };
-
-                img.src = imgJpg;
-            });
-        }
-
-                // Сохраняем оригинальную функцию showNode
+        // Сохраняем оригинальную функцию showNode
         let originalShowNodeCode = null;
 
 
@@ -2028,7 +1982,7 @@ function showNPCImage(nodeId, helloText) {
             }, 500);
         }
 
-   </script>
+    </script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
     <div id="resetButton" style="
