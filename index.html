@@ -602,8 +602,13 @@
     
 
         
+        
         /* ============================================
-           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC (тап для продолжения)
+           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC / ЛОКАЦИИ
+           - клик/тап для продолжения
+           - облачко текста
+           - индикатор загрузки
+           - блюр фона
            ============================================ */
 
         #npc-screen {
@@ -649,11 +654,35 @@
             object-position: center;
         }
 
-        /* UI поверх картинки */
+        /* UI поверх картинки + блюр */
         #npc-overlay-ui {
             position: absolute;
             inset: 0;
-            pointer-events: none; /* кликается весь экран */
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.12);
+        }
+
+        /* Индикатор загрузки по центру */
+        #npc-loader {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.92);
+            font-size: 16px;
+            letter-spacing: 0.2px;
+            text-shadow: 0 6px 14px rgba(0,0,0,0.55);
+        }
+
+        /* Когда готово — прячем лоадер */
+        #npc-screen.ready #npc-loader {
+            display: none;
         }
 
         /* Облачко текста (комикс) */
@@ -763,14 +792,23 @@
 <body>
 
     
-    <!-- Полноэкранный показ NPC -->
+    
+    <!-- Полноэкранный показ NPC / ЛОКАЦИИ -->
     <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
-        <img id="npc-image" src="" alt="NPC">
+        <img id="npc-image" src="" alt="Screen">
 
         <div id="npc-overlay-ui">
+            <div id="npc-loader" aria-hidden="true">Загрузка…</div>
+
             <div id="npc-speech" aria-live="polite"></div>
 
             <div id="npc-continue">
+                <div class="npc-continue-arrow">^</div>
+                <div class="npc-continue-label">Продолжить</div>
+            </div>
+        </div>
+    </div>
+<div id="npc-continue">
                 <div class="npc-continue-arrow">^</div>
                 <div class="npc-continue-label">Продолжить</div>
             </div>
@@ -834,22 +872,22 @@
         // ============================================
 
         
-        function showNPCImage(nodeId, helloText) {
+        
+        function showSplashImage(prefix, nodeId, bubbleText) {
             return new Promise((resolve) => {
                 const npcScreen = document.getElementById('npc-screen');
                 const npcImage = document.getElementById('npc-image');
                 const npcSpeech = document.getElementById('npc-speech');
 
-                // Мгновенная реакция на клик: показываем экран сразу
+                // Мгновенная реакция
                 npcScreen.classList.add('active');
                 npcScreen.classList.remove('fade-out');
                 npcScreen.classList.remove('ready');
 
-                // Текст из JSON (node.npc_hello)
-                npcSpeech.textContent = (helloText || '').toString().trim();
+                npcSpeech.textContent = (bubbleText || '').toString().trim();
 
-                const imgJpg = `img/npc_${nodeId}.jpg`;
-                const imgPng = `img/npc_${nodeId}.png`;
+                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
+                const imgPng = `img/${prefix}_${nodeId}.png`;
 
                 const img = new Image();
                 let ready = false;
@@ -863,12 +901,11 @@
                 };
 
                 const onClick = () => {
-                    // Пока картинка не загрузилась — игнорируем тап
                     if (!ready) return;
                     hideAndResolve();
                 };
 
-                // Один показ = один обработчик (если много кликов по кнопке — это отсекается блокировкой перехода)
+                // Один показ — один обработчик
                 npcScreen.addEventListener('click', onClick, { once: true });
                 npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
 
@@ -882,13 +919,8 @@
                     if (img.src.endsWith('.jpg')) {
                         img.src = imgPng;
                     } else {
-                        console.log(`NPC картинка не найдена: ${imgJpg} или ${imgPng}`);
-                        // Не блокируем игру
-                        npcScreen.classList.add('fade-out');
-                        setTimeout(() => {
-                            npcScreen.classList.remove('active', 'fade-out', 'ready');
-                            resolve();
-                        }, 250);
+                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        hideAndResolve();
                     }
                 };
 
@@ -896,12 +928,25 @@
             });
         }
 
+        function showNPCImage(nodeId, helloText) {
+            return showSplashImage('npc', nodeId, helloText);
+        }
+
+        function showLocationImage(nodeId, locationName) {
+            return showSplashImage('location', nodeId, locationName);
+        }
+
         function hasNPCTag(node) {
             return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
         }
 
-        // Блокировка перехода, чтобы не запускать showNode несколько раз при даблклике
+        function isLocationNode(node) {
+            return node && node.is_location === true;
+        }
+
+        // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
         window.__nodeTransitionLock = false;
+
 
         // Сохраняем оригинальную функцию showNode
         let originalShowNodeCode = null;
@@ -1484,17 +1529,24 @@
             window.__nodeTransitionLock = true;
 
             // ============================================
-            // ПРОВЕРКА NPC ТЕГА
+            // ПРОВЕРКА ЛОКАЦИИ / NPC
             // ============================================
-            if (hasNPCTag(node)) {
-                // Показываем NPC картинку, затем продолжаем
-                showNPCImage(nodeId, node.npc_hello).then(() => {
+            if (isLocationNode(node)) {
+                // Прелоадер локации: картинка location_(id) + облачко из location_name
+                showLocationImage(nodeId, node.location_name).then(() => {
                     loadNodeContent(node, nodeId);
                 });
                 return;
             }
 
-            // Если нет тега NPC, продолжаем как обычно
+            if (hasNPCTag(node)) {
+                // NPC: картинка npc_(id) + облачко из npc_hello
+                showNPCImage(nodeId, node.npc_hello).then(() => {
+                    loadNodeContent(node, nodeId);
+                });
+                return;
+            }
+// Если нет тега NPC, продолжаем как обычно
             loadNodeContent(node, nodeId);
         }
 
