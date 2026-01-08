@@ -19,14 +19,18 @@
       {
         "text": "Встать за верстак",
         "next": "2"
+      },
+      {
+        "text": "Сойти с корабля на станцию LEVSKY",
+        "next": "5"
       }
     ],
     "tag": "Гарпун 3",
     "is_location": true,
     "location_name": "Гарпун 3",
     "location_icon": "🚀",
-    "location_category": "NYX",
-    "category_name": "LEVSKY",
+    "location_category": "ship",
+    "category_name": "Корабль \"ГАРПУН 3\"",
     "location_description": "Борт корабля Гарпун 3. Главная каюта."
   },
   "2": {
@@ -45,8 +49,8 @@
     "is_location": true,
     "location_name": "Верстак",
     "location_icon": "🚀",
-    "location_category": "NYX",
-    "category_name": "LEVSKY",
+    "location_category": "ship",
+    "category_name": "Корабль \"ГАРПУН 3\"",
     "location_description": "Комната с верстаком"
   },
   "3": {
@@ -90,9 +94,9 @@
     "is_location": true,
     "location_name": "Главный холл станции LEVSKY",
     "location_icon": "🏛️",
-    "location_category": "NYX",
-    "category_name": "LEVSKY",
-    "location_description": "LEVSKY - это место свободы."
+    "location_category": "nyx",
+    "category_name": "levsky",
+    "location_description": "Космопорт LEVSKY"
   },
   "6": {
     "text": "Новый узел 6.",
