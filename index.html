@@ -776,7 +776,7 @@
         </div>
     </div>
 <div id="app">
-        <div id="scene" class="loading"> вселенной…</div>
+        <div id="scene" class="loading">Загрузка вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
 
@@ -1938,7 +1938,7 @@ function showNPCImage(nodeId, helloText) {
                 document.getElementById('app').appendChild(restartBtn);
             }
 
-            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            // 🔔 NOTIFICATION SYSTEM: Загрузка конфигурации
             loadNotificationConfig().then(() => {
                 console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
                 loadStory();
@@ -1949,7 +1949,7 @@ function showNPCImage(nodeId, helloText) {
             // END NOTIFICATION SYSTEM
         });
 
-        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        // 🔔 NOTIFICATION SYSTEM: Загрузка конфигурации
         async function loadNotificationConfig() {
             try {
                 // Сначала пытаемся загрузить config.js
