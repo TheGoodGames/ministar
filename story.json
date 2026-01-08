@@ -73,7 +73,10 @@
         "text": "Вернуться назад",
         "next": ""
       }
-    ]
+    ],
+    "notify": {
+      "message": "Расшифровал(а) сообщение."
+    }
   },
   "5": {
     "text": "Главный холл станции LEVSKY",
@@ -90,5 +93,14 @@
     "location_category": "NYX",
     "category_name": "LEVSKY",
     "location_description": "LEVSKY - это место свободы."
+  },
+  "6": {
+    "text": "Новый узел 6.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ]
   }
 }
