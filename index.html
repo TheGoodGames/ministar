@@ -760,11 +760,78 @@
         }
 
 
-        /* Активная локация на карте */
-        .map-item.active-location {
-            background: rgba(40, 170, 90, 0.65) !important;
-            border: 2px solid rgba(140, 255, 190, 0.75);
+        /* ============================================
+           КАРТА МИРА (аккордеон)
+           category_name -> раскрывающиеся секции
+           subcategory_name -> под-секции
+           location -> кликабельные элементы
+           ============================================ */
+
+        .map-title {
+            text-align: center;
+            margin: 16px 0 12px;
+            font-size: 34px;
+            letter-spacing: 0.3px;
         }
+
+        .map-accordion {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 12px 18px;
+            box-sizing: border-box;
+        }
+
+        .map-item {
+            width: 100%;
+            border: none;
+            border-radius: 18px;
+            padding: 14px 16px;
+            margin: 10px 0;
+            text-align: left;
+            background: rgba(86, 78, 132, 0.55);
+            color: #fff;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .map-item:hover {
+            filter: brightness(1.05);
+        }
+
+        .map-item.level-0 { padding-left: 16px; }
+        .map-item.level-1 { padding-left: 34px; background: rgba(86, 78, 132, 0.42); }
+        .map-item.level-2 { padding-left: 54px; background: rgba(86, 78, 132, 0.35); }
+
+        .map-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .map-icon { width: 24px; text-align: center; }
+
+        .map-label {
+            flex: 1;
+            line-height: 1.15;
+        }
+
+        .map-arrow {
+            width: 22px;
+            text-align: right;
+            opacity: 0.95;
+            font-size: 20px;
+        }
+
+        .map-desc {
+            margin-top: 6px;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .map-group { margin: 0; }
+        .map-children { display: none; margin: 0; }
+        .map-group.open > .map-children { display: block; }
 
 </style>
 </head>
@@ -819,13 +886,13 @@
     </div>
 
     <!-- Экран карты мира -->
-    <div id="map-screen">
+    
+    <div id="map-screen" class="screen" style="display:none;">
         <h2 class="map-title">🗺️ Карта мира</h2>
-        <div class="locations-grid" id="locations-container">
-            <!-- Локации будут добавлены сюда -->
-        </div>
-        <button class="inventory-close" onclick="closeMap()">← Назад к игре</button>
+        <div id="map-accordion" class="map-accordion"></div>
+        <button class="back-button" onclick="closeMap()">← Назад к игре</button>
     </div>
+
 
     <!-- Экран анимации ключа -->
     <div id="key-animation">
@@ -838,15 +905,182 @@
     </audio>
 
     <script>
-        function isShipLocation(node) {
-            return node && node.location_category === 'ship';
+        function getAllLocationNodes() {
+            const result = [];
+            for (const id in story) {
+                const n = story[id];
+                if (!n) continue;
+                if (n.is_location === true) {
+                    result.push({ id, node: n });
+                }
+            }
+            return result;
         }
 
-        function updateMapButtonVisibility() {
-            const node = story[currentNodeId];
-            const mapBtn = document.getElementById('map-button');
-            if (!mapBtn) return;
-            mapBtn.style.display = isShipLocation(node) ? 'inline-block' : 'none';
+        function buildMapTree() {
+            // Tree: category_name -> subcategory_name (optional) -> locations
+            const locs = getAllLocationNodes();
+            const tree = {};
+
+            locs.forEach(({ id, node }) => {
+                const cat = (node.category_name || node.location_category || 'Без категории').toString();
+                const sub = (node.subcategory_name || '').toString();
+
+                if (!tree[cat]) tree[cat] = { subcats: {}, locs: [] };
+
+                if (sub.trim()) {
+                    if (!tree[cat].subcats[sub]) tree[cat].subcats[sub] = [];
+                    tree[cat].subcats[sub].push({ id, node });
+                } else {
+                    tree[cat].locs.push({ id, node });
+                }
+            });
+
+            // Sort by title for stable UI
+            const sortByName = (a, b) => {
+                const an = (a.node.location_name || a.node.tag || a.id).toString();
+                const bn = (b.node.location_name || b.node.tag || b.id).toString();
+                return an.localeCompare(bn, 'ru');
+            };
+
+            Object.keys(tree).forEach(cat => {
+                tree[cat].locs.sort(sortByName);
+                Object.keys(tree[cat].subcats).forEach(sub => {
+                    tree[cat].subcats[sub].sort(sortByName);
+                });
+            });
+
+            return tree;
+        }
+
+        function createMapRow({ level, icon, title, description, isToggle, isOpen }) {
+            const btn = document.createElement('button');
+            btn.className = `map-item level-${level}`;
+
+            const row = document.createElement('div');
+            row.className = 'map-row';
+
+            const iconEl = document.createElement('div');
+            iconEl.className = 'map-icon';
+            iconEl.textContent = icon || '';
+
+            const label = document.createElement('div');
+            label.className = 'map-label';
+            label.textContent = title || '';
+
+            const arrow = document.createElement('div');
+            arrow.className = 'map-arrow';
+            arrow.textContent = isToggle ? (isOpen ? '^' : 'v') : '';
+
+            row.appendChild(iconEl);
+            row.appendChild(label);
+            row.appendChild(arrow);
+            btn.appendChild(row);
+
+            if (description) {
+                const desc = document.createElement('div');
+                desc.className = 'map-desc';
+                desc.textContent = description;
+                btn.appendChild(desc);
+            }
+
+            return btn;
+        }
+
+        function renderMapAccordion() {
+            const root = document.getElementById('map-accordion');
+            if (!root) return;
+            root.innerHTML = '';
+
+            const tree = buildMapTree();
+            const categories = Object.keys(tree).sort((a,b)=>a.localeCompare(b,'ru'));
+
+            categories.forEach(catName => {
+                const group = document.createElement('div');
+                group.className = 'map-group';
+
+                const header = createMapRow({
+                    level: 0,
+                    icon: '',
+                    title: catName,
+                    description: '',
+                    isToggle: true,
+                    isOpen: false
+                });
+
+                const children = document.createElement('div');
+                children.className = 'map-children';
+
+                header.addEventListener('click', () => {
+                    const open = group.classList.toggle('open');
+                    header.querySelector('.map-arrow').textContent = open ? '^' : 'v';
+                });
+
+                // Locations directly under category
+                tree[catName].locs.forEach(({ id, node }) => {
+                    const locBtn = createMapRow({
+                        level: 1,
+                        icon: node.location_icon || '',
+                        title: node.location_name || node.tag || id,
+                        description: node.location_description || '',
+                        isToggle: false,
+                        isOpen: false
+                    });
+                    locBtn.addEventListener('click', () => {
+                        closeMap();
+                        showNode(id);
+                    });
+                    children.appendChild(locBtn);
+                });
+
+                // Subcategories
+                const subs = Object.keys(tree[catName].subcats).sort((a,b)=>a.localeCompare(b,'ru'));
+                subs.forEach(subName => {
+                    const subGroup = document.createElement('div');
+                    subGroup.className = 'map-group';
+
+                    const subHeader = createMapRow({
+                        level: 1,
+                        icon: '',
+                        title: subName,
+                        description: '',
+                        isToggle: true,
+                        isOpen: false
+                    });
+
+                    const subChildren = document.createElement('div');
+                    subChildren.className = 'map-children';
+
+                    subHeader.addEventListener('click', () => {
+                        const open = subGroup.classList.toggle('open');
+                        subHeader.querySelector('.map-arrow').textContent = open ? '^' : 'v';
+                    });
+
+                    tree[catName].subcats[subName].forEach(({ id, node }) => {
+                        const locBtn = createMapRow({
+                            level: 2,
+                            icon: node.location_icon || '',
+                            title: node.location_name || node.tag || id,
+                            description: node.location_description || '',
+                            isToggle: false,
+                            isOpen: false
+                        });
+                        locBtn.addEventListener('click', () => {
+                            closeMap();
+                            showNode(id);
+                        });
+                        subChildren.appendChild(locBtn);
+                    });
+
+                    subGroup.appendChild(subHeader);
+                    subGroup.appendChild(subChildren);
+                    children.appendChild(subGroup);
+                });
+
+                group.appendChild(header);
+                group.appendChild(children);
+                root.appendChild(group);
+            });
         }
 
 
@@ -1108,23 +1342,17 @@
             return visitedLocations.includes(nodeId);
         }
 
+        
         function showMap() {
-            // ✅ СОХРАНЯЕМ позицию скролла
-            window.savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-
-            // Скрываем другие экраны
-            diceScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
             sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            codeScreen.style.display = 'none';
             mapScreen.style.display = 'block';
-
-            // ✅ ИСПРАВЛЕНИЕ: Сбрасываем стили анимации
-            mapScreen.style.opacity = '1';
-            mapScreen.style.transform = 'translateY(0)';
-
-            updateLocationsDisplay();
+            renderMapAccordion();
         }
+
 
         function closeMap() {
             mapScreen.style.display = 'none';
@@ -1525,7 +1753,6 @@
             window.__nodeTransitionLock = false;
             window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
-            updateMapButtonVisibility();
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
             if (node.notify) {
