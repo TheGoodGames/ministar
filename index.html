@@ -602,10 +602,11 @@
     
 
         /* ============================================
-           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC
+           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC (тап для продолжения)
            ============================================ */
 
         #npc-screen {
+            pointer-events: none;
             display: none;
             position: fixed;
             top: 0;
@@ -613,36 +614,31 @@
             width: 100%;
             height: 100%;
             background: #000;
-            z-index: 5000;
+            z-index: 9999;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         #npc-screen.active {
+            pointer-events: auto;
             display: flex;
-            animation: npcFadeIn 0.3s ease-out;
+            animation: npcFadeIn 0.25s ease-out;
         }
 
         @keyframes npcFadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         #npc-screen.fade-out {
-            animation: npcFadeOut 0.3s ease-out forwards;
+            animation: npcFadeOut 0.25s ease-out forwards;
         }
 
         @keyframes npcFadeOut {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-            }
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
 
         #npc-image {
@@ -654,27 +650,135 @@
             object-position: center;
         }
 
-        /* Для телефонов - картинка на всю высоту */
+        /* UI поверх картинки */
+        #npc-overlay-ui {
+            position: absolute;
+            inset: 0;
+            pointer-events: none; /* кликается весь экран */
+        }
+
+        /* Облачко текста (комикс) */
+        #npc-speech {
+            position: absolute;
+            left: 50%;
+            top: 56%;
+            transform: translate(-50%, -50%);
+            width: min(860px, 92vw);
+            background: rgba(255, 255, 255, 0.95);
+            color: #0b0f14;
+            border: 3px solid rgba(15, 23, 36, 0.95);
+            border-radius: 28px;
+            padding: 18px 20px;
+            font-size: 22px;
+            line-height: 1.25;
+            text-align: left;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            white-space: pre-wrap;
+        }
+
+        #npc-speech:empty {
+            display: none;
+        }
+
+        #npc-speech::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -18px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-top: 18px solid rgba(255, 255, 255, 0.95);
+        }
+
+        #npc-speech::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -24px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 19px solid transparent;
+            border-right: 19px solid transparent;
+            border-top: 22px solid rgba(15, 23, 36, 0.95);
+        }
+
+        /* Подсказка "Продолжить" */
+        #npc-continue {
+            position: absolute;
+            left: 50%;
+            bottom: 52px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 8px 18px rgba(0,0,0,0.55);
+            font-size: 28px;
+            letter-spacing: 0.2px;
+        }
+
+        /* Пока картинка грузится — прячем подсказку продолжения */
+        #npc-screen:not(.ready) #npc-continue {
+            opacity: 0;
+        }
+
+        .npc-continue-arrow {
+            font-size: 34px;
+            line-height: 1;
+            animation: npcArrowBlink 1.05s ease-in-out infinite;
+        }
+
+        @keyframes npcArrowBlink {
+            0%   { opacity: 0.25; transform: translateY(6px); }
+            50%  { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0.25; transform: translateY(6px); }
+        }
+
+        /* Для телефонов - картинка на весь экран */
         @media (max-width: 768px) {
             #npc-image {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
             }
-        }
 
-    </style>
+            #npc-speech {
+                top: 60%;
+                font-size: 21px;
+                width: 92vw;
+            }
+
+            #npc-continue {
+                bottom: 64px;
+                font-size: 30px;
+            }
+        }
+</style>
 </head>
 
 <body>
 
+    
     <!-- Полноэкранный показ NPC -->
-    <div id="npc-screen">
+    <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
         <img id="npc-image" src="" alt="NPC">
+
+        <div id="npc-overlay-ui">
+            <div id="npc-loader" aria-hidden="true">Загрузка…</div>
+            <div id="npc-speech" aria-live="polite"></div>
+
+            <div id="npc-continue">
+                <div class="npc-continue-arrow">^</div>
+                <div class="npc-continue-label">Продолжить</div>
+            </div>
+        </div>
     </div>
-
-
-    <div id="app">
+<div id="app">
         <div id="scene" class="loading">Загрузка вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
@@ -731,56 +835,92 @@
         // ПОКАЗ NPC КАРТИНОК
         // ============================================
 
-        function showNPCImage(nodeId) {
+        
+        
+        function showSplashImage(prefix, nodeId, bubbleText) {
             return new Promise((resolve) => {
-                const npcScreen = document.getElementById('npc-screen');
-                const npcImage = document.getElementById('npc-image');
+                const screen = document.getElementById('npc-screen');
+                const imgEl = document.getElementById('npc-image');
+                const speechEl = document.getElementById('npc-speech');
+                const loaderEl = document.getElementById('npc-loader');
 
-                // Пробуем загрузить картинку (сначала jpg, потом png)
-                const imgJpg = `img/npc_${nodeId}.jpg`;
-                const imgPng = `img/npc_${nodeId}.png`;
+                // Мгновенная реакция
+                screen.classList.add('active');
+                screen.classList.remove('fade-out');
+                screen.classList.remove('ready');
+                screen.classList.add('loading');
 
-                // Проверяем какой формат существует
+                // Скрываем "Продолжить" на время загрузки
+                // (покажется когда будет ready)
+
+                speechEl.textContent = (bubbleText || '').toString().trim();
+
+                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
+                const imgPng = `img/${prefix}_${nodeId}.png`;
+
                 const img = new Image();
+                let ready = false;
 
-                img.onload = function() {
-                    // Картинка загрузилась
-                    npcImage.src = img.src;
-                    npcScreen.classList.add('active');
-                    npcScreen.classList.remove('fade-out');
+                const cleanupAndResolve = () => {
+                    // На время закрытия — гарантированно убираем "Продолжить"
+                    screen.classList.remove('ready');
+                    ready = false;
 
-                    // Через 2 секунды скрываем
+                    screen.classList.add('fade-out');
                     setTimeout(() => {
-                        npcScreen.classList.add('fade-out');
-
-                        // После анимации скрытия убираем экран
-                        setTimeout(() => {
-                            npcScreen.classList.remove('active', 'fade-out');
-                            resolve();
-                        }, 300); // Время анимации fade-out
-
-                    }, 2000); // 2 секунды показа
+                        screen.classList.remove('active', 'fade-out', 'loading');
+                        resolve();
+                    }, 250);
                 };
 
-                img.onerror = function() {
-                    // Если jpg не загрузился, пробуем png
+                const onClick = () => {
+                    if (!ready) return;
+                    cleanupAndResolve();
+                };
+
+                screen.addEventListener('click', onClick, { once: true });
+                screen.addEventListener('touchstart', onClick, { once: true, passive: true });
+
+                img.onload = function () {
+                    imgEl.src = img.src;
+                    ready = true;
+                    screen.classList.remove('loading');
+                    screen.classList.add('ready');
+                };
+
+                img.onerror = function () {
                     if (img.src.endsWith('.jpg')) {
                         img.src = imgPng;
                     } else {
-                        // Если и png не загрузился, пропускаем показ
-                        console.log(`NPC картинка не найдена: ${imgJpg} или ${imgPng}`);
-                        resolve();
+                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        // Не блокируем игру
+                        cleanupAndResolve();
                     }
                 };
 
-                // Начинаем с jpg
                 img.src = imgJpg;
             });
+        }
+
+        function showNPCImage(nodeId, helloText) {
+            return showSplashImage('npc', nodeId, helloText);
+        }
+
+        function showLocationImage(nodeId, locationName) {
+            return showSplashImage('location', nodeId, locationName);
         }
 
         function hasNPCTag(node) {
             return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
         }
+
+        function isLocationNode(node) {
+            return node && node.is_location === true;
+        }
+
+        // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
+        window.__nodeTransitionLock = false;
+
 
         // Сохраняем оригинальную функцию showNode
         let originalShowNodeCode = null;
@@ -1351,11 +1491,21 @@
             const node = story[nodeId];
 
             // ============================================
+            // ПРОВЕРКА ЛОКАЦИИ
+            // ============================================
+            if (isLocationNode(node)) {
+                showLocationImage(nodeId, node.location_name).then(() => {
+                    loadNodeContent(node, nodeId);
+                });
+                return;
+            }
+
+            // ============================================
             // ПРОВЕРКА NPC ТЕГА
             // ============================================
             if (hasNPCTag(node)) {
                 // Показываем NPC картинку, затем продолжаем
-                showNPCImage(nodeId).then(() => {
+                showNPCImage(nodeId, node.npc_hello).then(() => {
                     loadNodeContent(node, nodeId);
                 });
                 return;
@@ -1365,7 +1515,9 @@
             loadNodeContent(node, nodeId);
         }
 
-        function loadNodeContent(node, nodeId) {            currentNodeId = nodeId;
+        function loadNodeContent(node, nodeId) {
+            window.__nodeTransitionLock = false;
+            window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
