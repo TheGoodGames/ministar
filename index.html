@@ -758,6 +758,14 @@
                 font-size: 30px;
             }
         }
+
+
+        /* Активная локация на карте */
+        .map-item.active-location {
+            background: rgba(40, 170, 90, 0.65) !important;
+            border: 2px solid rgba(140, 255, 190, 0.75);
+        }
+
 </style>
 </head>
 
@@ -830,6 +838,18 @@
     </audio>
 
     <script>
+        function isShipLocation(node) {
+            return node && node.location_category === 'ship';
+        }
+
+        function updateMapButtonVisibility() {
+            const node = story[currentNodeId];
+            const mapBtn = document.getElementById('map-button');
+            if (!mapBtn) return;
+            mapBtn.style.display = isShipLocation(node) ? 'inline-block' : 'none';
+        }
+
+
 
         // ============================================
         // ПОКАЗ NPC КАРТИНОК
@@ -1505,6 +1525,7 @@
             window.__nodeTransitionLock = false;
             window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
+            updateMapButtonVisibility();
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
             if (node.notify) {
@@ -1966,6 +1987,9 @@
             setTimeout(() => {
                 window.location.reload();
             }, 500);
+        }
+
+    500);
         }
 
     </script>
