@@ -970,8 +970,17 @@
             for (const id in story) {
                 const n = story[id];
                 if (!n) continue;
+
+                // Показываем локацию если:
+                // 1. Она помечена как loc_view_always: true (всегда видна)
+                // 2. ИЛИ она была посещена (в visitedLocations)
                 if (n.is_location === true) {
-                    result.push({ id, node: n });
+                    const isAlwaysVisible = n.loc_view_always === true;
+                    const isVisited = visitedLocations.includes(id);
+
+                    if (isAlwaysVisible || isVisited) {
+                        result.push({ id, node: n });
+                    }
                 }
             }
             return result;
