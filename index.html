@@ -833,6 +833,36 @@
         .map-children { display: none; margin: 0; }
         .map-group.open > .map-children { display: block; }
 
+
+
+        /* Активная локация на карте */
+        .map-item.active-location {
+            background: rgba(40, 170, 90, 0.65) !important;
+            border: 2px solid rgba(140, 255, 190, 0.75);
+        }
+
+        /* Красивая кнопка "Назад к игре" */
+        .back-button {
+            display: block;
+            width: calc(100% - 24px);
+            max-width: 540px;
+            margin: 20px auto;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: scale(1.02);
+        }
+
 </style>
 </head>
 
@@ -905,6 +935,19 @@
     </audio>
 
     <script>
+        // === Фильтр карты: показывать только на корабле
+        function isShipLocation(node) {
+            return node && node.location_category === 'ship';
+        }
+
+        function updateMapButtonVisibility() {
+            const node = story[currentNodeId];
+            const mapBtn = document.getElementById('map-button');
+            if (!mapBtn) return;
+            mapBtn.style.display = isShipLocation(node) ? 'inline-block' : 'none';
+        }
+
+
         function getAllLocationNodes() {
             const result = [];
             for (const id in story) {
@@ -992,10 +1035,18 @@
             if (!root) return;
             root.innerHTML = '';
 
+            // Определяем текущую категорию и подкатегорию для автооткрытия
+            const current = story[currentNodeId];
+            const openCatName = current ? (current.category_name || current.location_category || 'Без категории').toString() : null;
+            const openSubName = current ? (current.subcategory_name || '').toString() : '';
+
+
             const tree = buildMapTree();
             const categories = Object.keys(tree).sort((a,b)=>a.localeCompare(b,'ru'));
 
             categories.forEach(catName => {
+                const shouldOpenCat = (openCatName && catName === openCatName);
+
                 const group = document.createElement('div');
                 group.className = 'map-group';
 
@@ -1005,11 +1056,16 @@
                     title: catName,
                     description: '',
                     isToggle: true,
-                    isOpen: false
+                    isOpen: shouldOpenCat
                 });
 
                 const children = document.createElement('div');
                 children.className = 'map-children';
+
+                if (shouldOpenCat) {
+                    group.classList.add('open');
+                    header.querySelector('.map-arrow').textContent = '^';
+                }
 
                 header.addEventListener('click', () => {
                     const open = group.classList.toggle('open');
@@ -1026,6 +1082,7 @@
                         isToggle: false,
                         isOpen: false
                     });
+                    if (id === currentNodeId) locBtn.classList.add('active-location');
                     locBtn.addEventListener('click', () => {
                         closeMap();
                         showNode(id);
@@ -1036,6 +1093,8 @@
                 // Subcategories
                 const subs = Object.keys(tree[catName].subcats).sort((a,b)=>a.localeCompare(b,'ru'));
                 subs.forEach(subName => {
+                    const shouldOpenSub = (shouldOpenCat && openSubName && subName === openSubName);
+
                     const subGroup = document.createElement('div');
                     subGroup.className = 'map-group';
 
@@ -1045,11 +1104,16 @@
                         title: subName,
                         description: '',
                         isToggle: true,
-                        isOpen: false
+                        isOpen: shouldOpenSub
                     });
 
                     const subChildren = document.createElement('div');
                     subChildren.className = 'map-children';
+
+                    if (shouldOpenSub) {
+                        subGroup.classList.add('open');
+                        subHeader.querySelector('.map-arrow').textContent = '^';
+                    }
 
                     subHeader.addEventListener('click', () => {
                         const open = subGroup.classList.toggle('open');
@@ -1065,6 +1129,7 @@
                             isToggle: false,
                             isOpen: false
                         });
+                        if (id === currentNodeId) locBtn.classList.add('active-location');
                         locBtn.addEventListener('click', () => {
                             closeMap();
                             showNode(id);
@@ -1753,6 +1818,7 @@
             window.__nodeTransitionLock = false;
             window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
+            updateMapButtonVisibility();
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
             if (node.notify) {
@@ -2214,6 +2280,9 @@
             setTimeout(() => {
                 window.location.reload();
             }, 500);
+        }
+
+    500);
         }
 
     </script>
