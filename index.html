@@ -1835,7 +1835,7 @@
             window.__nodeTransitionLock = false;
             window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
-            updateMapButtonVisibility();
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
             if (node.notify) {
@@ -1943,13 +1943,14 @@
     `;
             }
 
-            // === КАРТА МИРА: Кнопка карты ===
+            // === КАРТА МИРА: Кнопка карты (только если map_view === true) ===
             let mapButtonHtml = '';
-            if (visitedLocations.length > 0) {
+            if (hasMapView(node)) {
                 mapButtonHtml = `
-        <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
+        <button id="map-button" class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
     `;
             }
+            // END КАРТА МИРА
             // END КАРТА МИРА
 
             let endMarkerHtml = '';
@@ -2183,8 +2184,7 @@
         document.head.appendChild(style);
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Инициализация видимости кнопки карты
-            updateMapButtonVisibility();
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
             if (window.Telegram?.WebApp) {
                 Telegram.WebApp.ready();
