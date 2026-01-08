@@ -953,6 +953,11 @@
         }
 
         function updateMapButtonVisibility() {
+            // Проверка: story и currentNodeId должны существовать
+            if (!story || !currentNodeId || !story[currentNodeId]) {
+                return; // Ещё не готово, выходим без ошибки
+            }
+
             const node = story[currentNodeId];
             const mapBtn = document.getElementById('map-button');
             if (!mapBtn) return;
@@ -1942,7 +1947,7 @@
             let mapButtonHtml = '';
             if (visitedLocations.length > 0) {
                 mapButtonHtml = `
-        <button id="map-button" class="choice-btn" style="display:none; background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
+        <button class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
     `;
             }
             // END КАРТА МИРА
@@ -2295,6 +2300,9 @@
             setTimeout(() => {
                 window.location.reload();
             }, 500);
+        }
+        
+     500);
         }
         
     </script>
