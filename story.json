@@ -46,7 +46,7 @@
     "location_name": "Верстак",
     "location_icon": "🚀",
     "location_category": "NYX",
-    "category_name": "LEVSKY",
+    "category_name": "NAKA",
     "location_description": "Комната с верстаком"
   },
   "3": {
@@ -76,7 +76,8 @@
     "location_name": "Главный холл станции LEVSKY",
     "location_icon": "🏛️",
     "location_category": "NYX",
-    "category_name": "LEVSKY",
+    "category_name": "TUKA",
     "location_description": "LEVSKY - это место свободы."
   }
 }
+
