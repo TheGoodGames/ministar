@@ -606,7 +606,6 @@
            ============================================ */
 
         #npc-screen {
-            pointer-events: none;
             display: none;
             position: fixed;
             top: 0;
@@ -622,7 +621,6 @@
         }
 
         #npc-screen.active {
-            pointer-events: auto;
             display: flex;
             animation: npcFadeIn 0.25s ease-out;
         }
@@ -769,7 +767,6 @@
         <img id="npc-image" src="" alt="NPC">
 
         <div id="npc-overlay-ui">
-            <div id="npc-loader" aria-hidden="true">Загрузка…</div>
             <div id="npc-speech" aria-live="polite"></div>
 
             <div id="npc-continue">
@@ -779,7 +776,7 @@
         </div>
     </div>
 <div id="app">
-        <div id="scene" class="loading">Загрузка вселенной…</div>
+        <div id="scene" class="loading"> вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
 
@@ -832,69 +829,64 @@
     <script>
 
         // ============================================
-        // ПОКАЗ NPC КАРТИНОК
+        // NPC/LOCATION SPLASH (из NPC_DIALOG_LOCK)
         // ============================================
 
-        
-        
-        function showSplashImage(prefix, nodeId, bubbleText) {
+function showNPCImage(nodeId, helloText) {
             return new Promise((resolve) => {
-                const screen = document.getElementById('npc-screen');
-                const imgEl = document.getElementById('npc-image');
-                const speechEl = document.getElementById('npc-speech');
-                const loaderEl = document.getElementById('npc-loader');
+                const npcScreen = document.getElementById('npc-screen');
+                const npcImage = document.getElementById('npc-image');
+                const npcSpeech = document.getElementById('npc-speech');
 
-                // Мгновенная реакция
-                screen.classList.add('active');
-                screen.classList.remove('fade-out');
-                screen.classList.remove('ready');
-                screen.classList.add('loading');
+                // Мгновенная реакция на клик: показываем экран сразу
+                npcScreen.classList.add('active');
+                npcScreen.classList.remove('fade-out');
+                npcScreen.classList.remove('ready');
 
-                // Скрываем "Продолжить" на время загрузки
-                // (покажется когда будет ready)
+                // Текст из JSON (node.npc_hello)
+                npcSpeech.textContent = (helloText || '').toString().trim();
 
-                speechEl.textContent = (bubbleText || '').toString().trim();
-
-                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
-                const imgPng = `img/${prefix}_${nodeId}.png`;
+                const imgJpg = `img/npc_${nodeId}.jpg`;
+                const imgPng = `img/npc_${nodeId}.png`;
 
                 const img = new Image();
                 let ready = false;
 
-                const cleanupAndResolve = () => {
-                    // На время закрытия — гарантированно убираем "Продолжить"
-                    screen.classList.remove('ready');
-                    ready = false;
-
-                    screen.classList.add('fade-out');
+                const hideAndResolve = () => {
+                    npcScreen.classList.add('fade-out');
                     setTimeout(() => {
-                        screen.classList.remove('active', 'fade-out', 'loading');
+                        npcScreen.classList.remove('active', 'fade-out', 'ready');
                         resolve();
                     }, 250);
                 };
 
                 const onClick = () => {
+                    // Пока картинка не загрузилась — игнорируем тап
                     if (!ready) return;
-                    cleanupAndResolve();
+                    hideAndResolve();
                 };
 
-                screen.addEventListener('click', onClick, { once: true });
-                screen.addEventListener('touchstart', onClick, { once: true, passive: true });
+                // Один показ = один обработчик (если много кликов по кнопке — это отсекается блокировкой перехода)
+                npcScreen.addEventListener('click', onClick, { once: true });
+                npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
 
                 img.onload = function () {
-                    imgEl.src = img.src;
+                    npcImage.src = img.src;
                     ready = true;
-                    screen.classList.remove('loading');
-                    screen.classList.add('ready');
+                    npcScreen.classList.add('ready');
                 };
 
                 img.onerror = function () {
                     if (img.src.endsWith('.jpg')) {
                         img.src = imgPng;
                     } else {
-                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        console.log(`NPC картинка не найдена: ${imgJpg} или ${imgPng}`);
                         // Не блокируем игру
-                        cleanupAndResolve();
+                        npcScreen.classList.add('fade-out');
+                        setTimeout(() => {
+                            npcScreen.classList.remove('active', 'fade-out', 'ready');
+                            resolve();
+                        }, 250);
                     }
                 };
 
@@ -902,27 +894,81 @@
             });
         }
 
-        function showNPCImage(nodeId, helloText) {
-            return showSplashImage('npc', nodeId, helloText);
-        }
-
-        function showLocationImage(nodeId, locationName) {
-            return showSplashImage('location', nodeId, locationName);
-        }
-
         function hasNPCTag(node) {
             return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
         }
+
+        // Блокировка перехода, чтобы не запускать showNode несколько раз при даблклике
+        window.__nodeTransitionLock = false;
 
         function isLocationNode(node) {
             return node && node.is_location === true;
         }
 
-        // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
-        window.__nodeTransitionLock = false;
+        function showLocationImage(nodeId, locationName) {
+            // Локации используют ту же систему, что и NPC, только другая картинка и текст
+            // Картинка: img/location_(id).jpg/png
+            // Текст: node.location_name
+            // Показ до тапа пользователя
+            return new Promise((resolve) => {
+                const npcScreen = document.getElementById('npc-screen');
+                const npcImage = document.getElementById('npc-image');
+                const npcSpeech = document.getElementById('npc-speech');
+
+                npcSpeech.textContent = (locationName || '').toString().trim();
+
+                const imgJpg = `img/location_${nodeId}.jpg`;
+                const imgPng = `img/location_${nodeId}.png`;
+
+                const img = new Image();
+
+                const hideAndResolve = () => {
+                    npcScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        npcScreen.classList.remove('active', 'fade-out');
+                        resolve();
+                    }, 250);
+                };
+
+                const onClick = () => {
+                    hideAndResolve();
+                };
+
+                img.onload = function() {
+                    npcImage.src = img.src;
+                    npcScreen.classList.add('active');
+                    npcScreen.classList.remove('fade-out');
+                    npcScreen.addEventListener('click', onClick, { once: true });
+                    npcScreen.addEventListener('touchstart', onClick, { once: true, passive: true });
+                };
+
+                img.onerror = function() {
+                    if (img.src.endsWith('.jpg')) {
+                        img.src = imgPng;
+                    } else {
+                        console.log(`Location картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        resolve();
+                    }
+                };
+
+                img.src = imgJpg;
+            });
+        }
 
 
-        // Сохраняем оригинальную функцию showNode
+        // ============================================
+        // ПОКАЗ NPC КАРТИНОК
+        // ============================================
+
+        
+        
+                        };
+
+                img.src = imgJpg;
+            });
+        }
+
+                // Сохраняем оригинальную функцию showNode
         let originalShowNodeCode = null;
 
 
@@ -1892,7 +1938,7 @@
                 document.getElementById('app').appendChild(restartBtn);
             }
 
-            // 🔔 NOTIFICATION SYSTEM: Загрузка конфигурации
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
             loadNotificationConfig().then(() => {
                 console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
                 loadStory();
@@ -1903,7 +1949,7 @@
             // END NOTIFICATION SYSTEM
         });
 
-        // 🔔 NOTIFICATION SYSTEM: Загрузка конфигурации
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
         async function loadNotificationConfig() {
             try {
                 // Сначала пытаемся загрузить config.js
@@ -1982,7 +2028,7 @@
             }, 500);
         }
 
-    </script>
+   </script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
     <div id="resetButton" style="
