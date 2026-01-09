@@ -1270,6 +1270,7 @@
 
                 // Locations directly under category
                 tree[catName].locs.forEach(({ id, node }) => {
+                    const targetWorld = node._targetWorld || node.targetWorld;
                     const locBtn = createMapRow({
                         level: 1,
                         icon: node.location_icon || '',
@@ -1323,6 +1324,7 @@
                     });
 
                     tree[catName].subcats[subName].forEach(({ id, node }) => {
+                        const targetWorld = node._targetWorld || node.targetWorld;
                         const locBtn = createMapRow({
                             level: 2,
                             icon: node.location_icon || '',
