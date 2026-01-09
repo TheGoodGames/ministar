@@ -2331,15 +2331,26 @@
                 codeTextEl.innerHTML = '';
             }
 
-            // === ДОБАВЛЯЕМ CHOICES ===
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
             const codeChoicesEl = document.getElementById('code-choices');
             if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                let choicesHtml = '';
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
                 node.choices.forEach((choice, index) => {
-                    const choiceText = choice.text || `Вариант ${index + 1}`;
-                    choicesHtml += `<button class="choice-btn" onclick="handleCodeChoice('${choice.next}')">${choiceText}</button>`;
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
                 });
-                codeChoicesEl.innerHTML = choicesHtml;
             } else if (codeChoicesEl) {
                 codeChoicesEl.innerHTML = '';
             }
@@ -2678,15 +2689,26 @@
                 codeTextEl.innerHTML = '';
             }
 
-            // === ДОБАВЛЯЕМ CHOICES ===
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
             const codeChoicesEl = document.getElementById('code-choices');
             if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                let choicesHtml = '';
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
                 node.choices.forEach((choice, index) => {
-                    const choiceText = choice.text || `Вариант ${index + 1}`;
-                    choicesHtml += `<button class="choice-btn" onclick="handleCodeChoice('${choice.next}')">${choiceText}</button>`;
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
                 });
-                codeChoicesEl.innerHTML = choicesHtml;
             } else if (codeChoicesEl) {
                 codeChoicesEl.innerHTML = '';
             }
