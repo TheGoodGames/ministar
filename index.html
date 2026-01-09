@@ -918,6 +918,7 @@
             <div id="code-error"></div>
         </div>
         <div class="code-hint" id="code-hint">Код состоит из 4 цифр</div>
+        <div id="code-text" class="story-text" style="margin-top: 20px;"></div>
         <div id="code-choices" class="choices" style="margin-top: 20px;"></div>
     </div>
 
@@ -2322,6 +2323,27 @@
             codeInput.value = '';
             codeErrorEl.textContent = '';
 
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                let choicesHtml = '';
+                node.choices.forEach((choice, index) => {
+                    const choiceText = choice.text || `Вариант ${index + 1}`;
+                    choicesHtml += `<button class="choice-btn" onclick="handleCodeChoice('${choice.next}')">${choiceText}</button>`;
+                });
+                codeChoicesEl.innerHTML = choicesHtml;
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
             // Фокус на поле ввода
             setTimeout(() => codeInput.focus(), 300);
 
@@ -2647,6 +2669,27 @@
             codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
             codeInput.value = '';
             codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                let choicesHtml = '';
+                node.choices.forEach((choice, index) => {
+                    const choiceText = choice.text || `Вариант ${index + 1}`;
+                    choicesHtml += `<button class="choice-btn" onclick="handleCodeChoice('${choice.next}')">${choiceText}</button>`;
+                });
+                codeChoicesEl.innerHTML = choicesHtml;
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
 
             // Фокус на поле ввода
             setTimeout(() => codeInput.focus(), 300);
