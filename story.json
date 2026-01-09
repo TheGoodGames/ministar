@@ -106,7 +106,6 @@
     ],
     "tag": "LEVSKY",
     "world": "nyx",
-    "map_view": true,
     "is_location": true,
     "loc_view_always": true,
     "location_name": "Космопорт LEVSKY",
@@ -255,7 +254,15 @@
     "tag": "🌀 Станция и ворота в Pyro",
     "world": "nyx",
     "jump_point": "to_pyro",
-    "map_view": true
+    "map_view": true,
+    "is_location": true,
+    "loc_view_always": true,
+    "location_name": "Станция у прыжковой точки",
+    "location_icon": "🌀",
+    "location_category": "nyx",
+    "category_name": "Прыжковая точка",
+    "subcategory_name": "",
+    "location_description": "Ты прибыл на станцию рядом с прыжковыми воротами в систему Pyro."
   },
   "16": {
     "text": "Новый узел 16.",
@@ -290,7 +297,14 @@
     "tag": "🌀 Станция и ворота в Nyx",
     "world": "pyro",
     "jump_point": "to_nyx",
-    "map_view": true
+    "map_view": true,
+    "is_location": true,
+    "location_name": "Старая станция возле прыжковой точки",
+    "location_icon": "🌀",
+    "location_category": "pyro",
+    "category_name": "",
+    "subcategory_name": "",
+    "location_description": "Старая заброшенная станция и прыжковые ворота в систему Nyx."
   },
   "18": {
     "text": "Новый узел 18.",
