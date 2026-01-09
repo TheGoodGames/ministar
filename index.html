@@ -1034,7 +1034,20 @@
                 }
             }
             return result;
-        } => {
+        }
+
+        function buildMapTree() {
+            // Tree: category_name -> subcategory_name (optional) -> locations
+            const locs = getAllLocationNodes();
+            const tree = {};
+
+            // === ДОБАВЛЯЕМ ПРЫЖКОВЫЕ ТОЧКИ В НАЧАЛО ===
+            const jumpPoints = getAvailableJumpPoints();
+            if (jumpPoints.length > 0) {
+                tree['🚀 Jump Points'] = { subcats: {}, locs: jumpPoints };
+            }
+
+            locs.forEach(({ id, node }) => {
                 const cat = (node.category_name || node.location_category || 'Без категории').toString();
                 const sub = (node.subcategory_name || '').toString();
 
