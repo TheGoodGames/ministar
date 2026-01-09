@@ -918,6 +918,7 @@
             <div id="code-error"></div>
         </div>
         <div class="code-hint" id="code-hint">Код состоит из 4 цифр</div>
+        <div id="code-choices" class="choices" style="margin-top: 20px;"></div>
     </div>
 
     <!-- Экран броска кубиков -->
@@ -2356,6 +2357,13 @@
                 });
             }
         }
+        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
+        function handleCodeChoice(nextNodeId) {
+            codeScreen.style.display = 'none';
+            currentCodeNode = null;
+            showNode(nextNodeId);
+        }
+
 
         // Обработчик кнопки подтверждения
         submitCodeBtn.addEventListener('click', checkCode);
