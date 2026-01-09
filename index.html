@@ -875,6 +875,15 @@
             transform: scale(1.02);
         }
 
+
+        /* Jump Points - специальное оформление */
+        .map-group.jump-points {
+            border-left: 3px solid rgba(100, 200, 255, 0.6);
+        }
+
+        .map-item.jump-point {
+            background: rgba(100, 150, 255, 0.35) !important;
+        }
 </style>
 </head>
 
@@ -965,33 +974,67 @@
         }
 
 
+        
+        // === СОХРАНЕНИЕ/ЗАГРУЗКА СИСТЕМЫ КОРАБЛЯ ===
+        
+        // === ОПРЕДЕЛЕНИЕ ТЕКУЩЕГО МИРА ===
+        function getCurrentWorld() {
+            if (!story || !currentNodeId || !story[currentNodeId]) {
+                return currentShipWorld; // По умолчанию возвращаем систему корабля
+            }
+
+            const node = story[currentNodeId];
+
+            // Для узлов корабля всегда используем currentShipWorld
+            if (node.location_category === 'ship') {
+                return currentShipWorld;
+            }
+
+            // Для остальных узлов используем их world или currentShipWorld
+            return node.world || currentShipWorld;
+        }
+
+        function saveShipWorld() {
+            localStorage.setItem('lingame_shipWorld', currentShipWorld);
+        }
+
+        function loadShipWorld() {
+            const saved = localStorage.getItem('lingame_shipWorld');
+            if (saved) {
+                currentShipWorld = saved;
+                console.log('📍 Корабль загружен в системе:', currentShipWorld);
+            }
+        }
+
         function getAllLocationNodes() {
             const result = [];
+            const currentWorld = getCurrentWorld();
+
             for (const id in story) {
                 const n = story[id];
                 if (!n) continue;
 
-                // Показываем локацию если:
-                // 1. Она помечена как loc_view_always: true (всегда видна)
-                // 2. ИЛИ она была посещена (в visitedLocations)
                 if (n.is_location === true) {
                     const isAlwaysVisible = n.loc_view_always === true;
                     const isVisited = visitedLocations.includes(id);
 
-                    if (isAlwaysVisible || isVisited) {
+                    // Показывать локацию если она посещена или всегда видна
+                    if (!isAlwaysVisible && !isVisited) continue;
+
+                    // === ФИЛЬТР ПО МИРУ ===
+                    // 1. Корабль (ship) - показываем всегда
+                    // 2. Локации текущего мира
+                    // 3. Локации без мира (для совместимости)
+                    const isShip = n.location_category === 'ship';
+                    const isSameWorld = !n.world || n.world === currentWorld;
+
+                    if (isShip || isSameWorld) {
                         result.push({ id, node: n });
                     }
                 }
             }
             return result;
-        }
-
-        function buildMapTree() {
-            // Tree: category_name -> subcategory_name (optional) -> locations
-            const locs = getAllLocationNodes();
-            const tree = {};
-
-            locs.forEach(({ id, node }) => {
+        }) => {
                 const cat = (node.category_name || node.location_category || 'Без категории').toString();
                 const sub = (node.subcategory_name || '').toString();
 
@@ -1056,6 +1099,120 @@
             return btn;
         }
 
+        
+        // === ПОЛУЧЕНИЕ ДОСТУПНЫХ ПРЫЖКОВЫХ ТОЧЕК ===
+        function getAvailableJumpPoints() {
+            const currentNode = story[currentNodeId];
+            if (!currentNode || !currentNode.jump_point) {
+                return [];
+            }
+
+            const currentWorld = getCurrentWorld();
+            const jumpPoint = currentNode.jump_point;
+
+            // Карта доступных прыжковых точек
+            const jumpMap = {
+                'to_pyro': { world: 'pyro', name: 'Jump to Pyro', icon: '🚀', description: 'Прыжок в систему Pyro' },
+                'to_nyx': { world: 'nyx', name: 'Jump to Nyx', icon: '🚀', description: 'Прыжок в систему Nyx' },
+                'to_stanton': { world: 'stanton', name: 'Jump to Stanton', icon: '🚀', description: 'Прыжок в систему Stanton' }
+            };
+
+            const jump = jumpMap[jumpPoint];
+            if (!jump) return [];
+
+            // Ищем узел прыжковой точки в целевой системе (обратный прыжок)
+            let targetNodeId = null;
+            const reverseJump = 'to_' + currentWorld;
+
+            for (const id in story) {
+                const node = story[id];
+                if (node && node.world === jump.world && node.jump_point === reverseJump) {
+                    targetNodeId = id;
+                    break;
+                }
+            }
+
+            // Если не нашли точный узел, ищем любую локацию в целевой системе
+            if (!targetNodeId) {
+                for (const id in story) {
+                    const node = story[id];
+                    if (node && node.world === jump.world && node.is_location) {
+                        targetNodeId = id;
+                        break;
+                    }
+                }
+            }
+
+            return [{
+                id: targetNodeId || jumpPoint,
+                targetWorld: jump.world,
+                node: {
+                    location_name: jump.name,
+                    location_icon: jump.icon,
+                    location_description: jump.description,
+                    _isJumpPoint: true,
+                    _targetWorld: jump.world
+                }
+            }];
+        }
+
+        // === ВЫПОЛНЕНИЕ ПРЫЖКА МЕЖДУ МИРАМИ ===
+        function performJump(targetNodeId, targetWorld) {
+            if (targetWorld) {
+                currentShipWorld = targetWorld;
+                saveShipWorld();
+                console.log('🚀 Прыжок выполнен! Корабль теперь в системе:', targetWorld);
+            }
+
+            closeMap();
+            if (targetNodeId && story[targetNodeId]) {
+                showNode(targetNodeId);
+            }
+        }
+
+        
+        function buildMapTree() {
+            // Tree: category_name -> subcategory_name (optional) -> locations
+            const locs = getAllLocationNodes();
+            const tree = {};
+
+            // === ДОБАВЛЯЕМ ПРЫЖКОВЫЕ ТОЧКИ В НАЧАЛО ===
+            const jumpPoints = getAvailableJumpPoints();
+            if (jumpPoints.length > 0) {
+                tree['🚀 Jump Points'] = { subcats: {}, locs: jumpPoints };
+            }
+
+            locs.forEach(({ id, node }) => {
+                const cat = (node.category_name || node.location_category || 'Без категории').toString();
+                const sub = (node.subcategory_name || '').toString();
+
+                if (!tree[cat]) tree[cat] = { subcats: {}, locs: [] };
+
+                if (sub.trim()) {
+                    if (!tree[cat].subcats[sub]) tree[cat].subcats[sub] = [];
+                    tree[cat].subcats[sub].push({ id, node });
+                } else {
+                    tree[cat].locs.push({ id, node });
+                }
+            });
+
+            // Sort by title for stable UI
+            const sortByName = (a, b) => {
+                const an = (a.node.location_name || a.node.tag || a.id).toString();
+                const bn = (b.node.location_name || b.node.tag || b.id).toString();
+                return an.localeCompare(bn, 'ru');
+            };
+
+            Object.keys(tree).forEach(cat => {
+                tree[cat].locs.sort(sortByName);
+                Object.keys(tree[cat].subcats).forEach(sub => {
+                    tree[cat].subcats[sub].sort(sortByName);
+                });
+            });
+
+            return tree;
+        }
+
         function renderMapAccordion() {
             const root = document.getElementById('map-accordion');
             if (!root) return;
@@ -1110,8 +1267,14 @@
                     });
                     if (id === currentNodeId) locBtn.classList.add('active-location');
                     locBtn.addEventListener('click', () => {
-                        closeMap();
-                        showNode(id);
+                        if (node._isJumpPoint && targetWorld) {
+                            // Это прыжковая точка - используем performJump
+                            performJump(id, targetWorld);
+                        } else {
+                            // Обычная локация
+                            closeMap();
+                            showNode(id);
+                        }
                     });
                     children.appendChild(locBtn);
                 });
@@ -1157,9 +1320,15 @@
                         });
                         if (id === currentNodeId) locBtn.classList.add('active-location');
                         locBtn.addEventListener('click', () => {
+                        if (node._isJumpPoint && targetWorld) {
+                            // Это прыжковая точка - используем performJump
+                            performJump(id, targetWorld);
+                        } else {
+                            // Обычная локация
                             closeMap();
                             showNode(id);
-                        });
+                        }
+                    });
                         subChildren.appendChild(locBtn);
                     });
 
@@ -1265,6 +1434,7 @@
 
         let story = null;
         let currentNodeId = null;
+        let currentShipWorld = 'nyx'; // Текущая система, где находится корабль
         let diceAnimationInterval = null;
         let autoAdvanceTimeout = null;
 
@@ -1979,6 +2149,341 @@
                 100% { transform: scale(1); opacity: 1; }
             }
         </style>
+    `;
+            }
+
+            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
+            let notificationBanner = '';
+            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
+                notificationBanner = `
+                <div class="notification-banner">
+                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
+                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
+                </div>
+                `;
+            }
+            // END NOTIFICATION SYSTEM
+
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+        }
+
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShipWorld(); // Загрузка системы корабля
+
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                return;
+            }
+
+            console.log('🔄 Сброс прогресса игры...');
+
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
+
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
+
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
+
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+        
+    </style>
     `;
             }
 
