@@ -258,8 +258,8 @@
     "tag": "Ворота в Pyro",
     "world": "nyx",
     "jump_point": "to_pyro",
-    "map_view": true,
     "is_location": true,
+    "loc_view_always": true,
     "location_name": "Прыжковые ворота в PYRO",
     "location_icon": "🌀",
     "location_category": "nyx",
@@ -288,5 +288,24 @@
     "category_name": "Корабль \"ГАРПУН 3\"",
     "subcategory_name": "",
     "location_description": "Довольно скудная по комфорту кабина пилота, но всё в традициях компании DAKE"
+  },
+  "17": {
+    "text": "Новый узел 17.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ],
+    "tag": "Ворота в NYX",
+    "world": "pyro",
+    "jump_point": "to_nyx",
+    "is_location": true,
+    "location_name": "Прыжкова точка",
+    "location_icon": "🌀",
+    "location_category": "pyro",
+    "category_name": "",
+    "subcategory_name": "",
+    "location_description": "Прыжковая точка в систему Nyx"
   }
 }
