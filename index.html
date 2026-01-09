@@ -2495,18 +2495,6 @@
             }, 500);
         }
 
-            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
-            let notificationBanner = '';
-            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-                <div class="notification-banner">
-                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
-                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
-                </div>
-                `;
-            }
-            // END NOTIFICATION SYSTEM
 
             sceneEl.classList.remove('active');
             setTimeout(() => {
