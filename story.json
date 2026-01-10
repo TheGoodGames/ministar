@@ -175,7 +175,8 @@
       {
         "text": "Я вчера тут зависла надолго да?",
         "next": "23",
-        "requires": "quest_kc_lin_room"
+        "requires": "state_kc_lin_room",
+        "hide_until_unlocked": true
       }
     ],
     "tag": "Бармен",
@@ -357,10 +358,9 @@
         "text": "Вернуться в космопорт",
         "next": "5",
         "collect": {
-          "id": "quest_kc_lin_room",
+          "id": "state_kc_lin_room",
           "label": "Найти ключ от своей команты",
           "type": "key_card",
-          "icon": "",
           "quantity": 1
         }
       },
