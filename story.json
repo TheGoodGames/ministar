@@ -356,17 +356,16 @@
     "choices": [
       {
         "text": "Вернуться в космопорт",
-        "next": "5",
-        "collect": {
-          "id": "state_kc_lin_room",
-          "label": "Найти ключ от своей команты",
-          "type": "key_card",
-          "quantity": 1
-        }
+        "next": "5"
       },
       {
         "text": "Войти в свою комнату",
         "next": "22",
+        "collect": {
+          "id": "state_kc_lin_room",
+          "label": "Найти ключ от своей команты",
+          "type": "key_card"
+        },
         "requires": "key_kc_lin_room",
         "missingMessages": {
           "key_kc_lin_room": "Нужен ключ от комнаты"
