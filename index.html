@@ -884,6 +884,861 @@
         .map-item.jump-point {
             background: rgba(100, 150, 255, 0.35) !important;
         }
+
+
+        /* ===== СТИЛИ МАГАЗИНА (RPG СИСТЕМА) ===== */
+#shop-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .shop-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+        }
+
+        .shop-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .shop-money {
+            color: #ffaa00;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .shop-item:hover {
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .shop-item-info {
+            text-align: left;
+            flex: 1;
+        }
+
+        .shop-item-name {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #00ffff;
+        }
+
+        .shop-item-desc {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-price {
+            color: #ffaa00;
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn {
+            background: linear-gradient(135deg, #44ff44, #22aa22);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(68, 255, 68, 0.5);
+        }
+
+        .shop-buy-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #shop-button {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
+            transition: all 0.3s ease;
+            z-index: 900;
+        }
+
+        #shop-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 170, 0, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            #shop-button {
+                bottom: auto;
+                top: 120px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    `;
+            }
+
+            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
+            let notificationBanner = '';
+            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
+                notificationBanner = `
+                <div class="notification-banner">
+                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
+                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
+                </div>
+                `;
+            }
+            // END NOTIFICATION SYSTEM
+
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        }
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
+                node.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
+                });
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
+        function handleCodeChoice(nextNodeId) {
+            codeScreen.style.display = 'none';
+            currentCodeNode = null;
+            showNode(nextNodeId);
+        }
+
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShipWorld(); // Загрузка системы корабля
+
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                return;
+            }
+
+            console.log('🔄 Сброс прогресса игры...');
+
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
+
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
+
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
+
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+
+
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+        
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
+                node.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
+                });
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                return;
+            }
+
+            console.log('🔄 Сброс прогресса игры...');
+
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
+
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
+
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
+
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+
 </style>
 </head>
 
@@ -2412,857 +3267,7 @@
             margin-left: 10px;
         }
 
-        #shop-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .shop-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 30px;
-            border-radius: 15px;
-            border: 2px solid #00ffff;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-        }
-
-        .shop-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .shop-money {
-            color: #ffaa00;
-            font-size: 1.2em;
-            margin: 10px 0;
-        }
-
-        .shop-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border: 2px solid #444;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .shop-item:hover {
-            border-color: #00ffff;
-            background: rgba(0, 255, 255, 0.1);
-        }
-
-        .shop-item-info {
-            text-align: left;
-            flex: 1;
-        }
-
-        .shop-item-name {
-            font-size: 1.1em;
-            margin-bottom: 5px;
-            color: #00ffff;
-        }
-
-        .shop-item-desc {
-            color: #888;
-            font-size: 0.85em;
-            margin-bottom: 5px;
-        }
-
-        .shop-item-price {
-            color: #ffaa00;
-            font-size: 0.95em;
-            font-weight: bold;
-        }
-
-        .shop-buy-btn {
-            background: linear-gradient(135deg, #44ff44, #22aa22);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.95em;
-            transition: all 0.3s ease;
-            color: #000;
-            font-weight: bold;
-        }
-
-        .shop-buy-btn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(68, 255, 68, 0.5);
-        }
-
-        .shop-buy-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        #shop-button {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: linear-gradient(135deg, #ffaa00, #ff8800);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
-            transition: all 0.3s ease;
-            z-index: 900;
-        }
-
-        #shop-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 170, 0, 0.6);
-        }
-
-        @media (max-width: 768px) {
-            #shop-button {
-                bottom: auto;
-                top: 120px;
-                right: 10px;
-                padding: 10px 15px;
-                font-size: 0.9em;
-            }
-        }
-    </style>
-    `;
-            }
-
-            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
-            let notificationBanner = '';
-            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-                <div class="notification-banner">
-                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
-                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
-                </div>
-                `;
-            }
-            // END NOTIFICATION SYSTEM
-
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
-
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
-        function hideNotificationBanner() {
-            localStorage.setItem('banner_hidden', 'true');
-            const banner = document.querySelector('.notification-banner');
-            if (banner) banner.style.display = 'none';
-        }
-        }
-        // END NOTIFICATION SYSTEM
-
-        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
-        function isIOS() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform) ||
-                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-        }
-
-        function isTelegramIOS() {
-            const tg = window.Telegram?.WebApp;
-            return isIOS() && tg?.platform === 'ios';
-        }
-        // END ОПРЕДЕЛЕНИЕ iOS
-
-        window.handleChoice = function (nextId, choiceIndex = null) {
-            // Обработка DICE
-            if (nextId.startsWith("DICE:")) {
-                const parts = nextId.slice(5).split(',');
-                const success = parts[0] || null;
-                const partial = parts[1] || null;
-                const fail = parts[2] || null;
-                rollDice(success, partial, fail);
-                return;
-            }
-
-            // Обработка сбора предмета из ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.collect) {
-                    if (collectedKeys[choice.collect.id]) {
-                        alert("Здесь ничего нет. Вы уже осматривали это место.");
-                        return;
-                    }
-                    showKeyAnimation(choice.collect, currentNodeId);
-                    return;
-                }
-            }
-
-            // Проверка требований на уровне ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
-                    if (missingMsgs.length > 0) {
-                        alert("Недоступно:\n" + missingMsgs.join("\n"));
-                        return;
-                    }
-                }
-            }
-
-            // Обработка перехода
-            if (nextId === "main_story") {
-                localStorage.removeItem('lingame_lastNode');
-                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-            }
-
-            if (nextId === "node_end") {
-                setTimeout(() => showNode("0"), 500);
-                return;
-            }
-
-            if (story[nextId]) {
-                showNode(nextId);
-            } else {
-                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-                showNode("0");
-            }
-        };
-
-        function toggleAudio() {
-            if (isAudioPlaying) {
-                audioEl.pause();
-                audioBtn.textContent = '🔇';
-                isAudioPlaying = false;
-            } else {
-                audioEl.play().then(() => {
-                    audioBtn.textContent = '🔊';
-                    isAudioPlaying = true;
-                }).catch(e => {
-                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-                });
-            }
-        }
-
-        function showCodeScreen(node) {
-            // Скрываем основную сцену
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-
-            // Показываем экран ввода кода
-            codeScreen.style.display = 'block';
-            currentCodeNode = node;
-
-            // Устанавливаем тексты и подсказки
-            codeTitleEl.textContent = node.code_title || "Введите секретный код";
-            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
-            codeInput.value = '';
-            codeErrorEl.textContent = '';
-
-            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
-            const codeTextEl = document.getElementById('code-text');
-            if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
-            } else if (codeTextEl) {
-                codeTextEl.innerHTML = '';
-            }
-
-            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
-            const codeChoicesEl = document.getElementById('code-choices');
-            if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                // Очищаем контейнер
-                codeChoicesEl.innerHTML = '';
-
-                // Создаём кнопки через DOM (не через innerHTML)
-                node.choices.forEach((choice, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${index + 1}`;
-                    btn.dataset.next = choice.next; // Используем data-атрибут
-
-                    // Добавляем обработчик клика
-                    btn.addEventListener('click', function() {
-                        handleCodeChoice(this.dataset.next);
-                    });
-
-                    codeChoicesEl.appendChild(btn);
-                });
-            } else if (codeChoicesEl) {
-                codeChoicesEl.innerHTML = '';
-            }
-
-            // Фокус на поле ввода
-            setTimeout(() => codeInput.focus(), 300);
-
-            // Прокручиваем наверх
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function checkCode() {
-            if (!currentCodeNode) return;
-
-            const inputCode = codeInput.value.trim();
-            const correctCode = currentCodeNode.correct_code;
-            const caseSensitive = currentCodeNode.case_sensitive !== false;
-
-            // Проверяем код с учетом регистра
-            const isCorrect = caseSensitive
-                ? inputCode === correctCode
-                : inputCode.toLowerCase() === correctCode.toLowerCase();
-
-            if (isCorrect) {
-                // Код верный - переходим к следующей ноде
-                codeScreen.style.display = 'none';
-                showNode(currentCodeNode.success_next);
-                currentCodeNode = null;
-            } else {
-                // Код неверный - показываем ошибку
-                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-
-                // Эффект тряски для поля ввода
-                codeInput.style.animation = "shake 0.5s";
-                codeInput.addEventListener('animationend', () => {
-                    codeInput.style.animation = "";
-                });
-            }
-        }
-        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
-        function handleCodeChoice(nextNodeId) {
-            codeScreen.style.display = 'none';
-            currentCodeNode = null;
-            showNode(nextNodeId);
-        }
-
-
-        // Обработчик кнопки подтверждения
-        submitCodeBtn.addEventListener('click', checkCode);
-
-        // Обработчик нажатия Enter в поле ввода
-        codeInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkCode();
-            }
-        });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-                20%, 40%, 60%, 80% { transform: translateX(6px); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadShipWorld(); // Загрузка системы корабля
-
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
-
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.MainButton.setText('Начать заново');
-                Telegram.WebApp.MainButton.show();
-                Telegram.WebApp.MainButton.onClick(() => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                });
-            } else {
-                const restartBtn = document.createElement('button');
-                restartBtn.className = 'choice-btn restart-btn';
-                restartBtn.textContent = 'Начать заново';
-                restartBtn.style.marginTop = '20px';
-                restartBtn.style.width = '100%';
-                restartBtn.onclick = () => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                };
-                document.getElementById('app').appendChild(restartBtn);
-            }
-
-            // 🔔 NOTIFICATION SYSTEM:  конфигурации
-            loadNotificationConfig().then(() => {
-                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
-                loadStory();
-            }).catch(e => {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                loadStory();
-            });
-            // END NOTIFICATION SYSTEM
-        });
-
-        // 🔔 NOTIFICATION SYSTEM:  конфигурации
-        async function loadNotificationConfig() {
-            try {
-                // Сначала пытаемся загрузить config.js
-                const configScript = document.createElement('script');
-                configScript.src = 'config.js?v=' + Date.now();
-                configScript.async = false;
-                document.head.appendChild(configScript);
-
-                // Ждем загрузки скрипта
-                await new Promise((resolve) => {
-                    configScript.onload = resolve;
-                    configScript.onerror = () => {
-                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
-                        resolve();
-                    };
-                });
-
-                // Проверяем глобальные переменные
-                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
-                    console.log('🔔 Конфигурация загружена из config.js');
-                } else {
-                    // Пытаемся получить из URL параметров (для тестирования)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const botToken = urlParams.get('bot_token');
-                    const chatId = urlParams.get('chat_id');
-
-                    if (botToken && chatId) {
-                        NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
-                            isEnabled: true
-                        };
-                        console.log('🔔 Конфигурация загружена из URL параметров');
-                    } else {
-                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
-                        NOTIFICATION_CONFIG.isEnabled = false;
-                    }
-                }
-            } catch (e) {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                NOTIFICATION_CONFIG.isEnabled = false;
-            }
-        }
-        // END NOTIFICATION SYSTEM
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
-                return;
-            }
-
-            console.log('🔄 Сброс прогресса игры...');
-
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            choices = {};
-
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-
-            // Перезагружаем страницу
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
-
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
         
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
-        function hideNotificationBanner() {
-            localStorage.setItem('banner_hidden', 'true');
-            const banner = document.querySelector('.notification-banner');
-            if (banner) banner.style.display = 'none';
-        }
-        
-        // END NOTIFICATION SYSTEM
-
-        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
-        function isIOS() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform) ||
-                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-        }
-
-        function isTelegramIOS() {
-            const tg = window.Telegram?.WebApp;
-            return isIOS() && tg?.platform === 'ios';
-        }
-        // END ОПРЕДЕЛЕНИЕ iOS
-
-        window.handleChoice = function (nextId, choiceIndex = null) {
-            // Обработка DICE
-            if (nextId.startsWith("DICE:")) {
-                const parts = nextId.slice(5).split(',');
-                const success = parts[0] || null;
-                const partial = parts[1] || null;
-                const fail = parts[2] || null;
-                rollDice(success, partial, fail);
-                return;
-            }
-
-            // Обработка сбора предмета из ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.collect) {
-                    if (collectedKeys[choice.collect.id]) {
-                        alert("Здесь ничего нет. Вы уже осматривали это место.");
-                        return;
-                    }
-                    showKeyAnimation(choice.collect, currentNodeId);
-                    return;
-                }
-            }
-
-            // Проверка требований на уровне ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
-                    if (missingMsgs.length > 0) {
-                        alert("Недоступно:\n" + missingMsgs.join("\n"));
-                        return;
-                    }
-                }
-            }
-
-            // Обработка перехода
-            if (nextId === "main_story") {
-                localStorage.removeItem('lingame_lastNode');
-                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-            }
-
-            if (nextId === "node_end") {
-                setTimeout(() => showNode("0"), 500);
-                return;
-            }
-
-            if (story[nextId]) {
-                showNode(nextId);
-            } else {
-                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-                showNode("0");
-            }
-        };
-
-        function toggleAudio() {
-            if (isAudioPlaying) {
-                audioEl.pause();
-                audioBtn.textContent = '🔇';
-                isAudioPlaying = false;
-            } else {
-                audioEl.play().then(() => {
-                    audioBtn.textContent = '🔊';
-                    isAudioPlaying = true;
-                }).catch(e => {
-                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-                });
-            }
-        }
-
-        function showCodeScreen(node) {
-            // Скрываем основную сцену
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-
-            // Показываем экран ввода кода
-            codeScreen.style.display = 'block';
-            currentCodeNode = node;
-
-            // Устанавливаем тексты и подсказки
-            codeTitleEl.textContent = node.code_title || "Введите секретный код";
-            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
-            codeInput.value = '';
-            codeErrorEl.textContent = '';
-
-            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
-            const codeTextEl = document.getElementById('code-text');
-            if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
-            } else if (codeTextEl) {
-                codeTextEl.innerHTML = '';
-            }
-
-            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
-            const codeChoicesEl = document.getElementById('code-choices');
-            if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                // Очищаем контейнер
-                codeChoicesEl.innerHTML = '';
-
-                // Создаём кнопки через DOM (не через innerHTML)
-                node.choices.forEach((choice, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${index + 1}`;
-                    btn.dataset.next = choice.next; // Используем data-атрибут
-
-                    // Добавляем обработчик клика
-                    btn.addEventListener('click', function() {
-                        handleCodeChoice(this.dataset.next);
-                    });
-
-                    codeChoicesEl.appendChild(btn);
-                });
-            } else if (codeChoicesEl) {
-                codeChoicesEl.innerHTML = '';
-            }
-
-            // Фокус на поле ввода
-            setTimeout(() => codeInput.focus(), 300);
-
-            // Прокручиваем наверх
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function checkCode() {
-            if (!currentCodeNode) return;
-
-            const inputCode = codeInput.value.trim();
-            const correctCode = currentCodeNode.correct_code;
-            const caseSensitive = currentCodeNode.case_sensitive !== false;
-
-            // Проверяем код с учетом регистра
-            const isCorrect = caseSensitive
-                ? inputCode === correctCode
-                : inputCode.toLowerCase() === correctCode.toLowerCase();
-
-            if (isCorrect) {
-                // Код верный - переходим к следующей ноде
-                codeScreen.style.display = 'none';
-                showNode(currentCodeNode.success_next);
-                currentCodeNode = null;
-            } else {
-                // Код неверный - показываем ошибку
-                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-
-                // Эффект тряски для поля ввода
-                codeInput.style.animation = "shake 0.5s";
-                codeInput.addEventListener('animationend', () => {
-                    codeInput.style.animation = "";
-                });
-            }
-        }
-
-        // Обработчик кнопки подтверждения
-        submitCodeBtn.addEventListener('click', checkCode);
-
-        // Обработчик нажатия Enter в поле ввода
-        codeInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkCode();
-            }
-        });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-                20%, 40%, 60%, 80% { transform: translateX(6px); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
-
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.MainButton.setText('Начать заново');
-                Telegram.WebApp.MainButton.show();
-                Telegram.WebApp.MainButton.onClick(() => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                });
-            } else {
-                const restartBtn = document.createElement('button');
-                restartBtn.className = 'choice-btn restart-btn';
-                restartBtn.textContent = 'Начать заново';
-                restartBtn.style.marginTop = '20px';
-                restartBtn.style.width = '100%';
-                restartBtn.onclick = () => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                };
-                document.getElementById('app').appendChild(restartBtn);
-            }
-
-            // 🔔 NOTIFICATION SYSTEM:  конфигурации
-            loadNotificationConfig().then(() => {
-                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
-                loadStory();
-            }).catch(e => {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                loadStory();
-            });
-            // END NOTIFICATION SYSTEM
-        });
-
-        // 🔔 NOTIFICATION SYSTEM:  конфигурации
-        async function loadNotificationConfig() {
-            try {
-                // Сначала пытаемся загрузить config.js
-                const configScript = document.createElement('script');
-                configScript.src = 'config.js?v=' + Date.now();
-                configScript.async = false;
-                document.head.appendChild(configScript);
-
-                // Ждем загрузки скрипта
-                await new Promise((resolve) => {
-                    configScript.onload = resolve;
-                    configScript.onerror = () => {
-                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
-                        resolve();
-                    };
-                });
-
-                // Проверяем глобальные переменные
-                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
-                    console.log('🔔 Конфигурация загружена из config.js');
-                } else {
-                    // Пытаемся получить из URL параметров (для тестирования)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const botToken = urlParams.get('bot_token');
-                    const chatId = urlParams.get('chat_id');
-
-                    if (botToken && chatId) {
-                        NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
-                            isEnabled: true
-                        };
-                        console.log('🔔 Конфигурация загружена из URL параметров');
-                    } else {
-                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
-                        NOTIFICATION_CONFIG.isEnabled = false;
-                    }
-                }
-            } catch (e) {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                NOTIFICATION_CONFIG.isEnabled = false;
-            }
-        }
-        // END NOTIFICATION SYSTEM
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
-                return;
-            }
-
-            console.log('🔄 Сброс прогресса игры...');
-
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            choices = {};
-
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-
-            // Перезагружаем страницу
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
         
     
 
