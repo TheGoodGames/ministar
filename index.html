@@ -1,10 +1,30 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ПОЛНАЯ RPG КВЕСТОВАЯ СИСТЕМА</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lin: Drake Clipper</title>
+
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Google Fonts: Merriweather -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
+        rel="stylesheet">
+
     <style>
+        :root {
+            --bg: #0c0b14;
+            --fg: #e8e6f6;
+            --accent: #6a5acd;
+            --success: #4caf50;
+            --deadend: #f44336;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,430 +32,881 @@
         }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-            color: #e0e0e0;
-            min-height: 100vh;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+            font-size: 19px;
             padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
 
-        #game-container {
-            max-width: 800px;
+        #app {
+            max-width: 600px;
             margin: 0 auto;
-            background: rgba(20, 20, 40, 0.95);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
         }
 
-        h1 {
-            text-align: center;
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff;
-            margin-bottom: 20px;
-            font-size: 2em;
+        #scene {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            text-align: left;
         }
 
-        /* СТАТЫ ПЕРСОНАЖА */
-        #player-stats {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            flex-wrap: wrap;
+        #scene.active {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        .stat-item {
-            flex: 1;
-            min-width: 120px;
-            text-align: center;
-        }
-
-        .stat-label {
-            color: #888;
-            font-size: 0.8em;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-
-        .stat-value.health { color: #ff4444; }
-        .stat-value.stamina { color: #44ff44; }
-        .stat-value.money { color: #ffaa00; }
-
-        .stat-bar {
+        .illustration {
             width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 14px;
+            margin: 24px 0;
             overflow: hidden;
-            margin-top: 5px;
+            background: #141224;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .stat-bar-fill {
-            height: 100%;
-            transition: width 0.3s ease;
+        .illustration img {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
-        .stat-bar-fill.health { background: linear-gradient(90deg, #ff4444, #ff8844); }
-        .stat-bar-fill.stamina { background: linear-gradient(90deg, #44ff44, #88ff44); }
-
-        #story-text {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 25px;
-            margin-bottom: 25px;
-            border-left: 4px solid #00ffff;
-            min-height: 150px;
-            line-height: 1.8;
-            font-size: 1.1em;
-            border-radius: 5px;
+        .illustration .fallback {
+            color: #777;
+            font-style: italic;
+            text-align: center;
+            padding: 24px;
+            font-family: system-ui, sans-serif;
         }
 
-        #choices {
+        .text {
+            line-height: 1.78;
+            margin: 26px 0;
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        .text p {
+            margin-bottom: 22px;
+            text-indent: 24px;
+        }
+
+        .choices {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
+            margin: 30px 0 24px;
         }
 
-        .choice-button {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        .choice-btn {
+            padding: 16px 20px;
+            background: var(--accent);
             color: white;
-            border: 2px solid #00ffff;
-            padding: 15px 25px;
-            font-size: 1em;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-family: inherit;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Merriweather', system-ui, sans-serif;
+            font-size: 17px;
             text-align: left;
-            display: block;
-            position: relative;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.12s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
 
-        .choice-cost {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 170, 0, 0.3);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
+        .choice-btn:hover {
+            background: #5a4ab0;
         }
 
-        .choice-button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #2a5298 0%, #3d6bb5 100%);
-            transform: translateX(10px);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        .choice-btn:active {
+            transform: scale(0.992);
         }
 
-        .choice-button:disabled {
-            background: #333;
-            color: #666;
-            border-color: #555;
-            cursor: not-allowed;
-            transform: none;
+        .deadend .choice-btn {
+            background: var(--deadend);
         }
 
-        .choice-hidden {
-            display: none !important;
+        .deadend .choice-btn:hover {
+            background: #d32f2f;
         }
 
-        /* ИНВЕНТАРЬ */
-        #inventory {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            padding: 15px;
-            min-width: 280px;
-            max-width: 350px;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-            max-height: 80vh;
-            overflow-y: auto;
+        .ending-success {
+            border-left: 4px solid var(--success);
+            padding-left: 16px;
         }
 
-        #inventory h3 {
-            color: #00ff00;
-            margin-bottom: 10px;
+        .loading {
+            padding: 40px;
+            color: #777;
             text-align: center;
-            border-bottom: 1px solid #00ff00;
-            padding-bottom: 8px;
+            font-family: system-ui, sans-serif;
         }
 
-        .inventory-section {
-            margin: 15px 0;
+        .restart-btn {
+            background: #ff9800;
         }
 
-        .inventory-section-title {
-            color: #888;
-            font-size: 0.85em;
-            margin-bottom: 8px;
-            text-transform: uppercase;
+        .restart-btn:hover {
+            background: #f57c00;
         }
 
-        .key-item {
-            background: rgba(0, 255, 0, 0.1);
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            border-left: 3px solid #00ff00;
-            font-size: 0.9em;
+        #audio-control {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(106, 90, 205, 0.25);
+            backdrop-filter: blur(4px);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .item-quantity {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.85em;
-            font-weight: bold;
+        /* Стиль для экрана броска кубиков */
+        #dice-screen {
+            display: none;
+            text-align: center;
+            padding: 40px;
         }
 
-        .key-item.quest-type {
-            border-left-color: #ffaa00;
-            background: rgba(255, 170, 0, 0.1);
+        #dice-screen .dice {
+            font-size: 100px;
+            margin-bottom: 30px;
         }
 
-        .key-item.item-type {
-            border-left-color: #00ff00;
-            background: rgba(0, 255, 0, 0.1);
+        #dice-screen .result {
+            font-size: 24px;
+            margin: 20px 0;
         }
 
-        .key-item.state-type {
-            border-left-color: #00ffff;
-            background: rgba(0, 255, 255, 0.1);
+        #dice-screen button {
+            width: 200px;
+            margin: 0 auto;
         }
 
-        .key-item.key-type {
-            border-left-color: #ff00ff;
-            background: rgba(255, 0, 255, 0.1);
-        }
-
-        .key-animation {
-            animation: keyAppear 0.5s ease;
-        }
-
-        @keyframes keyAppear {
-            0% {
-                transform: scale(0) rotate(-180deg);
-                opacity: 0;
-            }
-            100% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
-        }
-
-        /* МОДАЛЬНЫЕ ОКНА */
-        #password-modal, #dice-modal, #map-modal, #shop-modal {
+        /* === ИНВЕНТАРЬ === */
+        #inventory-screen {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: var(--bg);
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: #1a1a2e;
-            padding: 40px;
-            border-radius: 15px;
-            border: 2px solid #00ffff;
-            text-align: center;
-            max-width: 500px;
-            max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-        }
-
-        .shop-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border: 2px solid #444;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .shop-item:hover {
-            border-color: #00ffff;
-            background: rgba(0, 255, 255, 0.1);
-        }
-
-        .shop-item-info {
-            text-align: left;
-            flex: 1;
-        }
-
-        .shop-item-name {
-            font-size: 1.1em;
-            margin-bottom: 5px;
-        }
-
-        .shop-item-price {
-            color: #ffaa00;
-            font-size: 0.9em;
-        }
-
-        .shop-buy-btn {
-            background: linear-gradient(135deg, #44ff44, #22aa22);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.95em;
-            transition: all 0.3s ease;
-        }
-
-        .shop-buy-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .shop-buy-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        #password-input {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.5em;
+            padding: 30px 20px;
             text-align: center;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            border-radius: 8px;
-            margin: 20px 0;
-            letter-spacing: 10px;
         }
 
-        .modal-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 1.1em;
-            cursor: pointer;
-            border-radius: 8px;
-            margin: 10px;
-            transition: all 0.3s ease;
+        #inventory-screen h2 {
+            margin-bottom: 24px;
+            font-size: 28px;
         }
 
-        .modal-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        #code-screen {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
-        #dice-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 30px 0;
+        #code-screen h2 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            text-align: center;
         }
 
-        .dice {
-            width: 80px;
-            height: 80px;
+        .code-input-container {
             background: white;
-            border: 3px solid #333;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 3em;
-            color: #333;
-            font-weight: bold;
+            color: black;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            margin: 20px 0;
         }
 
-        #map-button, #shop-button {
-            position: fixed;
-            bottom: 20px;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        #code-input {
+            width: 100%;
+            padding: 18px;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            border: 3px solid #333;
+            border-radius: 12px;
+            margin: 20px 0;
+            background: #f8f8f8;
+            box-sizing: border-box;
+            letter-spacing: 4px;
+        }
+
+        #code-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.3);
+        }
+
+        #submit-code {
+            background: var(--accent);
             color: white;
             border: none;
-            padding: 15px 25px;
-            font-size: 1.1em;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 20px;
+            font-weight: bold;
             cursor: pointer;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-            transition: all 0.3s ease;
+            margin-top: 10px;
+            transition: all 0.2s;
+            width: 100%;
         }
 
-        #map-button {
-            right: 20px;
+        #submit-code:hover {
+            background: #5a4ab0;
+            transform: translateY(-2px);
         }
 
-        #shop-button {
-            right: 180px;
-            background: linear-gradient(135deg, #ffaa00, #ff8800);
+        #code-error {
+            color: var(--deadend);
+            min-height: 24px;
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 18px;
         }
 
-        #map-button:hover, #shop-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        .code-hint {
+            color: #666;
+            margin-top: 15px;
+            font-style: italic;
+            font-size: 18px;
         }
 
-        #debug-panel {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: rgba(255, 0, 0, 0.8);
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 24px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .key-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .key-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+        }
+
+        .key-label {
+            background: white;
+            color: black;
+            font-size: 14px;
+            font-family: 'Merriweather', sans-serif;
+            padding: 6px 8px;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .inventory-close {
+            margin-top: 28px;
+            background: var(--accent);
             color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 0.9em;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 17px;
             cursor: pointer;
         }
 
-        @media (max-width: 768px) {
-            #inventory {
-                position: static;
-                margin: 20px auto;
-                max-width: 100%;
+        .inventory-close:hover {
+            background: #5a4ab0;
+        }
+
+        /* === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА === */
+        #key-animation {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        #key-animation .icon {
+            font-size: 120px;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: keyPop 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        #key-animation .label {
+            font-size: 22px;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.4s forwards;
+        }
+
+        @keyframes keyPop {
+            0% {
+                transform: scale(0.2) rotate(-30deg);
+                opacity: 0;
             }
 
-            #map-button, #shop-button {
-                position: static;
-                width: 100%;
-                margin: 10px 0;
+            70% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 1;
             }
 
-            #debug-panel {
-                position: static;
-                margin: 10px auto;
-                text-align: center;
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 1;
             }
         }
-    </style>
-</head>
-<body>
-    <div id="game-container">
-        <h1>🚀 ПОЛНАЯ RPG СИСТЕМА</h1>
 
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 🔔 NOTIFICATION SYSTEM */
+        .notification-banner {
+            background: rgba(106, 90, 205, 0.15);
+            border-left: 3px solid var(--accent);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .notification-banner a {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        .notification-banner .close-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* === КАРТА МИРА === */
+        #map-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .locations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+
+        .location-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(106, 90, 205, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: rgba(106, 90, 205, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .location-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            background: rgba(106, 90, 205, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .location-item:active {
+            transform: translateY(1px);
+        }
+
+        .location-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .location-name {
+            font-family: 'Merriweather', sans-serif;
+            font-size: 16px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .location-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .current-location {
+            border-color: var(--success);
+            background: rgba(76, 175, 80, 0.2);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .location-unvisited {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        .location-unvisited:hover {
+            opacity: 1;
+            filter: grayscale(0);
+        }
+
+        .map-info {
+            color: #aaa;
+            font-size: 15px;
+            margin-top: 15px;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .map-title {
+            text-align: center;
+            margin: 12px 0 10px;
+            font-size: 28px;
+            letter-spacing: 0.2px;
+        }
+
+        .category-title {
+            margin: 30px 0 15px;
+            color: #aaa;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 480px) {
+            .notification-banner {
+                margin: 15px 10px !important;
+                border-radius: 12px !important;
+                border-left: none !important;
+                border-top: 3px solid var(--accent) !important;
+                padding: 18px 15px !important;
+                font-size: 17px !important;
+                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .notification-banner a {
+                display: block;
+                margin-top: 8px;
+                font-weight: 600;
+            }
+
+            .locations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+
+            .location-item {
+                padding: 12px;
+            }
+
+            .location-icon {
+                font-size: 40px;
+            }
+
+            .location-name {
+                font-size: 15px;
+            }
+        }
+
+        /* iOS-specific fixes */
+        .notification-banner-ios {
+            position: sticky;
+            top: 70px;
+            background: rgba(40, 35, 70, 0.85) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(106, 90, 205, 0.3);
+            z-index: 10000 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            width: 100% !important;
+            left: 0 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .ios-only-warning {
+            background: rgba(255, 235, 59, 0.15);
+            border-left: 3px solid #ffc107;
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0 18px 15px;
+            font-size: 15px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .ios-only-warning {
+                display: block;
+                margin: 12px 10px !important;
+                border-radius: 12px !important;
+                border-left: none !important;
+                border-top: 3px solid #ffc107 !important;
+            }
+        }
+
+        /* END NOTIFICATION SYSTEM */
+    
+
+        /* ============================================
+           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC (тап для продолжения)
+           ============================================ */
+
+        #npc-screen {
+            pointer-events: none;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #npc-screen.active {
+            pointer-events: auto;
+            display: flex;
+            animation: npcFadeIn 0.25s ease-out;
+        }
+
+        @keyframes npcFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #npc-screen.fade-out {
+            animation: npcFadeOut 0.25s ease-out forwards;
+        }
+
+        @keyframes npcFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        #npc-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        /* UI поверх картинки */
+        #npc-overlay-ui {
+            position: absolute;
+            inset: 0;
+            pointer-events: none; /* кликается весь экран */
+        }
+
+        /* Облачко текста (комикс) */
+        #npc-speech {
+            position: absolute;
+            left: 50%;
+            top: 56%;
+            transform: translate(-50%, -50%);
+            width: min(860px, 92vw);
+            background: rgba(255, 255, 255, 0.95);
+            color: #0b0f14;
+            border: 3px solid rgba(15, 23, 36, 0.95);
+            border-radius: 28px;
+            padding: 18px 20px;
+            font-size: 22px;
+            line-height: 1.25;
+            text-align: left;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            white-space: pre-wrap;
+        }
+
+        #npc-speech:empty {
+            display: none;
+        }
+
+        #npc-speech::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -18px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-top: 18px solid rgba(255, 255, 255, 0.95);
+        }
+
+        #npc-speech::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -24px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 19px solid transparent;
+            border-right: 19px solid transparent;
+            border-top: 22px solid rgba(15, 23, 36, 0.95);
+        }
+
+        /* Подсказка "Продолжить" */
+        #npc-continue {
+            position: absolute;
+            left: 50%;
+            bottom: 52px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 8px 18px rgba(0,0,0,0.55);
+            font-size: 28px;
+            letter-spacing: 0.2px;
+        }
+
+        /* Пока картинка грузится — прячем подсказку продолжения */
+        #npc-screen:not(.ready) #npc-continue {
+            opacity: 0;
+        }
+
+        .npc-continue-arrow {
+            font-size: 34px;
+            line-height: 1;
+            animation: npcArrowBlink 1.05s ease-in-out infinite;
+        }
+
+        @keyframes npcArrowBlink {
+            0%   { opacity: 0.25; transform: translateY(6px); }
+            50%  { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0.25; transform: translateY(6px); }
+        }
+
+        /* Для телефонов - картинка на весь экран */
+        @media (max-width: 768px) {
+            #npc-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            #npc-speech {
+                top: 60%;
+                font-size: 21px;
+                width: 92vw;
+            }
+
+            #npc-continue {
+                bottom: 64px;
+                font-size: 30px;
+            }
+        }
+
+
+        /* ============================================
+           КАРТА МИРА (аккордеон)
+           category_name -> раскрывающиеся секции
+           subcategory_name -> под-секции
+           location -> кликабельные элементы
+           ============================================ */
+
+        .map-title {
+            text-align: center;
+            margin: 16px 0 12px;
+            font-size: 34px;
+            letter-spacing: 0.3px;
+        }
+
+        .map-accordion {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 10px 14px;
+            box-sizing: border-box;
+        }
+
+        .map-item {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin: 6px 0;
+            text-align: left;
+            background: rgba(86, 78, 132, 0.55);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .map-item:hover {
+            filter: brightness(1.05);
+        }
+
+        .map-item.level-0 { 
+            padding-left: 14px; 
+            background: rgba(86, 78, 132, 0.55);
+        }
+        .map-item.level-1 { 
+            padding-left: 28px; 
+            background: rgba(70, 95, 145, 0.48);
+            font-size: 17px;
+        }
+        .map-item.level-2 { 
+            padding-left: 44px; 
+            background: rgba(60, 105, 155, 0.42);
+            font-size: 16px;
+        }
+
+        .map-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .map-icon { width: 24px; text-align: center; }
+
+        .map-label {
+            flex: 1;
+            line-height: 1.15;
+        }
+
+        .map-arrow {
+            width: 22px;
+            text-align: right;
+            opacity: 0.95;
+            font-size: 20px;
+        }
+
+        .map-desc {
+            margin-top: 4px;
+            opacity: 0.88;
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .map-group { margin: 0; }
+        .map-children { display: none; margin: 0; }
+        .map-group.open > .map-children { display: block; }
+
+
+
+        /* Активная локация на карте */
+        .map-item.active-location {
+            background: rgba(40, 170, 90, 0.65) !important;
+            border: 2px solid rgba(140, 255, 190, 0.75);
+        }
+
+        /* Красивая кнопка "Назад к игре" */
+        .back-button {
+            display: block;
+            width: calc(100% - 24px);
+            max-width: 540px;
+            margin: 20px auto;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: scale(1.02);
+        }
+
+
+        /* Jump Points - специальное оформление */
+        .map-group.jump-points {
+            border-left: 3px solid rgba(100, 200, 255, 0.6);
+        }
+
+        .map-item.jump-point {
+            background: rgba(100, 150, 255, 0.35) !important;
+        }
+</style>
+</head>
+
+<body>
+
+    
+    <!-- Полноэкранный показ NPC -->
+    <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
+        <img id="npc-image" src="" alt="NPC">
+
+        <div id="npc-overlay-ui">
+            <div id="npc-loader" aria-hidden="true"></div>
+            <div id="npc-speech" aria-live="polite"></div>
+
+            <div id="npc-continue">
+                <div class="npc-continue-arrow">^</div>
+                <div class="npc-continue-label">Продолжить</div>
+            </div>
+        </div>
+    </div>
+<div id="app">
         <!-- СТАТЫ ПЕРСОНАЖА -->
-        <div id="player-stats">
+        <div id="player-stats" style="display: none;">
             <div class="stat-item">
                 <div class="stat-label">❤️ ЗДОРОВЬЕ</div>
                 <div class="stat-value health" id="health-value">100/100</div>
@@ -456,380 +927,608 @@
             </div>
         </div>
 
-        <div id="story-text">Загрузка истории...</div>
-        <div id="choices"></div>
+
+        <div id="scene" class="loading"> вселенной…</div>
+    </div>
+    <button id="audio-control" onclick="toggleAudio()">🔇</button>
+
+    <!-- Экран ввода кода -->
+    <div id="code-screen">
+        <h2 id="code-title">Введите секретный код</h2>
+        <div class="code-input-container">
+            <input type="text" id="code-input" placeholder="____" maxlength="10">
+            <button id="submit-code">Подтвердить</button>
+            <div id="code-error"></div>
+        </div>
+        <div class="code-hint" id="code-hint">Код состоит из 4 цифр</div>
+        <div id="code-text" class="story-text" style="margin-top: 20px;"></div>
+        <div id="code-choices" class="choices" style="margin-top: 20px;"></div>
     </div>
 
-    <div id="inventory">
-        <h3>📦 ИНВЕНТАРЬ</h3>
-
-        <div class="inventory-section">
-            <div class="inventory-section-title">🎯 Квесты</div>
-            <div id="quests-list"></div>
-        </div>
-
-        <div class="inventory-section">
-            <div class="inventory-section-title">📦 Предметы</div>
-            <div id="items-list"></div>
-        </div>
-
-        <div class="inventory-section">
-            <div class="inventory-section-title">🔑 Ключи</div>
-            <div id="keys-list"></div>
-        </div>
+    <!-- Экран броска кубиков -->
+    <div id="dice-screen">
+        <div class="dice">🎲 🎲</div>
+        <div class="result">Бросьте кости, чтобы определить исход.</div>
+        <button class="choice-btn" id="roll-button">Бросить кости</button>
     </div>
 
-    <button id="shop-button">🏪 Магазин</button>
-    <button id="map-button">🗺️ Карта</button>
-    <div id="debug-panel" onclick="resetGame()">🔄 СБРОС</div>
-
-    <!-- Password Modal -->
-    <div id="password-modal">
-        <div class="modal-content">
-            <h2>🔐 Введите код</h2>
-            <input type="text" id="password-input" maxlength="10" placeholder="****">
-            <p style="color: #888; font-size: 0.9em;">Код состоит из 4 цифр</p>
-            <button class="modal-button" onclick="submitPassword()">Подтвердить</button>
-            <button class="modal-button" onclick="closePasswordModal()">← Назад</button>
+    <!-- Экран инвентаря -->
+    <div id="inventory-screen">
+        <h2>Ваши ключи</h2>
+        <div class="keys-grid" id="keys-container">
+            <!-- Ключи будут добавлены сюда -->
         </div>
+        <button class="inventory-close" onclick="closeInventory()">← Назад к игре</button>
     </div>
 
-    <!-- Dice Modal -->
-    <div id="dice-modal">
-        <div class="modal-content">
-            <h2>🎲 🎲</h2>
-            <p>Бросьте кости, чтобы определить исход.</p>
-            <div id="dice-container">
-                <div class="dice" id="dice1">?</div>
-                <div class="dice" id="dice2">?</div>
-            </div>
-            <div id="dice-result" style="margin: 20px 0; font-size: 1.2em; color: #00ffff;"></div>
-            <button class="modal-button" onclick="rollDice()">Бросить кости</button>
-            <button class="modal-button" id="dice-continue-btn" style="display: none;" onclick="continueDiceStory()">Продолжить</button>
-        </div>
+    <!-- Экран карты мира -->
+    
+    <div id="map-screen" class="screen" style="display:none;">
+        <h2 class="map-title">🗺️ Карта мира</h2>
+        <div id="map-accordion" class="map-accordion"></div>
+        <button class="back-button" onclick="closeMap()">← Назад к игре</button>
     </div>
 
-    <!-- Map Modal -->
-    <div id="map-modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <h2>🗺️ Карта мира</h2>
-            <div id="map-locations" style="text-align: left; margin: 20px 0;"></div>
-            <button class="modal-button" onclick="closeMap()">← Назад</button>
-        </div>
+
+    <!-- Экран анимации ключа -->
+    <div id="key-animation">
+        <div class="icon" id="anim-key-icon">🗝️</div>
+        <div class="label" id="anim-key-label">Новый ключ!</div>
     </div>
 
-    <!-- Shop Modal -->
-    <div id="shop-modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <h2>🏪 МАГАЗИН</h2>
-            <p style="color: #ffaa00; margin: 10px 0;">💰 Ваши кредиты: <span id="shop-money">100</span></p>
-            <div id="shop-items"></div>
-            <button class="modal-button" onclick="closeShop()">← Назад</button>
-        </div>
-    </div>
+    <audio id="ambient-audio" loop preload="auto">
+        <source src="audio/ambient-loop.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
-        // ============= ДАННЫЕ ИСТОРИИ =============
-        const story = {
-            "start": {
-                "text": "Вы просыпаетесь в капсуле спасения. Корабль повреждён. На экране мигает сигнал SOS.",
-                "choices": [
-                    {
-                        "text": "Исследовать капсулу",
-                        "next": "explore_pod"
-                    },
-                    {
-                        "text": "Проверить системы корабля",
-                        "next": "check_ship"
-                    },
-                    {
-                        "text": "Открыть магазин (тест)",
-                        "action": "open_shop"
-                    }
-                ]
-            },
-            "explore_pod": {
-                "text": "В капсуле вы находите аварийный комплект: медпак, аптечку и 50 кредитов!",
-                "choices": [
-                    {
-                        "text": "Взять медпак x3",
-                        "next": "got_medkit",
-                        "collect": {
-                            "id": "item_medkit",
-                            "label": "💊 Медпак",
-                            "type": "item",
-                            "quantity": 3
-                        }
-                    },
-                    {
-                        "text": "Взять ключ-карту",
-                        "next": "got_keycard",
-                        "collect": {
-                            "id": "key_keycard",
-                            "label": "🔑 Ключ-карта",
-                            "type": "key",
-                            "quantity": 1
-                        }
-                    },
-                    {
-                        "text": "Взять кредиты (+50₡)",
-                        "next": "start",
-                        "money": 50
-                    }
-                ]
-            },
-            "got_medkit": {
-                "text": "Медпаки в вашем инвентаре. Вы чувствуете себя увереннее.",
-                "choices": [
-                    {
-                        "text": "Использовать медпак (-1, +50 HP)",
-                        "next": "used_medkit",
-                        "requires": ["item_medkit"],
-                        "consume": {
-                            "id": "item_medkit",
-                            "quantity": 1
-                        },
-                        "health": 50
-                    },
-                    {
-                        "text": "Идти в медбай",
-                        "next": "medbay"
-                    },
-                    {
-                        "text": "Вернуться к капсуле",
-                        "next": "explore_pod"
-                    }
-                ]
-            },
-            "used_medkit": {
-                "text": "Вы используете медпак. Здоровье восстановлено!",
-                "choices": [
-                    {
-                        "text": "Продолжить",
-                        "next": "got_medkit"
-                    }
-                ]
-            },
-            "got_keycard": {
-                "text": "Ключ-карта инженера получена. Вы можете открыть запертые двери.",
-                "choices": [
-                    {
-                        "text": "Идти в инженерный отсек",
-                        "next": "engineering",
-                        "requires": ["key_keycard"]
-                    },
-                    {
-                        "text": "Вернуться к капсуле",
-                        "next": "explore_pod"
-                    }
-                ]
-            },
-            "check_ship": {
-                "text": "Системы корабля показывают критический уровень кислорода. Нужно найти капитана.",
-                "choices": [
-                    {
-                        "text": "Искать капитана на мостике",
-                        "next": "bridge"
-                    },
-                    {
-                        "text": "Проверить каюты экипажа",
-                        "next": "crew_quarters"
-                    }
-                ]
-            },
-            "medbay": {
-                "text": "Медбай полностью разрушен. Среди обломков вы замечаете терминал.",
-                "choices": [
-                    {
-                        "text": "Проверить терминал",
-                        "next": "terminal_medbay",
-                        "requires": ["item_medkit"],
-                        "hide_until_unlocked": false,
-                        "missing_messages": {
-                            "item_medkit": "❌ Нужен медпак для доступа"
-                        }
-                    },
-                    {
-                        "text": "Взломать за 30 энергии",
-                        "next": "terminal_medbay",
-                        "stamina": -30
-                    },
-                    {
-                        "text": "Вернуться назад",
-                        "next": "start"
-                    }
-                ]
-            },
-            "terminal_medbay": {
-                "text": "Терминал запрашивает пароль. Подсказка: '1234'.",
-                "password": {
-                    "correct": "1234",
-                    "success": "password_success",
-                    "fail": "password_fail"
-                }
-            },
-            "password_success": {
-                "text": "✅ Пароль принят! Вы получаете доступ к базе данных.",
-                "choices": [
-                    {
-                        "text": "Получить награду (100₡ и квест)",
-                        "next": "start",
-                        "money": 100,
-                        "collect": {
-                            "id": "quest_save_ship",
-                            "label": "🎯 Спасти корабль",
-                            "type": "quest"
-                        }
-                    }
-                ]
-            },
-            "password_fail": {
-                "text": "❌ Неверный пароль! Терминал заблокирован.",
-                "choices": [
-                    {
-                        "text": "Попробовать снова",
-                        "next": "terminal_medbay"
-                    },
-                    {
-                        "text": "Вернуться",
-                        "next": "medbay"
-                    }
-                ]
-            },
-            "bridge": {
-                "text": "На мостике вы встречаете капитана Стоуна. Он ранен.",
-                "choices": [
-                    {
-                        "text": "Представиться капитану",
-                        "next": "meet_captain",
-                        "requires": ["state_met_captain"],
-                        "hide_until_unlocked": false,
-                        "collect": {
-                            "id": "state_met_captain",
-                            "label": "",
-                            "type": "state"
-                        },
-                        "missing_messages": {
-                            "state_met_captain": "Вы уже знакомы!"
-                        }
-                    },
-                    {
-                        "text": "Привет снова, капитан!",
-                        "next": "captain_return",
-                        "requires": ["state_met_captain"],
-                        "hide_until_unlocked": true
-                    },
-                    {
-                        "text": "Вылечить капитана (медпак)",
-                        "next": "heal_captain",
-                        "requires": ["item_medkit", "state_met_captain"],
-                        "hide_until_unlocked": true,
-                        "consume": {
-                            "id": "item_medkit",
-                            "quantity": 1
-                        }
-                    }
-                ]
-            },
-            "meet_captain": {
-                "text": "Капитан: 'Наконец-то! Помоги мне спасти корабль!'",
-                "choices": [
-                    {
-                        "text": "Принять квест",
-                        "next": "start",
-                        "collect": {
-                            "id": "quest_help_captain",
-                            "label": "🎯 Помочь капитану",
-                            "type": "quest"
-                        },
-                        "money": 200
-                    }
-                ]
-            },
-            "captain_return": {
-                "text": "Капитан: 'Как продвигается ремонт?'",
-                "choices": [
-                    {
-                        "text": "Ещё работаю",
-                        "next": "start"
-                    }
-                ]
-            },
-            "heal_captain": {
-                "text": "Вы лечите капитана. Он передаёт вам главный доступ и 500 кредитов!",
-                "choices": [
-                    {
-                        "text": "Получить награду",
-                        "next": "start",
-                        "collect": {
-                            "id": "key_master_access",
-                            "label": "🔐 Главный доступ",
-                            "type": "key"
-                        },
-                        "money": 500
-                    }
-                ]
-            },
-            "engineering": {
-                "text": "Инженерный отсек. Реактор нуждается в ремонте!",
-                "choices": [
-                    {
-                        "text": "Ремонтировать (-50₡, бросок костей)",
-                        "next": "reactor_dice",
-                        "cost": 50
-                    },
-                    {
-                        "text": "Назад",
-                        "next": "start"
-                    }
-                ]
-            },
-            "reactor_dice": {
-                "text": "Вы начинаете ремонт реактора. Бросьте кости!",
-                "dice": {
-                    "difficulty": 7,
-                    "success": "reactor_success",
-                    "fail": "reactor_fail"
-                }
-            },
-            "reactor_success": {
-                "text": "✅ УСПЕХ! Реактор починен. Корабль спасён! (+1000₡)",
-                "choices": [
-                    {
-                        "text": "🎉 Получить награду",
-                        "next": "start",
-                        "money": 1000,
-                        "collect": {
-                            "id": "state_reactor_fixed",
-                            "label": "",
-                            "type": "state"
-                        }
-                    }
-                ]
-            },
-            "reactor_fail": {
-                "text": "❌ ПРОВАЛ! Реактор повреждён ещё сильнее (-50 HP).",
-                "choices": [
-                    {
-                        "text": "Попробовать снова",
-                        "next": "engineering",
-                        "health": -50
-                    }
-                ]
-            },
-            "crew_quarters": {
-                "text": "Каюты пусты. На столе 100 кредитов.",
-                "choices": [
-                    {
-                        "text": "Взять кредиты (+100₡)",
-                        "next": "start",
-                        "money": 100
-                    }
-                ]
+        // === Фильтр карты: показывать только когда map_view: true
+        function hasMapView(node) {
+            return node && node.map_view === true;
+        }
+
+        function updateMapButtonVisibility() {
+            // Проверка: story и currentNodeId должны существовать
+            if (!story || !currentNodeId || !story[currentNodeId]) {
+                return; // Ещё не готово, выходим без ошибки
             }
+
+            const node = story[currentNodeId];
+            const mapBtn = document.getElementById('map-button');
+            if (!mapBtn) return;
+            mapBtn.style.display = hasMapView(node) ? 'inline-block' : 'none';
+        }
+
+
+        
+        // === СОХРАНЕНИЕ/ЗАГРУЗКА СИСТЕМЫ КОРАБЛЯ ===
+        
+        // === ОПРЕДЕЛЕНИЕ ТЕКУЩЕГО МИРА ===
+        function getCurrentWorld() {
+            if (!story || !currentNodeId || !story[currentNodeId]) {
+                return currentShipWorld; // По умолчанию возвращаем систему корабля
+            }
+
+            const node = story[currentNodeId];
+
+            // Для узлов корабля всегда используем currentShipWorld
+            if (node.location_category === 'ship') {
+                return currentShipWorld;
+            }
+
+            // Для остальных узлов используем их world или currentShipWorld
+            return node.world || currentShipWorld;
+        }
+
+        function saveShipWorld() {
+            localStorage.setItem('lingame_shipWorld', currentShipWorld);
+        }
+
+        function loadShipWorld() {
+            const saved = localStorage.getItem('lingame_shipWorld');
+            if (saved) {
+                currentShipWorld = saved;
+                console.log('📍 Корабль загружен в системе:', currentShipWorld);
+            }
+        }
+
+        function getAllLocationNodes() {
+            const result = [];
+            const currentWorld = getCurrentWorld();
+
+            for (const id in story) {
+                const n = story[id];
+                if (!n) continue;
+
+                if (n.is_location === true) {
+                    const isAlwaysVisible = n.loc_view_always === true;
+                    const isVisited = visitedLocations.includes(id);
+
+                    // Показывать локацию если она посещена или всегда видна
+                    if (!isAlwaysVisible && !isVisited) continue;
+
+                    // === ФИЛЬТР ПО МИРУ ===
+                    // 1. Корабль (ship) - показываем всегда
+                    // 2. Локации текущего мира
+                    // 3. Локации без мира (для совместимости)
+                    const isShip = n.location_category === 'ship';
+                    const isSameWorld = !n.world || n.world === currentWorld;
+
+                    if (isShip || isSameWorld) {
+                        result.push({ id, node: n });
+                    }
+                }
+            }
+            return result;
+        }
+
+        function buildMapTree() {
+            // Tree: category_name -> subcategory_name (optional) -> locations
+            const locs = getAllLocationNodes();
+            const tree = {};
+
+            // === ДОБАВЛЯЕМ ПРЫЖКОВЫЕ ТОЧКИ В НАЧАЛО ===
+            const jumpPoints = getAvailableJumpPoints();
+            if (jumpPoints.length > 0) {
+                tree['🚀 Jump Points'] = { subcats: {}, locs: jumpPoints };
+            }
+
+            locs.forEach(({ id, node }) => {
+                const cat = (node.category_name || node.location_category || 'Без категории').toString();
+                const sub = (node.subcategory_name || '').toString();
+
+                if (!tree[cat]) tree[cat] = { subcats: {}, locs: [] };
+
+                if (sub.trim()) {
+                    if (!tree[cat].subcats[sub]) tree[cat].subcats[sub] = [];
+                    tree[cat].subcats[sub].push({ id, node });
+                } else {
+                    tree[cat].locs.push({ id, node });
+                }
+            });
+
+            // Sort by title for stable UI
+            const sortByName = (a, b) => {
+                const an = (a.node.location_name || a.node.tag || a.id).toString();
+                const bn = (b.node.location_name || b.node.tag || b.id).toString();
+                return an.localeCompare(bn, 'ru');
+            };
+
+            Object.keys(tree).forEach(cat => {
+                tree[cat].locs.sort(sortByName);
+                Object.keys(tree[cat].subcats).forEach(sub => {
+                    tree[cat].subcats[sub].sort(sortByName);
+                });
+            });
+
+            return tree;
+        }
+
+        function createMapRow({ level, icon, title, description, isToggle, isOpen }) {
+            const btn = document.createElement('button');
+            btn.className = `map-item level-${level}`;
+
+            const row = document.createElement('div');
+            row.className = 'map-row';
+
+            const iconEl = document.createElement('div');
+            iconEl.className = 'map-icon';
+            iconEl.textContent = icon || '';
+
+            const label = document.createElement('div');
+            label.className = 'map-label';
+            label.textContent = title || '';
+
+            const arrow = document.createElement('div');
+            arrow.className = 'map-arrow';
+            arrow.textContent = isToggle ? (isOpen ? '^' : 'v') : '';
+
+            row.appendChild(iconEl);
+            row.appendChild(label);
+            row.appendChild(arrow);
+            btn.appendChild(row);
+
+            if (description) {
+                const desc = document.createElement('div');
+                desc.className = 'map-desc';
+                desc.textContent = description;
+                btn.appendChild(desc);
+            }
+
+            return btn;
+        }
+
+        
+        // === ПОЛУЧЕНИЕ ДОСТУПНЫХ ПРЫЖКОВЫХ ТОЧЕК ===
+        function getAvailableJumpPoints() {
+            const currentNode = story[currentNodeId];
+            if (!currentNode || !currentNode.jump_point) {
+                return [];
+            }
+
+            const currentWorld = getCurrentWorld();
+            const jumpPoint = currentNode.jump_point;
+
+            // Карта доступных прыжковых точек
+            const jumpMap = {
+                'to_pyro': { world: 'pyro', name: 'Jump to Pyro', icon: '🌀', description: 'Прыжок в систему Pyro' },
+                'to_nyx': { world: 'nyx', name: 'Jump to Nyx', icon: '🌀', description: 'Прыжок в систему Nyx' },
+                'to_stanton': { world: 'stanton', name: 'Jump to Stanton', icon: '🌀', description: 'Прыжок в систему Stanton' },
+                'to_terra': { world: 'terra', name: 'Jump to Terra', icon: '🌀', description: 'Прыжок в систему Terra' }
+            };
+
+            const jump = jumpMap[jumpPoint];
+            if (!jump) return [];
+
+            // Ищем узел прыжковой точки в целевой системе (обратный прыжок)
+            let targetNodeId = null;
+            const reverseJump = 'to_' + currentWorld;
+
+            for (const id in story) {
+                const node = story[id];
+                if (node && node.world === jump.world && node.jump_point === reverseJump) {
+                    targetNodeId = id;
+                    break;
+                }
+            }
+
+            // Если не нашли точный узел, ищем любую локацию в целевой системе
+            if (!targetNodeId) {
+                for (const id in story) {
+                    const node = story[id];
+                    if (node && node.world === jump.world && node.is_location) {
+                        targetNodeId = id;
+                        break;
+                    }
+                }
+            }
+
+            return [{
+                id: targetNodeId || jumpPoint,
+                targetWorld: jump.world,
+                node: {
+                    location_name: jump.name,
+                    location_icon: jump.icon,
+                    location_description: jump.description,
+                    _isJumpPoint: true,
+                    _targetWorld: jump.world
+                }
+            }];
+        }
+
+        // === ВЫПОЛНЕНИЕ ПРЫЖКА МЕЖДУ МИРАМИ ===
+        function performJump(targetNodeId, targetWorld) {
+            if (targetWorld) {
+                currentShipWorld = targetWorld;
+                saveShipWorld();
+                console.log('🚀 Прыжок выполнен! Корабль теперь в системе:', targetWorld);
+            }
+
+            closeMap();
+            if (targetNodeId && story[targetNodeId]) {
+                showNode(targetNodeId);
+            }
+        }
+
+        
+        function buildMapTree() {
+            // Tree: category_name -> subcategory_name (optional) -> locations
+            const locs = getAllLocationNodes();
+            const tree = {};
+
+            // === ДОБАВЛЯЕМ ПРЫЖКОВЫЕ ТОЧКИ В НАЧАЛО ===
+            const jumpPoints = getAvailableJumpPoints();
+            if (jumpPoints.length > 0) {
+                tree['🚀 Jump Points'] = { subcats: {}, locs: jumpPoints };
+            }
+
+            locs.forEach(({ id, node }) => {
+                const cat = (node.category_name || node.location_category || 'Без категории').toString();
+                const sub = (node.subcategory_name || '').toString();
+
+                if (!tree[cat]) tree[cat] = { subcats: {}, locs: [] };
+
+                if (sub.trim()) {
+                    if (!tree[cat].subcats[sub]) tree[cat].subcats[sub] = [];
+                    tree[cat].subcats[sub].push({ id, node });
+                } else {
+                    tree[cat].locs.push({ id, node });
+                }
+            });
+
+            // Sort by title for stable UI
+            const sortByName = (a, b) => {
+                const an = (a.node.location_name || a.node.tag || a.id).toString();
+                const bn = (b.node.location_name || b.node.tag || b.id).toString();
+                return an.localeCompare(bn, 'ru');
+            };
+
+            Object.keys(tree).forEach(cat => {
+                tree[cat].locs.sort(sortByName);
+                Object.keys(tree[cat].subcats).forEach(sub => {
+                    tree[cat].subcats[sub].sort(sortByName);
+                });
+            });
+
+            return tree;
+        }
+
+        function renderMapAccordion() {
+            const root = document.getElementById('map-accordion');
+            if (!root) return;
+            root.innerHTML = '';
+
+            // Определяем текущую категорию и подкатегорию для автооткрытия
+            const current = story[currentNodeId];
+            const openCatName = current ? (current.category_name || current.location_category || 'Без категории').toString() : null;
+            const openSubName = current ? (current.subcategory_name || '').toString() : '';
+
+
+            const tree = buildMapTree();
+            const categories = Object.keys(tree).sort((a,b)=>a.localeCompare(b,'ru'));
+
+            categories.forEach(catName => {
+                const shouldOpenCat = (openCatName && catName === openCatName);
+
+                const group = document.createElement('div');
+                group.className = 'map-group';
+
+                const header = createMapRow({
+                    level: 0,
+                    icon: '',
+                    title: catName,
+                    description: '',
+                    isToggle: true,
+                    isOpen: shouldOpenCat
+                });
+
+                const children = document.createElement('div');
+                children.className = 'map-children';
+
+                if (shouldOpenCat) {
+                    group.classList.add('open');
+                    header.querySelector('.map-arrow').textContent = '^';
+                }
+
+                header.addEventListener('click', () => {
+                    const open = group.classList.toggle('open');
+                    header.querySelector('.map-arrow').textContent = open ? '^' : 'v';
+                });
+
+                // Locations directly under category
+                tree[catName].locs.forEach(({ id, node }) => {
+                    const targetWorld = node._targetWorld || node.targetWorld;
+                    const locBtn = createMapRow({
+                        level: 1,
+                        icon: node.location_icon || '',
+                        title: node.location_name || node.tag || id,
+                        description: node.location_description || '',
+                        isToggle: false,
+                        isOpen: false
+                    });
+                    if (id === currentNodeId) locBtn.classList.add('active-location');
+                    locBtn.addEventListener('click', () => {
+                        if (node._isJumpPoint && targetWorld) {
+                            // Это прыжковая точка - используем performJump
+                            performJump(id, targetWorld);
+                        } else {
+                            // Обычная локация
+                            closeMap();
+                            showNode(id);
+                        }
+                    });
+                    children.appendChild(locBtn);
+                });
+
+                // Subcategories
+                const subs = Object.keys(tree[catName].subcats).sort((a,b)=>a.localeCompare(b,'ru'));
+                subs.forEach(subName => {
+                    const shouldOpenSub = (shouldOpenCat && openSubName && subName === openSubName);
+
+                    const subGroup = document.createElement('div');
+                    subGroup.className = 'map-group';
+
+                    const subHeader = createMapRow({
+                        level: 1,
+                        icon: '',
+                        title: subName,
+                        description: '',
+                        isToggle: true,
+                        isOpen: shouldOpenSub
+                    });
+
+                    const subChildren = document.createElement('div');
+                    subChildren.className = 'map-children';
+
+                    if (shouldOpenSub) {
+                        subGroup.classList.add('open');
+                        subHeader.querySelector('.map-arrow').textContent = '^';
+                    }
+
+                    subHeader.addEventListener('click', () => {
+                        const open = subGroup.classList.toggle('open');
+                        subHeader.querySelector('.map-arrow').textContent = open ? '^' : 'v';
+                    });
+
+                    tree[catName].subcats[subName].forEach(({ id, node }) => {
+                        const targetWorld = node._targetWorld || node.targetWorld;
+                        const locBtn = createMapRow({
+                            level: 2,
+                            icon: node.location_icon || '',
+                            title: node.location_name || node.tag || id,
+                            description: node.location_description || '',
+                            isToggle: false,
+                            isOpen: false
+                        });
+                        if (id === currentNodeId) locBtn.classList.add('active-location');
+                        locBtn.addEventListener('click', () => {
+                        if (node._isJumpPoint && targetWorld) {
+                            // Это прыжковая точка - используем performJump
+                            performJump(id, targetWorld);
+                        } else {
+                            // Обычная локация
+                            closeMap();
+                            showNode(id);
+                        }
+                    });
+                        subChildren.appendChild(locBtn);
+                    });
+
+                    subGroup.appendChild(subHeader);
+                    subGroup.appendChild(subChildren);
+                    children.appendChild(subGroup);
+                });
+
+                group.appendChild(header);
+                group.appendChild(children);
+                root.appendChild(group);
+            });
+        }
+
+
+
+        // ============================================
+        // ПОКАЗ NPC КАРТИНОК
+        // ============================================
+
+        
+        
+        function showSplashImage(prefix, nodeId, bubbleText) {
+            return new Promise((resolve) => {
+                const screen = document.getElementById('npc-screen');
+                const imgEl = document.getElementById('npc-image');
+                const speechEl = document.getElementById('npc-speech');
+                const loaderEl = document.getElementById('npc-loader');
+
+                // Мгновенная реакция
+                screen.classList.add('active');
+                screen.classList.remove('fade-out');
+                screen.classList.remove('ready');
+                screen.classList.add('loading');
+
+                // Скрываем "Продолжить" на время загрузки
+                // (покажется когда будет ready)
+
+                speechEl.textContent = (bubbleText || '').toString().trim();
+
+                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
+                const imgPng = `img/${prefix}_${nodeId}.png`;
+
+                const img = new Image();
+                let ready = false;
+
+                const cleanupAndResolve = () => {
+                    // На время закрытия — гарантированно убираем "Продолжить"
+                    screen.classList.remove('ready');
+                    ready = false;
+
+                    screen.classList.add('fade-out');
+                    setTimeout(() => {
+                        screen.classList.remove('active', 'fade-out', 'loading');
+                        resolve();
+                    }, 250);
+                };
+
+                const onClick = () => {
+                    if (!ready) return;
+                    cleanupAndResolve();
+                };
+
+                screen.addEventListener('click', onClick, { once: true });
+                screen.addEventListener('touchstart', onClick, { once: true, passive: true });
+
+                img.onload = function () {
+                    imgEl.src = img.src;
+                    ready = true;
+                    screen.classList.remove('loading');
+                    screen.classList.add('ready');
+                };
+
+                img.onerror = function () {
+                    if (img.src.endsWith('.jpg')) {
+                        img.src = imgPng;
+                    } else {
+                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
+                        // Не блокируем игру
+                        cleanupAndResolve();
+                    }
+                };
+
+                img.src = imgJpg;
+            });
+        }
+
+        function showNPCImage(nodeId, helloText) {
+            return showSplashImage('npc', nodeId, helloText);
+        }
+
+        function hasNPCTag(node) {
+            return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
+        }
+
+        // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
+        window.__nodeTransitionLock = false;
+
+
+        // Сохраняем оригинальную функцию showNode
+        let originalShowNodeCode = null;
+
+
+        let story = null;
+        let currentNodeId = null;
+        let currentShipWorld = 'nyx'; // Текущая система, где находится корабль
+        let diceAnimationInterval = null;
+        let autoAdvanceTimeout = null;
+
+        // 🔔 NOTIFICATION SYSTEM: Глобальные переменные
+        let lastNotificationTime = 0;
+        const NOTIFICATION_COOLDOWN = 3000; // 3 секунды между уведомлениями
+        let NOTIFICATION_CONFIG = {
+            BOT_TOKEN: '',
+            PUBLIC_CHAT_ID: '',
+            isEnabled: false
+        };
+        // END NOTIFICATION SYSTEM
+
+        // === СИСТЕМА КАРТЫ МИРА ===
+        let visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
+        const mapScreen = document.getElementById('map-screen');
+        const locationsContainer = document.getElementById('locations-container');
+        // END СИСТЕМА КАРТЫ МИРА
+
+        // Добавляем новые переменные
+        let currentCodeNode = null;
+        const codeScreen = document.getElementById('code-screen');
+        const codeInput = document.getElementById('code-input');
+        const submitCodeBtn = document.getElementById('submit-code');
+        const codeErrorEl = document.getElementById('code-error');
+        const codeTitleEl = document.getElementById('code-title');
+        const codeHintEl = document.getElementById('code-hint');
+
+        const sceneEl = document.getElementById('scene');
+        const diceScreen = document.getElementById('dice-screen');
+        const inventoryScreen = document.getElementById('inventory-screen');
+        const keyAnimScreen = document.getElementById('key-animation');
+        const keysContainer = document.getElementById('keys-container');
+        const animKeyIcon = document.getElementById('anim-key-icon');
+        const animKeyLabel = document.getElementById('anim-key-label');
+        const audioEl = document.getElementById('ambient-audio');
+        const audioBtn = document.getElementById('audio-control');
+        let isAudioPlaying = false;
+
+        // === СИСТЕМА КЛЮЧЕЙ ===
+        let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+
+        // ===== RPG СИСТЕМЫ: НОВЫЕ ПЕРЕМЕННЫЕ =====
+        let collectedItems = {}; // Количество предметов: {"item_medkit": 3}
+        let playerStats = {
+            health: 100,
+            maxHealth: 100,
+            stamina: 100,
+            maxStamina: 100,
+            money: 100
         };
 
-        // ============= МАГАЗИН =============
+        // Магазин
         const shopItems = [
             {
                 id: "item_medkit",
@@ -857,623 +1556,1935 @@
             }
         ];
 
-        // ============= СОСТОЯНИЕ ИГРЫ =============
-        let playerStats = {
-            health: 100,
-            maxHealth: 100,
-            stamina: 100,
-            maxStamina: 100,
-            money: 100
-        };
 
-        let currentNodeId = "start";
-        let collectedItems = {}; // { "item_medkit": 3, "key_keycard": 1 }
-        let currentPasswordNode = null;
-        let currentDiceNode = null;
+        function saveKeys() {
+            // Сохраняем статы и предметы
+        localStorage.setItem("playerStats", JSON.stringify(playerStats));
+        localStorage.setItem("collectedItems", JSON.stringify(collectedItems));
 
-        // ============= УПРАВЛЕНИЕ ПРЕДМЕТАМИ =============
-
-        function hasItem(itemId, quantity = 1) {
-            return (collectedItems[itemId] || 0) >= quantity;
-        }
-
-        function addItem(itemId, quantity = 1) {
-            if (!collectedItems[itemId]) {
-                collectedItems[itemId] = 0;
-            }
-            collectedItems[itemId] += quantity;
-        }
-
-        function removeItem(itemId, quantity = 1) {
-            if (collectedItems[itemId]) {
-                collectedItems[itemId] -= quantity;
-                if (collectedItems[itemId] <= 0) {
-                    delete collectedItems[itemId];
-                }
-            }
+        // Сохраняем старые ключи
+        localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
         }
 
         function collectKey(keyData) {
-            if (keyData && keyData.id) {
-                const qty = keyData.quantity || 1;
-                addItem(keyData.id, qty);
-                saveGame();
-                updateInventory();
-                updateStats();
+        if (!keyData || !keyData.id) return;
 
-                if (keyData.label && keyData.label.trim() !== "") {
-                    showKeyAnimation(keyData);
+        const keyId = keyData.id;
+        const quantity = keyData.quantity || 1;
+
+        // Добавляем в новый формат (с количеством)
+        addItem(keyId, quantity);
+
+        // Также добавляем в старый формат для совместимости
+        collectedKeys.add(keyId);
+
+        saveKeys();
+
+        // Показываем анимацию только если есть метка
+        if (keyData.label && keyData.label.trim() !== "") {
+            showKeyAnimation(keyData);
+        }
+
+        // Обновляем инвентарь
+        if (typeof showInventory === 'function') {
+            showInventory();
+        }
+    };
+                saveKeys();
+                console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')');
+
+        function hasAllKeys(requiredKeys) {
+            if (!requiredKeys) return true;
+            if (typeof requiredKeys === 'string') {
+                // Поддержка старого формата: "requires": "single_key"
+                requiredKeys = [requiredKeys];
+            }
+            if (!Array.isArray(requiredKeys)) {
+                return false;
+            }
+            return requiredKeys.every(keyId => !!collectedKeys[keyId]);
+        }
+
+        function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
+            if (!requiredKeys) return [];
+            const keys = Array.isArray(requiredKeys) ? requiredKeys : [requiredKeys];
+            return keys
+                .filter(keyId => !collectedKeys[keyId])
+                .map(keyId => missingMessages[keyId] || `Требуется предмет: ${keyId}`);
+        }
+
+        function showInventory() {
+            // НЕ скрываем сцену! Только показываем инвентарь поверх
+            diceScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            inventoryScreen.style.display = 'block';
+
+            keysContainer.innerHTML = '';
+            const keys = Object.entries(collectedKeys);
+            if (keys.length === 0) {
+                keysContainer.innerHTML = '<p>У вас пока нет ключей.</p>';
+            } else {
+                const iconMap = {
+                    'card': '🃏',
+                    'old': '🔑',
+                    'digital': '💾',
+                    'regular': '🗝️'
+                };
+
+                for (const [id, data] of keys) {
+                    const { label, type = 'regular' } = data;
+                    const icon = iconMap[type] || iconMap.regular;
+
+                    const keyEl = document.createElement('div');
+                    keyEl.className = 'key-item';
+                    keyEl.innerHTML = `
+                <div class="key-icon">${icon}</div>
+                <div class="key-label">${label}</div>
+            `;
+                    keysContainer.appendChild(keyEl);
                 }
             }
+            // Не прокручиваем наверх — оставляем позицию сцены как есть
         }
 
-        function consumeItem(consumeData) {
-            if (consumeData && consumeData.id) {
-                const qty = consumeData.quantity || 1;
-                removeItem(consumeData.id, qty);
-                saveGame();
-                updateInventory();
+        function closeInventory() {
+            inventoryScreen.style.display = 'none';
+            // НЕ делаем sceneEl.style.display = 'block' — он и так виден
+        }
+
+        // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
+        function showKeyAnimation(keyData, nextNodeId) {
+            if (!keyData || !keyData.id || !keyData.label) return;
+
+            // ✅ СОХРАНЯЕМ КЛЮЧ ПРЯМО ЗДЕСЬ
+            collectedKeys[keyData.id] = {
+                label: keyData.label,
+                type: keyData.type || 'regular'
+            };
+            saveKeys(); // сохраняем в localStorage
+
+            const iconMap = {
+                'card': '🃏',
+                'old': '🔑',
+                'digital': '💾',
+                'regular': '🗝️'
+            };
+            const icon = iconMap[keyData.type || 'regular'] || iconMap.regular;
+
+            if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'block';
+
+            animKeyIcon.textContent = icon;
+            animKeyLabel.textContent = keyData.label;
+
+            autoAdvanceTimeout = setTimeout(() => {
+                keyAnimScreen.style.display = 'none';
+                showNode(nextNodeId);
+            }, 2200);
+        }
+
+        // === СИСТЕМА КАРТЫ МИРА ===
+        function saveLocations() {
+            localStorage.setItem('lingame_locations', JSON.stringify(visitedLocations));
+        }
+
+        function addLocation(nodeId) {
+            if (!nodeId || visitedLocations.includes(nodeId)) return;
+
+            visitedLocations.push(nodeId);
+            saveLocations();
+            console.log(`🗺️ Открыта новая локация: ${story[nodeId]?.location_name || nodeId}`);
+        }
+
+        function isLocationVisited(nodeId) {
+            return visitedLocations.includes(nodeId);
+        }
+
+        
+        function showMap() {
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            codeScreen.style.display = 'none';
+            mapScreen.style.display = 'block';
+            renderMapAccordion();
+        }
+
+
+        function closeMap() {
+            mapScreen.style.display = 'none';
+            sceneEl.style.display = 'block';
+
+            // ✅ ВОССТАНАВЛИВАЕМ позицию скролла
+            if (window.savedScrollPosition !== undefined) {
+                window.scrollTo({ top: window.savedScrollPosition, behavior: 'instant' });
+                window.savedScrollPosition = undefined;
             }
         }
 
-        // ============= СТАТЫ =============
+        function updateLocationsDisplay() {
+            locationsContainer.innerHTML = '';
 
-        function modifyHealth(amount) {
-            playerStats.health = Math.max(0, Math.min(playerStats.maxHealth, playerStats.health + amount));
-            updateStats();
-
-            if (playerStats.health === 0) {
-                alert("💀 ВЫ ПОГИБЛИ!");
-                resetGame();
-            }
-        }
-
-        function modifyStamina(amount) {
-            playerStats.stamina = Math.max(0, Math.min(playerStats.maxStamina, playerStats.stamina + amount));
-            updateStats();
-        }
-
-        function modifyMoney(amount) {
-            playerStats.money += amount;
-            if (playerStats.money < 0) playerStats.money = 0;
-            updateStats();
-        }
-
-        function updateStats() {
-            document.getElementById('health-value').textContent = 
-                `${playerStats.health}/${playerStats.maxHealth}`;
-            document.getElementById('stamina-value').textContent = 
-                `${playerStats.stamina}/${playerStats.maxStamina}`;
-            document.getElementById('money-value').textContent = 
-                playerStats.money;
-
-            const healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
-            const staminaPercent = (playerStats.stamina / playerStats.maxStamina) * 100;
-
-            document.getElementById('health-bar').style.width = healthPercent + '%';
-            document.getElementById('stamina-bar').style.width = staminaPercent + '%';
-
-            saveGame();
-        }
-
-        // ============= АНИМАЦИЯ =============
-
-        function showKeyAnimation(keyData) {
-            const targetList = getInventoryListForType(keyData.type || keyData.id.split('_')[0]);
-            if (!targetList) return;
-
-            const keyItem = document.createElement('div');
-            keyItem.className = 'key-item key-animation';
-
-            const qty = collectedItems[keyData.id] || 1;
-            const label = document.createElement('span');
-            label.textContent = keyData.label;
-            keyItem.appendChild(label);
-
-            if (qty > 1) {
-                const qtyBadge = document.createElement('span');
-                qtyBadge.className = 'item-quantity';
-                qtyBadge.textContent = `x${qty}`;
-                keyItem.appendChild(qtyBadge);
+            if (visitedLocations.length === 0) {
+                locationsContainer.innerHTML = `
+                    <p style="color: #777; margin: 40px 0; font-size: 18px;">Вы еще не открыли ни одной локации</p>
+                    <p class="map-info">Путешествуйте по миру, чтобы открывать новые места на карте</p>
+                `;
+                return;
             }
 
-            const prefix = keyData.id.split('_')[0];
-            keyItem.classList.add(`${prefix}-type`);
+            // Группируем локации по категориям
+            const locationsByCategory = {};
 
-            targetList.appendChild(keyItem);
-
-            setTimeout(() => {
-                keyItem.classList.remove('key-animation');
-            }, 500);
-        }
-
-        function getInventoryListForType(type) {
-            switch(type) {
-                case 'quest': return document.getElementById('quests-list');
-                case 'item': return document.getElementById('items-list');
-                case 'key': return document.getElementById('keys-list');
-                default: return document.getElementById('items-list');
-            }
-        }
-
-        function updateInventory() {
-            document.getElementById('quests-list').innerHTML = '';
-            document.getElementById('items-list').innerHTML = '';
-            document.getElementById('keys-list').innerHTML = '';
-
-            let hasAnyItems = false;
-
-            for (let itemId in collectedItems) {
-                const qty = collectedItems[itemId];
-                if (qty <= 0) continue;
-
-                const keyData = findKeyData(itemId);
-                if (!keyData || !keyData.label || keyData.label.trim() === "") continue;
-
-                hasAnyItems = true;
-                const prefix = itemId.split('_')[0];
-                const targetList = getInventoryListForType(keyData.type || prefix);
-
-                if (!targetList) continue;
-
-                const keyItem = document.createElement('div');
-                keyItem.className = `key-item ${prefix}-type`;
-
-                const label = document.createElement('span');
-                label.textContent = keyData.label;
-                keyItem.appendChild(label);
-
-                if (qty > 1) {
-                    const qtyBadge = document.createElement('span');
-                    qtyBadge.className = 'item-quantity';
-                    qtyBadge.textContent = `x${qty}`;
-                    keyItem.appendChild(qtyBadge);
-                }
-
-                targetList.appendChild(keyItem);
-            }
-
-            if (!document.getElementById('quests-list').children.length) {
-                document.getElementById('quests-list').innerHTML = '<p style="color: #666; font-size: 0.85em;">Нет квестов</p>';
-            }
-            if (!document.getElementById('items-list').children.length) {
-                document.getElementById('items-list').innerHTML = '<p style="color: #666; font-size: 0.85em;">Нет предметов</p>';
-            }
-            if (!document.getElementById('keys-list').children.length) {
-                document.getElementById('keys-list').innerHTML = '<p style="color: #666; font-size: 0.85em;">Нет ключей</p>';
-            }
-        }
-
-        function findKeyData(keyId) {
-            for (let nodeId in story) {
+            for (const nodeId of visitedLocations) {
                 const node = story[nodeId];
-                if (node.choices) {
-                    for (let choice of node.choices) {
-                        if (choice.collect && choice.collect.id === keyId) {
-                            return choice.collect;
-                        }
+                if (!node || !node.is_location) continue;
+
+                const category = node.location_category || 'other';
+                if (!locationsByCategory[category]) {
+                    locationsByCategory[category] = [];
+                }
+                locationsByCategory[category].push(nodeId);
+            }
+
+            // Отображаем локации по категориям
+            for (const [category, locationIds] of Object.entries(locationsByCategory)) {
+                if (locationIds.length === 0) continue;
+
+                let categoryTitle = 'Другие места';
+                if (story[locationIds[0]]?.category_name) {
+                    categoryTitle = story[locationIds[0]].category_name;
+                } else {
+                    const defaultTitles = {
+                        'town': '🏰 Города и поселения',
+                        'wilderness': '🌲 Дикие земли',
+                        'dungeon': '⚔️ Подземелья',
+                        'ship': '⚓ Корабли',
+                        'space': '🚀 Космос'
+                    };
+                    categoryTitle = defaultTitles[category] || categoryTitle;
+                }
+
+                locationsContainer.innerHTML += `<h3 class="category-title">${categoryTitle}</h3>`;
+
+                for (const nodeId of locationIds) {
+                    const node = story[nodeId];
+                    if (!node) continue;
+
+                    const locationEl = document.createElement('div');
+                    locationEl.className = 'location-item';
+                    if (nodeId === currentNodeId) {
+                        locationEl.classList.add('current-location');
                     }
+
+                    const icon = node.location_icon || '📍';
+                    const name = node.location_name || nodeId.replace(/_/g, ' ');
+                    const description = node.location_description || '';
+
+                    locationEl.innerHTML = `
+                        <div class="location-icon">${icon}</div>
+                        <div class="location-name">${name}</div>
+                        ${description ? `<div class="location-description">${description}</div>` : ''}
+                    `;
+
+                    // ✅ ИСПРАВЛЕНИЕ: Используем IIFE для правильного замыкания
+                    locationEl.onclick = (function(targetId) {
+                        return function() {
+                            console.log('🖱️ Клик по локации:', targetId);
+                            console.log('📦 story существует:', !!story);
+                            console.log('🎯 Узел существует:', !!story[targetId]);
+
+                            // Плавное закрытие карты
+                            mapScreen.style.opacity = '0';
+                            mapScreen.style.transform = 'translateY(20px)';
+
+                            setTimeout(() => {
+                                mapScreen.style.display = 'none';
+                                sceneEl.style.display = 'block';
+
+                                if (story && story[targetId]) {
+                                    console.log(`🗺️ Переход к локации: ${targetId}`);
+                                    showNode(targetId);
+                                } else {
+                                    console.error(`❌ Узел "${targetId}" не найден в story.json`);
+                                    sceneEl.innerHTML += `
+                    <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
+                        padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
+                        <p>❌ Ошибка: локация "${targetId}" не найдена в файле игры</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль разработчика (F12)</p>
+                    </div>
+                `;
+                                }
+                            }, 250);
+                        };
+                    })(nodeId); // Передаём nodeId как параметр
+
+                    locationsContainer.appendChild(locationEl);
                 }
             }
-            return null;
+
+            if (locationsContainer.children.length === 0) {
+                locationsContainer.innerHTML = `
+                    <div class="map-info" style="margin-top: 30px; grid-column: 1 / -1;">
+                        <p>🗺️ Локации добавлены, но не отображаются</p>
+                        <p style="font-style: italic; margin-top: 8px;">Проверьте, что узлы имеют is_location = true</p>
+                    </div>
+                `;
+            }
+        }
+        // Свайп удалён (работал нестабильно на мобильных)
+        // END СИСТЕМА КАРТЫ МИРА
+
+        // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+
+        function getDiceEmoji(n) {
+            const dice = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            return dice[n - 1] || '🎲';
         }
 
-        // ============= ПРОВЕРКА ТРЕБОВАНИЙ =============
-
-        function checkRequirements(requires) {
-            if (!requires || requires.length === 0) return true;
-            return requires.every(keyId => hasItem(keyId, 1));
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
         }
 
-        function getMissingKeyMessages(requires, missingMessages = {}) {
-            if (!requires || requires.length === 0) return [];
+        function getSafeImageName(nodeId) {
+            return nodeId
+                .replace(/[^a-zA-Z0-9\s_-]/g, '')
+                .replace(/\s+/g, '_')
+                .toLowerCase()
+                .replace(/_{2,}/g, '_');
+        }
 
-            const missing = [];
-            requires.forEach(keyId => {
-                if (!hasItem(keyId, 1)) {
-                    const message = missingMessages[keyId] || `❌ Требуется: ${keyId}`;
-                    missing.push(message);
+        function formatText(text) {
+            let normalized = text.replace(/\\n/g, '\n');
+            return normalized
+                .replace(/`([^`]*)`/g, '<em>$1</em>')
+                .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>')
+                .split('\n\n')
+                .map(p => `<p>${p.trim()}</p>`)
+                .filter(p => p !== '<p></p>')
+                .join('');
+        }
+
+        function getIllustrationHtml(nodeId) {
+            const safeName = getSafeImageName(nodeId);
+            const imgSrc = nodeId === "node_end"
+                ? "img/end_scene.jpg"
+                : `img/${safeName}.jpg`;
+            return `
+        <div class="illustration">
+          <img src="${imgSrc}?v=${Date.now()}"
+               alt="Сцена ${nodeId}"
+               onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>🌌 Иллюстрация недоступна для ${nodeId}</div>'">
+        </div>
+      `;
+        }
+
+        // === БРОСОК КУБИКОВ ===
+
+        function rollDice(successTarget, partialTarget, failTarget) {
+            if (diceAnimationInterval) {
+                clearInterval(diceAnimationInterval);
+                diceAnimationInterval = null;
+            }
+
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'block';
+            diceScreen.innerHTML = `
+                <div class="dice">🎲 🎲</div>
+                <div class="result">Испытать удачу и сделать верный выбор.</div>
+                <button class="choice-btn" id="roll-button">Положиться на судьбу</button>
+            `;
+
+            const newRollButton = document.getElementById('roll-button');
+            newRollButton.onclick = () => {
+                let animCount = 0;
+                diceAnimationInterval = setInterval(() => {
+                    const d1 = Math.floor(Math.random() * 6) + 1;
+                    const d2 = Math.floor(Math.random() * 6) + 1;
+                    diceScreen.innerHTML = `
+                        <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+                        <div class="result">Бросок...</div>
+                        <button class="choice-btn" disabled>Хоть-бы... хоть-бы...</button>
+                    `;
+                    animCount++;
+                    if (animCount > 12) {
+                        clearInterval(diceAnimationInterval);
+                        diceAnimationInterval = null;
+                        const total = d1 + d2;
+                        diceScreen.innerHTML = `
+                            <div class="dice">${getDiceEmoji(d1)} ${getDiceEmoji(d2)}</div>
+                            <div class="result">Выпало: <strong>${total}</strong></div>
+                            <button class="choice-btn" onclick="proceedAfterDice(${total})">Продолжить</button>
+                        `;
+
+                        window.proceedAfterDice = function (total) {
+                            diceScreen.style.display = 'none';
+                            sceneEl.style.display = 'block';
+
+                            let target;
+                            if (total >= 8) {
+                                target = successTarget;
+                            } else if (total === 7) {
+                                target = partialTarget;
+                            } else {
+                                target = failTarget;
+                            }
+
+                            if (target && story[target]) {
+                                showNode(target);
+                            } else {
+                                showNode('0');
+                            }
+                        };
+                    }
+                }, 100);
+            };
+        }
+
+        // === 🔔 NOTIFICATION SYSTEM ===
+        function validateInitData(initData) {
+            if (!initData) return false;
+
+            // Проверяем наличие обязательных параметров
+            const params = new URLSearchParams(initData);
+            const hasUser = params.has('user');
+            const hasAuthDate = params.has('auth_date');
+
+            if (!hasUser || !hasAuthDate) return false;
+
+            // Проверяем актуальность данных (24 часа)
+            const authDate = parseInt(params.get('auth_date')) * 1000;
+            const now = Date.now();
+            return (now - authDate) < 86400000; // 24 часа в миллисекундах
+        }
+
+        async function sendGlobalNotification(nodeId, notifyData) {
+            // Проверка конфигурации
+            if (!NOTIFICATION_CONFIG.isEnabled ||
+                !NOTIFICATION_CONFIG.BOT_TOKEN ||
+                !NOTIFICATION_CONFIG.PUBLIC_CHAT_ID) {
+                console.log('🔔 Уведомления отключены или конфигурация не загружена');
+                return;
+            }
+
+            const tg = window.Telegram?.WebApp;
+            if (!tg?.initData || !validateInitData(tg.initData)) {
+                console.log('🔔 Невалидные данные Telegram');
+                return;
+            }
+
+            // Защита от спама
+            const now = Date.now();
+            if (now - lastNotificationTime < NOTIFICATION_COOLDOWN) {
+                console.log('🔔 Уведомление отклонено: кулдаун');
+                return;
+            }
+
+            // Проверка дубликатов
+            const notifiedKey = `notified_${nodeId}_${tg.initDataUnsafe?.user?.id}`;
+            if (localStorage.getItem(notifiedKey)) {
+                console.log('🔔 Уведомление отклонено: дубликат');
+                return;
+            }
+
+            lastNotificationTime = now;
+
+            try {
+                // Получаем данные пользователя
+                const user = tg.initDataUnsafe?.user || {};
+                const playerName = user.username
+                    ? `@${user.username}`
+                    : user.first_name || 'Игрок';
+
+                // Формируем сообщение
+                const message = `
+🔔 Новое достижение в игре!
+👤 ${playerName} дошёл до: ${notifyData.message}
+🎮 Прогресс: ${nodeId}
+                `.trim();
+
+                console.log('📤 Отправка уведомления:', message);
+
+                // Отправляем запрос в Bot API
+                const response = await fetch(`https://api.telegram.org/bot${NOTIFICATION_CONFIG.BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: NOTIFICATION_CONFIG.PUBLIC_CHAT_ID, // Просто число!
+                        text: message,
+                        disable_web_page_preview: true,
+                        disable_notification: false // Важно: true для тихих уведомлений
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.ok) {
+                    console.log('✅ Уведомление успешно отправлено');
+                    // Сохраняем факт отправки для избежания дубликатов
+                    localStorage.setItem(notifiedKey, 'true');
+                } else {
+                    console.error('❌ Ошибка Telegram API:', result);
+                    // Сбрасываем lastNotificationTime при ошибке для повторной попытки
+                    lastNotificationTime = 0;
                 }
-            });
-            return missing;
+            } catch (e) {
+                console.error('❌ Ошибка отправки уведомления:', e);
+                lastNotificationTime = 0;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+
+        // === ОСНОВНАЯ ЛОГИКА ===
+
+        async function loadStory() {
+            try {
+                const res = await fetch('story.json');
+                if (!res.ok) throw new Error('Файл story.json не найден');
+                story = await res.json();
+                initGame();
+            } catch (e) {
+                sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
+                console.error(e);
+            }
         }
 
-        // ============= РЕНДЕРИНГ УЗЛА =============
+        function initGame() {
+        // Загружаем статы персонажа
+        const savedStats = localStorage.getItem("playerStats");
+        if (savedStats) {
+            try {
+                playerStats = JSON.parse(savedStats);
+            } catch (e) {
+                console.error("Ошибка загрузки статов:", e);
+            }
+        }
 
-        function renderNode(nodeId) {
+        // Загружаем предметы
+        const savedItems = localStorage.getItem("collectedItems");
+        if (savedItems) {
+            try {
+                collectedItems = JSON.parse(savedItems);
+            } catch (e) {
+                console.error("Ошибка загрузки предметов:", e);
+            }
+        }
+
+        // Миграция старых ключей
+        migrateOldKeysToItems();
+
+        // Обновляем отображение статов
+        updateStats();
+
+        // Инициализируем магазин
+        initShopButton();
+
+            // Загружаем сохраненные локации
+            visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
+
+            const saved = localStorage.getItem('lingame_lastNode');
+            if (saved && story[saved]) {
+                showNode(saved);
+            } else {
+                showNode('0');
+            }
+        }
+
+        function showNode(nodeId) {
+            // Отмена предыдущего таймера
+            if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+
+            sceneEl.style.display = 'block';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+            codeScreen.style.display = 'none';  // ✅ ИСПРАВЛЕНИЕ: Скрываем экран ввода кода
+
+            if (!story[nodeId]) {
+                console.error(`Узел "${nodeId}" не найден`);
+                showNode(Object.keys(story)[0]);
+                return;
+            }
+
             const node = story[nodeId];
-            if (!node) {
-                document.getElementById('story-text').textContent = "❌ Узел не найден: " + nodeId;
+
+            // ============================================
+            // ПРОВЕРКА ЛОКАЦИИ
+            // ============================================
+
+            // ============================================
+            // ПРОВЕРКА NPC ТЕГА
+            // ============================================
+            if (hasNPCTag(node)) {
+                // Показываем NPC картинку, затем продолжаем
+                showNPCImage(nodeId, node.npc_hello).then(() => {
+                    loadNodeContent(node, nodeId);
+                });
                 return;
             }
 
-            currentNodeId = nodeId;
-            document.getElementById('story-text').textContent = node.text;
+            // Если нет тега NPC, продолжаем как обычно
+            loadNodeContent(node, nodeId);
+        }
 
-            const choicesContainer = document.getElementById('choices');
-            choicesContainer.innerHTML = '';
+        function loadNodeContent(node, nodeId) {
+            window.__nodeTransitionLock = false;
+            window.__nodeTransitionLock = false;            currentNodeId = nodeId;
+            localStorage.setItem('lingame_lastNode', nodeId);
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
-            if (node.password) {
-                currentPasswordNode = node;
-                const button = document.createElement('button');
-                button.className = 'choice-button';
-                button.textContent = '🔐 Ввести пароль';
-                button.onclick = () => openPasswordModal();
-                choicesContainer.appendChild(button);
+            // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
+            if (node.notify) {
+                sendGlobalNotification(nodeId, node.notify);
+            }
+            // END NOTIFICATION SYSTEM
+
+            // === СИСТЕМА КАРТЫ МИРА: Отметка посещенных локаций ===
+            if (node.is_location && !isLocationVisited(nodeId)) {
+                addLocation(nodeId);
+
+                // Показываем анимацию открытия новой локации (опционально)
+                if (!localStorage.getItem('hide_map_tutorial')) {
+                    setTimeout(() => {
+                        sceneEl.innerHTML += `
+                            <div style="background: rgba(76, 175, 80, 0.2); border-left: 3px solid var(--success); padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px; position: relative;">
+                                <button style="position: absolute; right: 8px; top: 8px; background: rgba(255,255,255,0.1); border: none; width: 20px; height: 20px; border-radius: 50%; color: white; font-size: 12px; cursor: pointer;" onclick="localStorage.setItem('hide_map_tutorial', 'true'); this.parentElement.style.display='none'">×</button>
+                                <p>🗺️ <strong>Новая локация открыта!</strong> Нажмите иконку карты 🗺️, чтобы вернуться сюда позже.</p>
+                            </div>
+                        `;
+                    }, 500);
+                }
+            }
+            // === СИСТЕМА БОЛЬНИЦЫ: Очистка инвентаря ===
+            if (node.is_hospital) {
+                // Полная очистка инвентаря при попадании в больницу
+                inventory = [];
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+                console.log('🏥 Вы в больнице. Инвентарь полностью очищен.');
+            }
+            // END СИСТЕМА БОЛЬНИЦЫ
+
+            // END СИСТЕМА КАРТЫ МИРА
+
+            // 🔑 Сбор ключа удалён
+            // Проверка на ноду с вводом кода
+            if (node.input_type === "code") {
+                showCodeScreen(node);
                 return;
             }
 
-            if (node.dice) {
-                currentDiceNode = node;
-                const button = document.createElement('button');
-                button.className = 'choice-button';
-                button.textContent = '🎲 Бросить кости';
-                button.onclick = () => openDiceModal();
-                choicesContainer.appendChild(button);
+            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
+            if (node.requires && !hasAllKeys(node.requires)) {
+                const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
+                sceneEl.classList.remove('active');
+                setTimeout(() => {
+                    sceneEl.className = 'scene deadend';
+                    sceneEl.innerHTML = `
+                        <div class="text"><p>Дверь заперта. Похоже, вам нужен особый ключ...</p></div>
+                        <div class="choices">
+                            <button class="choice-btn" onclick="handleChoice('${fallbackChoice.next}')">${fallbackChoice.text}</button>
+                        </div>
+                        <div style="text-align:center; margin-top:20px;">
+                            <button class="choice-btn" style="background:#555;" onclick="showInventory()">Посмотреть инвентарь</button>
+                        </div>
+                    `;
+                    sceneEl.classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 320);
                 return;
             }
 
-            if (node.choices) {
-                node.choices.forEach((choice, index) => {
-                    const button = document.createElement('button');
-                    button.className = 'choice-button';
-                    button.textContent = choice.text;
+            const isRestartNode = nodeId === "node_end";
+            const hasRestartOption = node.choices?.some(c => c.next === "main_story");
 
-                    // Показываем стоимость
-                    if (choice.cost) {
-                        const costSpan = document.createElement('span');
-                        costSpan.className = 'choice-cost';
-                        costSpan.textContent = `-${choice.cost}₡`;
-                        button.appendChild(costSpan);
+            const illustration = getIllustrationHtml(nodeId);
+            const formattedText = formatText(node.text);
+
+            const hasChoices = node.choices && node.choices.length > 0;
+            let showAnimation = false;
+            let nextAfterCollect = null;
+
+            // 🎬 Проверка: один выбор + есть collect → анимация!
+            if (node.collect && node.choices && node.choices.length === 1) {
+                showAnimation = true;
+                nextAfterCollect = node.choices[0].next;
+            }
+
+            if (showAnimation) {
+                // Показываем анимацию вместо кнопки
+                sceneEl.classList.remove('active');
+                setTimeout(() => {
+                    sceneEl.className = 'scene';
+                    sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>`;
+                    sceneEl.classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Запуск анимации ключа
+                    setTimeout(() => {
+                        showKeyAnimation(node.collect, nextAfterCollect);
+                    }, 600);
+                }, 320);
+                return;
+            }
+
+            // Обычное отображение
+            let choicesHtml = '';
+            if (hasChoices && !isRestartNode) {
+                let choices = [...node.choices];
+                if (!hasRestartOption) {
+                    choices = shuffleArray(choices);
+                }
+                choicesHtml = choices.map((c, index) => {
+                    // === RPG СИСТЕМЫ: ПРОВЕРКА УСЛОВИЙ ===
+
+                    // Проверка требований
+                    const requirementsMet = !c.requires || checkRequirements(c.requires);
+                    const hideUntilUnlocked = c.hide_until_unlocked !== undefined ? c.hide_until_unlocked : false;
+
+                    // Скрываем кнопку если hide_until_unlocked === true и требования не выполнены
+                    if (c.requires && !requirementsMet && hideUntilUnlocked === true) {
+                        return ''; // Не показываем кнопку
                     }
-
-                    const requirementsMet = checkRequirements(choice.requires);
-                    const hideUntilUnlocked = choice.hide_until_unlocked !== undefined ? choice.hide_until_unlocked : false;
 
                     // Проверка стоимости
-                    const canAfford = !choice.cost || playerStats.money >= choice.cost;
+                    const canAfford = !c.cost || playerStats.money >= c.cost;
 
-                    // Проверка стамины
-                    const hasStamina = !choice.stamina || (choice.stamina > 0 || playerStats.stamina >= Math.abs(choice.stamina));
+                    // Проверка энергии
+                    const hasEnergy = !c.stamina || (c.stamina > 0 || playerStats.stamina >= Math.abs(c.stamina));
 
-                    if (choice.requires && choice.requires.length > 0) {
-                        if (!requirementsMet) {
-                            if (hideUntilUnlocked === true) {
-                                button.classList.add('choice-hidden');
-                            } else {
-                                button.disabled = true;
-                                button.onclick = () => {
-                                    const messages = getMissingKeyMessages(choice.requires, choice.missing_messages);
-                                    if (messages.length > 0) {
-                                        alert("Недоступно:\n" + messages.join("\n"));
-                                    }
-                                };
-                            }
-                        } else if (!canAfford) {
-                            button.disabled = true;
-                            button.onclick = () => alert("❌ Недостаточно кредитов!");
-                        } else if (!hasStamina) {
-                            button.disabled = true;
-                            button.onclick = () => alert("❌ Недостаточно энергии!");
-                        } else {
-                            button.onclick = () => handleChoice(choice, index);
-                        }
-                    } else {
-                        if (!canAfford) {
-                            button.disabled = true;
-                            button.onclick = () => alert("❌ Недостаточно кредитов!");
-                        } else if (!hasStamina) {
-                            button.disabled = true;
-                            button.onclick = () => alert("❌ Недостаточно энергии!");
-                        } else {
-                            button.onclick = () => handleChoice(choice, index);
-                        }
+                    // Определяем доступность кнопки
+                    let isDisabled = false;
+                    if (c.requires && !requirementsMet) {
+                        isDisabled = true;
+                    }
+                    if (!canAfford || !hasEnergy) {
+                        isDisabled = true;
                     }
 
-                    choicesContainer.appendChild(button);
+                    const isRestart = c.next === "main_story" || c.next === "node_end";
+                    const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
+
+                    // Отображение стоимости
+                    const costDisplay = c.cost ? `<span class="choice-cost">-${c.cost}₡</span>` : '';
+
+                    return `<button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="handleChoice('${c.next}', ${index})">${c.text}${costDisplay}</button>`;
+                }).filter(btn => btn !== '').join('');
+            }
+
+            let inventoryButtonHtml = '';
+            if (Object.keys(collectedKeys).length > 0 || hasChoices) {
+                inventoryButtonHtml = `
+        <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
+    `;
+            }
+
+            // === КАРТА МИРА: Кнопка карты (только если map_view === true) ===
+            let mapButtonHtml = '';
+            if (hasMapView(node)) {
+                mapButtonHtml = `
+        <button id="map-button" class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
+    `;
+            }
+            // END КАРТА МИРА
+            // END КАРТА МИРА
+
+            let endMarkerHtml = '';
+            if (!hasChoices || isRestartNode) {
+                endMarkerHtml = `
+        <div style="
+            text-align: center;
+            margin: 40px 0 20px;
+            font-size: 80px;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        ">❌</div>
+        <style>
+            @keyframes popIn {
+                0% { transform: scale(0.3); opacity: 0; }
+                70% { transform: scale(1.2); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        
+        /* ===== RPG СИСТЕМЫ: СТАТЫ И МАГАЗИН ===== */
+        #player-stats {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-item {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.75em;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.health { color: #ff4444; }
+        .stat-value.stamina { color: #44ff44; }
+        .stat-value.money { color: #ffaa00; }
+
+        .stat-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .stat-bar-fill.health { background: linear-gradient(90deg, #ff4444, #ff8844); }
+        .stat-bar-fill.stamina { background: linear-gradient(90deg, #44ff44, #88ff44); }
+
+        .inventory-section {
+            margin: 12px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .inventory-section:last-child {
+            border-bottom: none;
+        }
+
+        .inventory-section-title {
+            color: #888;
+            font-size: 0.8em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .item-quantity {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .key-item.key-type {
+            border-left-color: #ff00ff;
+            background: rgba(255, 0, 255, 0.1);
+        }
+
+        .choice-cost {
+            background: rgba(255, 170, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            color: #ffaa00;
+            margin-left: 10px;
+        }
+
+        #shop-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .shop-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+        }
+
+        .shop-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .shop-money {
+            color: #ffaa00;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .shop-item:hover {
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .shop-item-info {
+            text-align: left;
+            flex: 1;
+        }
+
+        .shop-item-name {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #00ffff;
+        }
+
+        .shop-item-desc {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-price {
+            color: #ffaa00;
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn {
+            background: linear-gradient(135deg, #44ff44, #22aa22);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(68, 255, 68, 0.5);
+        }
+
+        .shop-buy-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #shop-button {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
+            transition: all 0.3s ease;
+            z-index: 900;
+        }
+
+        #shop-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 170, 0, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            #shop-button {
+                bottom: auto;
+                top: 120px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    `;
+            }
+
+            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
+            let notificationBanner = '';
+            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
+                notificationBanner = `
+                <div class="notification-banner">
+                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
+                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
+                </div>
+                `;
+            }
+            // END NOTIFICATION SYSTEM
+
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
                 });
             }
         }
 
-        function handleChoice(choice, choiceIndex) {
-            // Действия
-            if (choice.action === 'open_shop') {
-                openShop();
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '
+    <button id="shop-button" style="display: none;">🏪 Магазин</button>
+
+<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
+                node.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
+                });
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
+        function handleCodeChoice(nextNodeId) {
+            codeScreen.style.display = 'none';
+            currentCodeNode = null;
+            showNode(nextNodeId);
+        }
+
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShipWorld(); // Загрузка системы корабля
+
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
                 return;
             }
 
-            // Стоимость
-            if (choice.cost) {
-                modifyMoney(-choice.cost);
-            }
+            console.log('🔄 Сброс прогресса игры...');
 
-            // Деньги
-            if (choice.money) {
-                modifyMoney(choice.money);
-            }
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
 
-            // Здоровье
-            if (choice.health) {
-                modifyHealth(choice.health);
-            }
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
 
-            // Энергия
-            if (choice.stamina) {
-                modifyStamina(choice.stamina);
-            }
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
 
-            // Потребление предметов
-            if (choice.consume) {
-                consumeItem(choice.consume);
-            }
-
-            // Сбор предметов
-            if (choice.collect) {
-                collectKey(choice.collect);
-            }
-
-            // Переход
-            if (choice.next) {
-                renderNode(choice.next);
-            }
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         }
 
-        // ============= ПАРОЛЬ =============
 
-        function openPasswordModal() {
-            document.getElementById('password-modal').style.display = 'flex';
-            document.getElementById('password-input').value = '';
-            document.getElementById('password-input').focus();
-        }
-
-        function closePasswordModal() {
-            document.getElementById('password-modal').style.display = 'none';
-        }
-
-        function submitPassword() {
-            const input = document.getElementById('password-input').value;
-            const correct = currentPasswordNode.password.correct;
-
-            closePasswordModal();
-
-            if (input === correct) {
-                renderNode(currentPasswordNode.password.success);
-            } else {
-                renderNode(currentPasswordNode.password.fail);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('password-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    submitPassword();
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
                 }
-            });
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+        }
+
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
+                node.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
+                });
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
         });
 
-        // ============= КОСТИ =============
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
 
-        function openDiceModal() {
-            document.getElementById('dice-modal').style.display = 'flex';
-            document.getElementById('dice1').textContent = '?';
-            document.getElementById('dice2').textContent = '?';
-            document.getElementById('dice-result').textContent = '';
-            document.getElementById('dice-continue-btn').style.display = 'none';
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
-        function rollDice() {
-            const dice1 = Math.floor(Math.random() * 6) + 1;
-            const dice2 = Math.floor(Math.random() * 6) + 1;
-            const total = dice1 + dice2;
-
-            document.getElementById('dice1').textContent = dice1;
-            document.getElementById('dice2').textContent = dice2;
-
-            const difficulty = currentDiceNode.dice.difficulty;
-            const success = total >= difficulty;
-
-            const resultText = success 
-                ? `✅ Успех! (${total} >= ${difficulty})`
-                : `❌ Провал! (${total} < ${difficulty})`;
-
-            document.getElementById('dice-result').textContent = resultText;
-            document.getElementById('dice-continue-btn').style.display = 'block';
-            document.getElementById('dice-continue-btn').dataset.result = success ? 'success' : 'fail';
-        }
-
-        function continueDiceStory() {
-            const success = document.getElementById('dice-continue-btn').dataset.result === 'success';
-            document.getElementById('dice-modal').style.display = 'none';
-
-            const nextNode = success 
-                ? currentDiceNode.dice.success 
-                : currentDiceNode.dice.fail;
-
-            renderNode(nextNode);
-        }
-
-        // ============= КАРТА =============
-
-        document.getElementById('map-button').onclick = () => {
-            document.getElementById('map-modal').style.display = 'flex';
-            updateMap();
-        };
-
-        function closeMap() {
-            document.getElementById('map-modal').style.display = 'none';
-        }
-
-        function updateMap() {
-            const mapContainer = document.getElementById('map-locations');
-            mapContainer.innerHTML = '';
-
-            const locations = [
-                { name: "🚀 Капсула", id: "start" },
-                { name: "🏥 Медбай", id: "medbay" },
-                { name: "🌉 Мостик", id: "bridge" },
-                { name: "⚙️ Инженерия", id: "engineering", requires: ["key_keycard"] }
-            ];
-
-            locations.forEach(loc => {
-                const div = document.createElement('div');
-                div.style.padding = '10px';
-                div.style.margin = '5px 0';
-                div.style.background = 'rgba(0,255,255,0.1)';
-                div.style.borderRadius = '5px';
-                div.style.cursor = 'pointer';
-
-                const canAccess = !loc.requires || checkRequirements(loc.requires);
-
-                if (!canAccess) {
-                    div.style.opacity = '0.5';
-                    div.style.cursor = 'not-allowed';
-                }
-
-                div.textContent = loc.name + (canAccess ? '' : ' 🔒');
-
-                if (canAccess) {
-                    div.onclick = () => {
-                        closeMap();
-                        renderNode(loc.id);
-                    };
-                }
-
-                mapContainer.appendChild(div);
-            });
-        }
-
-        // ============= МАГАЗИН =============
-
-        document.getElementById('shop-button').onclick = openShop;
-
-        function openShop() {
-            document.getElementById('shop-modal').style.display = 'flex';
-            document.getElementById('shop-money').textContent = playerStats.money;
-
-            const shopContainer = document.getElementById('shop-items');
-            shopContainer.innerHTML = '';
-
-            shopItems.forEach(item => {
-                const shopItem = document.createElement('div');
-                shopItem.className = 'shop-item';
-
-                const info = document.createElement('div');
-                info.className = 'shop-item-info';
-
-                const name = document.createElement('div');
-                name.className = 'shop-item-name';
-                name.textContent = item.name;
-
-                const desc = document.createElement('div');
-                desc.style.color = '#888';
-                desc.style.fontSize = '0.85em';
-                desc.textContent = item.description;
-
-                const price = document.createElement('div');
-                price.className = 'shop-item-price';
-                price.textContent = `💰 ${item.price} кредитов`;
-
-                info.appendChild(name);
-                info.appendChild(desc);
-                info.appendChild(price);
-
-                const buyBtn = document.createElement('button');
-                buyBtn.className = 'shop-buy-btn';
-                buyBtn.textContent = 'Купить';
-                buyBtn.onclick = () => buyItem(item);
-
-                if (playerStats.money < item.price) {
-                    buyBtn.disabled = true;
-                }
-
-                shopItem.appendChild(info);
-                shopItem.appendChild(buyBtn);
-                shopContainer.appendChild(shopItem);
-            });
-        }
-
-        function buyItem(item) {
-            if (playerStats.money >= item.price) {
-                modifyMoney(-item.price);
-                addItem(item.id, 1);
-
-                const keyData = {
-                    id: item.id,
-                    label: item.name,
-                    type: item.id.split('_')[0],
-                    quantity: 1
-                };
-
-                updateInventory();
-                showKeyAnimation(keyData);
-
-                alert(`✅ Куплено: ${item.name}`);
-                openShop(); // Обновляем магазин
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
             } else {
-                alert("❌ Недостаточно кредитов!");
-            }
-        }
-
-        function closeShop() {
-            document.getElementById('shop-modal').style.display = 'none';
-        }
-
-        // ============= СОХРАНЕНИЕ/ЗАГРУЗКА =============
-
-        function saveGame() {
-            const gameState = {
-                currentNodeId: currentNodeId,
-                collectedItems: collectedItems,
-                playerStats: playerStats
-            };
-            localStorage.setItem('rpgGameSave', JSON.stringify(gameState));
-        }
-
-        function loadGame() {
-            const saved = localStorage.getItem('rpgGameSave');
-            if (saved) {
-                const gameState = JSON.parse(saved);
-                currentNodeId = gameState.currentNodeId || 'start';
-                collectedItems = gameState.collectedItems || {};
-                playerStats = gameState.playerStats || {
-                    health: 100,
-                    maxHealth: 100,
-                    stamina: 100,
-                    maxStamina: 100,
-                    money: 100
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
                 };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
             }
         }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                return;
+            }
 
-        function resetGame() {
-            if (confirm('Сбросить весь прогресс?')) {
-                localStorage.removeItem('rpgGameSave');
-                collectedItems = {};
-                currentNodeId = 'start';
-                playerStats = {
-                    health: 100,
-                    maxHealth: 100,
-                    stamina: 100,
-                    maxStamina: 100,
-                    money: 100
-                };
-                updateInventory();
-                updateStats();
-                renderNode('start');
+            console.log('🔄 Сброс прогресса игры...');
+
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
+
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
+
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
+
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+        
+    
+
+    // ===== RPG СИСТЕМЫ: НОВЫЕ ФУНКЦИИ =====
+
+    // Работа с предметами (количество)
+    function hasItem(itemId, quantity = 1) {
+        return (collectedItems[itemId] || 0) >= quantity;
+    }
+
+    function addItem(itemId, quantity = 1) {
+        if (!collectedItems[itemId]) {
+            collectedItems[itemId] = 0;
+        }
+        collectedItems[itemId] += quantity;
+    }
+
+    function removeItem(itemId, quantity = 1) {
+        if (collectedItems[itemId]) {
+            collectedItems[itemId] -= quantity;
+            if (collectedItems[itemId] <= 0) {
+                delete collectedItems[itemId];
             }
         }
+    }
 
-        // ============= ИНИЦИАЛИЗАЦИЯ =============
+    function consumeItem(consumeData) {
+        if (consumeData && consumeData.id) {
+            const qty = consumeData.quantity || 1;
+            removeItem(consumeData.id, qty);
+            saveKeys();
+            showInventory();
+        }
+    }
 
-        window.onload = () => {
-            loadGame();
-            updateInventory();
-            updateStats();
-            renderNode(currentNodeId);
-        };
+    // Статы персонажа
+    function modifyHealth(amount) {
+        playerStats.health = Math.max(0, Math.min(playerStats.maxHealth, playerStats.health + amount));
+        updateStats();
 
-        window.addEventListener('beforeunload', saveGame);
+        if (playerStats.health === 0) {
+            alert("💀 ВЫ ПОГИБЛИ!");
+            if (confirm("Начать сначала?")) {
+                resetProgress();
+            }
+        }
+    }
 
-    </script>
+    function modifyStamina(amount) {
+        playerStats.stamina = Math.max(0, Math.min(playerStats.maxStamina, playerStats.stamina + amount));
+        updateStats();
+    }
+
+    function modifyMoney(amount) {
+        playerStats.money += amount;
+        if (playerStats.money < 0) playerStats.money = 0;
+        updateStats();
+    }
+
+    function updateStats() {
+        const healthElem = document.getElementById('health-value');
+        const staminaElem = document.getElementById('stamina-value');
+        const moneyElem = document.getElementById('money-value');
+        const healthBar = document.getElementById('health-bar');
+        const staminaBar = document.getElementById('stamina-bar');
+
+        if (healthElem) healthElem.textContent = `${playerStats.health}/${playerStats.maxHealth}`;
+        if (staminaElem) staminaElem.textContent = `${playerStats.stamina}/${playerStats.maxStamina}`;
+        if (moneyElem) moneyElem.textContent = playerStats.money;
+
+        const healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
+        const staminaPercent = (playerStats.stamina / playerStats.maxStamina) * 100;
+
+        if (healthBar) healthBar.style.width = healthPercent + '%';
+        if (staminaBar) staminaBar.style.width = staminaPercent + '%';
+
+        // Показываем панель статов
+        const statsPanel = document.getElementById('player-stats');
+        if (statsPanel) statsPanel.style.display = 'flex';
+
+        saveKeys(); // Сохраняем изменения
+    }
+
+    // Магазин
+    function openShop() {
+        document.getElementById('shop-modal').style.display = 'flex';
+        document.getElementById('shop-money-display').textContent = playerStats.money;
+
+        const container = document.getElementById('shop-items-container');
+        container.innerHTML = '';
+
+        shopItems.forEach(item => {
+            const canBuy = playerStats.money >= item.price;
+
+            const shopItem = document.createElement('div');
+            shopItem.className = 'shop-item';
+
+            const info = document.createElement('div');
+            info.className = 'shop-item-info';
+
+            const name = document.createElement('div');
+            name.className = 'shop-item-name';
+            name.textContent = item.name;
+
+            const desc = document.createElement('div');
+            desc.className = 'shop-item-desc';
+            desc.textContent = item.description;
+
+            const price = document.createElement('div');
+            price.className = 'shop-item-price';
+            price.textContent = `💰 ${item.price} кредитов`;
+
+            info.appendChild(name);
+            info.appendChild(desc);
+            info.appendChild(price);
+
+            const buyBtn = document.createElement('button');
+            buyBtn.className = 'shop-buy-btn';
+            buyBtn.textContent = 'Купить';
+            buyBtn.disabled = !canBuy;
+            buyBtn.onclick = () => buyItem(item.id);
+
+            shopItem.appendChild(info);
+            shopItem.appendChild(buyBtn);
+            container.appendChild(shopItem);
+        });
+
+        // Показываем кнопку магазина
+        const shopBtn = document.getElementById('shop-button');
+        if (shopBtn) shopBtn.style.display = 'block';
+    }
+
+    function buyItem(itemId) {
+        const item = shopItems.find(i => i.id === itemId);
+        if (item && playerStats.money >= item.price) {
+            modifyMoney(-item.price);
+            addItem(item.id, 1);
+
+            // Обновляем инвентарь
+            showInventory();
+
+            alert(`✅ Куплено: ${item.name}`);
+            openShop(); // Обновляем магазин
+        } else {
+            alert("❌ Недостаточно кредитов!");
+        }
+    }
+
+    function closeShop() {
+        document.getElementById('shop-modal').style.display = 'none';
+    }
+
+    // Инициализация кнопки магазина
+    function initShopButton() {
+        const shopBtn = document.getElementById('shop-button');
+        if (shopBtn) {
+            shopBtn.onclick = openShop;
+            shopBtn.style.display = 'block';
+        }
+    }
+
+    // Обновленная проверка требований (с поддержкой количества)
+    function checkRequirements(requires) {
+        if (!requires || requires.length === 0) return true;
+
+        return requires.every(keyId => {
+            // Проверяем и в старом формате (collectedKeys) и в новом (collectedItems)
+            return collectedKeys.has(keyId) || hasItem(keyId, 1);
+        });
+    }
+
+    // Конвертация старого формата в новый
+    function migrateOldKeysToItems() {
+        if (collectedKeys && collectedKeys.size > 0) {
+            collectedKeys.forEach(keyId => {
+                if (!collectedItems[keyId]) {
+                    collectedItems[keyId] = 1;
+                }
+            });
+        }
+    }
+</script>
+
+    <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
+    <div id="resetButton" style="
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        text-align: center;
+    ">
+        <button onclick="resetProgress()" style="
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            color: white;
+            border: 2px solid #ff5252;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+            transition: all 0.3s;
+        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(211, 47, 47, 0.6)'" 
+           onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211, 47, 47, 0.4)'">
+            🔄 СБРОСИТЬ ВСЁ (отладка)
+        </button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО МАГАЗИНА -->
+    <div id="shop-modal">
+        <div class="shop-content">
+            <div class="shop-header">
+                <h2 style="color: #00ffff; margin-bottom: 10px;">🏪 МАГАЗИН</h2>
+                <div class="shop-money">💰 Ваши кредиты: <span id="shop-money-display">100</span></div>
+            </div>
+            <div id="shop-items-container"></div>
+            <button class="choice-btn" onclick="closeShop()" style="margin-top: 20px; width: 100%; max-width: 300px;">← Закрыть</button>
+        </div>
+    </div>
+
 </body>
+
 </html>
