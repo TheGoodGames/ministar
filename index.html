@@ -884,10 +884,117 @@
         .map-item.jump-point {
             background: rgba(100, 150, 255, 0.35) !important;
         }
-</style>
+
+        /* === ВСПЛЫВАЮЩЕЕ ОКНО === */
+        #collect-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #collect-message {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 600px;
+            min-height: 200px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+            border: 3px solid rgba(76, 175, 80, 0.3);
+            animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes scaleIn {
+            from { 
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            to { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        #collect-message .icon {
+            font-size: 80px;
+            margin-bottom: 25px;
+            animation: pulse 1.5s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        #collect-message .text {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 35px;
+            line-height: 1.8;
+            font-weight: 500;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            white-space: pre-line;
+        }
+
+        #collect-message button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 18px 50px;
+            font-size: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #collect-message button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.6);
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+        }
+
+        #collect-message button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        /* === КОНЕЦ ВСПЛЫВАЮЩЕГО ОКНА === */
+    </style>
 </head>
 
 <body>
+    <!-- Всплывающее окно для сообщений -->
+    <div id="collect-overlay" style="display:none;">
+        <div id="collect-message">
+            <div class="icon"></div>
+            <div class="text"></div>
+            <button onclick="closeCollectMessage()">Закрыть</button>
+        </div>
+    </div>
+
+    
 
     
     <!-- Полноэкранный показ NPC -->
