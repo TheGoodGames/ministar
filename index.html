@@ -1587,6 +1587,12 @@
             };
         }
 
+
+        // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
+        function goToNode(nodeId) {
+            showNode(nodeId);
+        }
+
         function showKeyAnimation(keyData, nextNodeId) {
             if (!keyData || !keyData.id || !keyData.label) return;
 
