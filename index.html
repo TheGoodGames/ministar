@@ -1601,42 +1601,35 @@
         function showKeyAnimation(keyData, nextNodeId) {
             if (!keyData || !keyData.id || !keyData.label) return;
 
-            // Сохраняем ключ
+            // ✅ СОХРАНЯЕМ КЛЮЧ ПРЯМО ЗДЕСЬ
             collectedKeys[keyData.id] = {
                 label: keyData.label,
                 type: keyData.type || 'regular'
             };
-            saveKeys();
+            saveKeys(); // сохраняем в localStorage
 
-            // Берём иконку из JSON или используем дефолтную по типу
-            let icon = keyData.icon;
-            if (!icon) {
-                const iconMap = {
-                    'card': '🃏',
-                    'old': '🔑',
-                    'digital': '💾',
-                    'regular': '🗝️',
-                    'quest': '📋'
-                };
-                icon = iconMap[keyData.type] || '🔑';
-            }
-
-            keyAnimScreen.style.display = 'block';
-            keyAnimScreen.innerHTML = `
-                <div class="key-anim-content" style="cursor: pointer;">
-                    <div class="key-icon-big">${icon}</div>
-                    <div class="key-label-big">${keyData.label}</div>
-                    <p style="margin-top: 20px; color: #888; font-size: 14px;">Нажмите для продолжения</p>
-                </div>
-            `;
-
-            keyAnimScreen.onclick = function() {
-                keyAnimScreen.style.display = 'none';
-                keyAnimScreen.onclick = null;
-                if (nextNodeId) {
-                    goToNode(nextNodeId);
-                }
+            const iconMap = {
+                'card': '🃏',
+                'old': '🔑',
+                'digital': '💾',
+                'regular': '🗝️'
             };
+            const icon = iconMap[keyData.type || 'regular'] || iconMap.regular;
+
+            if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'block';
+
+            animKeyIcon.textContent = icon;
+            animKeyLabel.textContent = keyData.label;
+
+            autoAdvanceTimeout = setTimeout(() => {
+                keyAnimScreen.style.display = 'none';
+                showNode(nextNodeId);
+            }, 2200);
         }
 
         // === СИСТЕМА КАРТЫ МИРА ===
