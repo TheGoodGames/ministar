@@ -2701,10 +2701,7 @@
             // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
             const codeTextEl = document.getElementById('code-text');
             if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '
-    <button id="shop-button" style="display: none;">🏪 Магазин</button>
-
-<br>');
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
             } else if (codeTextEl) {
                 codeTextEl.innerHTML = '';
             }
@@ -3449,6 +3446,8 @@
 </script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
+        <button id="shop-button" style="display: none;">🏪 Магазин</button>
+
     <div id="resetButton" style="
         position: fixed;
         bottom: 20px;
