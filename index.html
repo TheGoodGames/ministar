@@ -2172,7 +2172,7 @@
                 const choicesWithIndex = choices.map((c, idx) => ({
                     choice: c,
                     shuffledIndex: idx,
-                    originalIndex: node.choices.indexOf(c)
+                    originalIndex: c.originalIndex !== undefined ? c.originalIndex : node.choices.indexOf(c)
                 }));
 
                 // ФИЛЬТРАЦИЯ choices по hide_until_unlocked
