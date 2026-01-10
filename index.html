@@ -2308,7 +2308,7 @@
         // END ОПРЕДЕЛЕНИЕ iOS
 
         window.handleChoice = function(nextNodeId, choiceIndex = 0) {
-            const node = storyData[currentNodeId];
+            const node = story[currentNodeId];
             if (!node || !node.choices) return;
 
             const choice = node.choices[choiceIndex];
@@ -2663,58 +2663,7 @@
         }
         // END ОПРЕДЕЛЕНИЕ iOS
 
-        window.handleChoice = function(nextNodeId, choiceIndex = 0) {
-            const node = storyData[currentNodeId];
-            if (!node || !node.choices) return;
-
-            const choice = node.choices[choiceIndex];
-            if (!choice) return;
-
-            // ОБРАБОТКА COLLECT
-            if (choice.collect) {
-                // 1. Проверяем был ли уже собран
-                if (collectedKeys[choice.collect.id]) {
-                    const repeatMsg = choice.collect.already_collected_message || 
-                                     choice.already_collected_message || 
-                                     "Здесь больше ничего нет.";
-                    showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
-                    return;
-                }
-
-                // 2. Если есть requires и НЕТ ключа - блокируем переход
-                if (choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
-                    if (missingMsgs.length > 0) {
-                        // Сохраняем collect СРАЗУ (без анимации)
-                        collectedKeys[choice.collect.id] = {
-                            label: choice.collect.label,
-                            type: choice.collect.type || 'regular'
-                        };
-                        saveKeys();
-
-                        // Показываем ОДНО окно с missing_message
-                        showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
-                        return;
-                    }
-                }
-
-                // 3. Обычный collect - показываем анимацию и переходим
-                showKeyAnimation(choice.collect, nextNodeId);
-                return;
-            }
-
-            // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
-            if (choice.requires) {
-                const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
-                if (missingMsgs.length > 0) {
-                    showCollectMessage(missingMsgs.join('\n'), '🔒');
-                    return;
-                }
-            }
-
-            // ПЕРЕХОД к следующему узлу (если нет collect)
-            goToNode(nextNodeId);
-        };
+        
 
         function toggleAudio() {
             if (isAudioPlaying) {
