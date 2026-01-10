@@ -975,10 +975,8 @@
             mapBtn.style.display = hasMapView(node) ? 'inline-block' : 'none';
         }
 
-
-        
         // === СОХРАНЕНИЕ/ЗАГРУЗКА СИСТЕМЫ КОРАБЛЯ ===
-        
+
         // === ОПРЕДЕЛЕНИЕ ТЕКУЩЕГО МИРА ===
         function getCurrentWorld() {
             if (!story || !currentNodeId || !story[currentNodeId]) {
@@ -1114,7 +1112,6 @@
             return btn;
         }
 
-        
         // === ПОЛУЧЕНИЕ ДОСТУПНЫХ ПРЫЖКОВЫХ ТОЧЕК ===
         function getAvailableJumpPoints() {
             const currentNode = story[currentNodeId];
@@ -1186,7 +1183,6 @@
             }
         }
 
-        
         function buildMapTree() {
             // Tree: category_name -> subcategory_name (optional) -> locations
             const locs = getAllLocationNodes();
@@ -1238,7 +1234,6 @@
             const current = story[currentNodeId];
             const openCatName = current ? (current.category_name || current.location_category || 'Без категории').toString() : null;
             const openSubName = current ? (current.subcategory_name || '').toString() : '';
-
 
             const tree = buildMapTree();
             const categories = Object.keys(tree).sort((a,b)=>a.localeCompare(b,'ru'));
@@ -1361,14 +1356,10 @@
             });
         }
 
-
-
         // ============================================
         // ПОКАЗ NPC КАРТИНОК
         // ============================================
 
-        
-        
         function showSplashImage(prefix, nodeId, bubbleText) {
             return new Promise((resolve) => {
                 const screen = document.getElementById('npc-screen');
@@ -1445,10 +1436,8 @@
         // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
         window.__nodeTransitionLock = false;
 
-
         // Сохраняем оригинальную функцию showNode
         let originalShowNodeCode = null;
-
 
         let story = null;
         let currentNodeId = null;
@@ -1580,7 +1569,7 @@
         }
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
-        
+
         function showCollectMessage(message, icon = '💬') {
             keyAnimScreen.style.display = 'block';
             keyAnimScreen.innerHTML = `
@@ -1658,7 +1647,6 @@
             return visitedLocations.includes(nodeId);
         }
 
-        
         function showMap() {
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'none';
@@ -1668,7 +1656,6 @@
             mapScreen.style.display = 'block';
             renderMapAccordion();
         }
-
 
         function closeMap() {
             mapScreen.style.display = 'none';
@@ -1767,7 +1754,7 @@
                                 } else {
                                     console.error(`❌ Узел "${targetId}" не найден в story.json`);
                                     sceneEl.innerHTML += `
-                    <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend); 
+                    <div style="background: rgba(244, 67, 54, 0.2); border-left: 3px solid var(--deadend);
                         padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px;">
                         <p>❌ Ошибка: локация "${targetId}" не найдена в файле игры</p>
                         <p style="font-size: 13px; margin-top: 8px;">Проверьте консоль разработчика (F12)</p>
@@ -2248,7 +2235,7 @@
                 notificationBanner = `
                 <div class="notification-banner">
                     <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                    <p>🔔 Следите за прогрессом всех игроков в нашем канале:
                     <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
                 </div>
                 `;
@@ -2318,8 +2305,8 @@
             if (choice.collect) {
                 // 1. Проверяем был ли уже собран
                 if (collectedKeys[choice.collect.id]) {
-                    const repeatMsg = choice.collect.already_collected_message || 
-                                     choice.already_collected_message || 
+                    const repeatMsg = choice.collect.already_collected_message ||
+                                     choice.already_collected_message ||
                                      "Здесь больше ничего нет.";
                     showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
                     return;
@@ -2357,7 +2344,7 @@
             }
 
             // ПЕРЕХОД к следующему узлу (если нет collect)
-            
+            goToNode(nextNodeId);
         };
 
         function toggleAudio() {
@@ -2466,7 +2453,6 @@
             currentCodeNode = null;
             showNode(nextNodeId);
         }
-
 
         // Обработчик кнопки подтверждения
         submitCodeBtn.addEventListener('click', checkCode);
@@ -2609,7 +2595,6 @@
             }, 500);
         }
 
-
             sceneEl.classList.remove('active');
             setTimeout(() => {
                 sceneEl.className = 'scene';
@@ -2662,8 +2647,6 @@
             return isIOS() && tg?.platform === 'ios';
         }
         // END ОПРЕДЕЛЕНИЕ iOS
-
-        
 
         function toggleAudio() {
             if (isAudioPlaying) {
@@ -2904,8 +2887,8 @@
                 window.location.reload();
             }, 500);
         }
-        
-    </script>
+
+</script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
     <div id="resetButton" style="
