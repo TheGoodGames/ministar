@@ -886,40 +886,231 @@
         }
 
 
-        /* ===== СТИЛИ МАГАЗИНА (RPG СИСТЕМА) ===== */
-#shop-modal {
+        /* ===== RPG СИСТЕМЫ: СТИЛИ ===== */
+        #player-stats {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .stat-value.health { color: #ff4444; }
+        .stat-value.stamina { color: #44ff44; }
+        .stat-value.money { color: #ffaa00; }
+
+        .stat-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .stat-bar-fill.health { background: linear-gradient(90deg, #ff4444, #ff8844); }
+        .stat-bar-fill.stamina { background: linear-gradient(90deg, #44ff44, #88ff44); }
+
+        #story-text {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #00ffff;
+            min-height: 150px;
+            line-height: 1.8;
+            font-size: 1.1em;
+            border-radius: 5px;
+        }
+
+        #choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .choice-button {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: 2px solid #00ffff;
+            padding: 15px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-align: left;
+            display: block;
+            position: relative;
+        }
+
+        .choice-cost {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 170, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .choice-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2a5298 0%, #3d6bb5 100%);
+            transform: translateX(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .choice-button:disabled {
+            background: #333;
+            color: #666;
+            border-color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .choice-hidden {
+            display: none !important;
+        }
+
+        /* ИНВЕНТАРЬ */
+        #inventory {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #inventory h3 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 8px;
+        }
+
+        .inventory-section {
+            margin: 15px 0;
+        }
+
+        .inventory-section-title {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .key-item {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #00ff00;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-quantity {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .key-item.quest-type {
+            border-left-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.1);
+        }
+
+        .key-item.item-type {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .key-item.state-type {
+            border-left-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .key-item.key-type {
+            border-left-color: #ff00ff;
+            background: rgba(255, 0, 255, 0.1);
+        }
+
+        .key-animation {
+            animation: keyAppear 0.5s ease;
+        }
+
+        @keyframes keyAppear {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* МОДАЛЬНЫЕ ОКНА */
+        #password-modal, #dice-modal, #map-modal, #shop-modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 10000;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
             justify-content: center;
             align-items: center;
         }
 
-        .shop-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 30px;
+        .modal-content {
+            background: #1a1a2e;
+            padding: 40px;
             border-radius: 15px;
             border: 2px solid #00ffff;
-            max-width: 600px;
+            text-align: center;
+            max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-        }
-
-        .shop-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .shop-money {
-            color: #ffaa00;
-            font-size: 1.2em;
-            margin: 10px 0;
         }
 
         .shop-item {
@@ -947,19 +1138,11 @@
         .shop-item-name {
             font-size: 1.1em;
             margin-bottom: 5px;
-            color: #00ffff;
-        }
-
-        .shop-item-desc {
-            color: #888;
-            font-size: 0.85em;
-            margin-bottom: 5px;
         }
 
         .shop-item-price {
             color: #ffaa00;
-            font-size: 0.95em;
-            font-weight: bold;
+            font-size: 0.9em;
         }
 
         .shop-buy-btn {
@@ -971,797 +1154,137 @@
             font-family: inherit;
             font-size: 0.95em;
             transition: all 0.3s ease;
-            color: #000;
-            font-weight: bold;
         }
 
-        .shop-buy-btn:hover:not(:disabled) {
+        .shop-buy-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(68, 255, 68, 0.5);
         }
 
         .shop-buy-btn:disabled {
             background: #333;
             color: #666;
             cursor: not-allowed;
+            transform: none;
+        }
+
+        #password-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.5em;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            border-radius: 8px;
+            margin: 20px 0;
+            letter-spacing: 10px;
+        }
+
+        .modal-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #dice-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .dice {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #map-button, #shop-button {
+            position: fixed;
+            bottom: 20px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        #map-button {
+            right: 20px;
         }
 
         #shop-button {
+            right: 180px;
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+        }
+
+        #map-button:hover, #shop-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        #debug-panel {
             position: fixed;
             bottom: 80px;
             right: 20px;
-            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            background: rgba(255, 0, 0, 0.8);
             color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1em;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
             cursor: pointer;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
-            transition: all 0.3s ease;
-            z-index: 900;
-        }
-
-        #shop-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 170, 0, 0.6);
         }
 
         @media (max-width: 768px) {
-            #shop-button {
-                bottom: auto;
-                top: 120px;
-                right: 10px;
-                padding: 10px 15px;
-                font-size: 0.9em;
+            #inventory {
+                position: static;
+                margin: 20px auto;
+                max-width: 100%;
+            }
+
+            #map-button, #shop-button {
+                position: static;
+                width: 100%;
+                margin: 10px 0;
+            }
+
+            #debug-panel {
+                position: static;
+                margin: 10px auto;
+                text-align: center;
             }
         }
+
     </style>
-    `;
-            }
-
-            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
-            let notificationBanner = '';
-            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-                <div class="notification-banner">
-                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
-                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
-                </div>
-                `;
-            }
-            // END NOTIFICATION SYSTEM
-
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
-
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
-        function hideNotificationBanner() {
-            localStorage.setItem('banner_hidden', 'true');
-            const banner = document.querySelector('.notification-banner');
-            if (banner) banner.style.display = 'none';
-        }
-        }
-        // END NOTIFICATION SYSTEM
-
-        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
-        function isIOS() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform) ||
-                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-        }
-
-        function isTelegramIOS() {
-            const tg = window.Telegram?.WebApp;
-            return isIOS() && tg?.platform === 'ios';
-        }
-        // END ОПРЕДЕЛЕНИЕ iOS
-
-        window.handleChoice = function (nextId, choiceIndex = null) {
-            // Обработка DICE
-            if (nextId.startsWith("DICE:")) {
-                const parts = nextId.slice(5).split(',');
-                const success = parts[0] || null;
-                const partial = parts[1] || null;
-                const fail = parts[2] || null;
-                rollDice(success, partial, fail);
-                return;
-            }
-
-            // Обработка сбора предмета из ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.collect) {
-                    if (collectedKeys[choice.collect.id]) {
-                        alert("Здесь ничего нет. Вы уже осматривали это место.");
-                        return;
-                    }
-                    showKeyAnimation(choice.collect, currentNodeId);
-                    return;
-                }
-            }
-
-            // Проверка требований на уровне ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
-                    if (missingMsgs.length > 0) {
-                        alert("Недоступно:\n" + missingMsgs.join("\n"));
-                        return;
-                    }
-                }
-            }
-
-            // Обработка перехода
-            if (nextId === "main_story") {
-                localStorage.removeItem('lingame_lastNode');
-                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-            }
-
-            if (nextId === "node_end") {
-                setTimeout(() => showNode("0"), 500);
-                return;
-            }
-
-            if (story[nextId]) {
-                showNode(nextId);
-            } else {
-                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-                showNode("0");
-            }
-        };
-
-        function toggleAudio() {
-            if (isAudioPlaying) {
-                audioEl.pause();
-                audioBtn.textContent = '🔇';
-                isAudioPlaying = false;
-            } else {
-                audioEl.play().then(() => {
-                    audioBtn.textContent = '🔊';
-                    isAudioPlaying = true;
-                }).catch(e => {
-                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-                });
-            }
-        }
-
-        function showCodeScreen(node) {
-            // Скрываем основную сцену
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-
-            // Показываем экран ввода кода
-            codeScreen.style.display = 'block';
-            currentCodeNode = node;
-
-            // Устанавливаем тексты и подсказки
-            codeTitleEl.textContent = node.code_title || "Введите секретный код";
-            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
-            codeInput.value = '';
-            codeErrorEl.textContent = '';
-
-            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
-            const codeTextEl = document.getElementById('code-text');
-            if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
-            } else if (codeTextEl) {
-                codeTextEl.innerHTML = '';
-            }
-
-            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
-            const codeChoicesEl = document.getElementById('code-choices');
-            if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                // Очищаем контейнер
-                codeChoicesEl.innerHTML = '';
-
-                // Создаём кнопки через DOM (не через innerHTML)
-                node.choices.forEach((choice, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${index + 1}`;
-                    btn.dataset.next = choice.next; // Используем data-атрибут
-
-                    // Добавляем обработчик клика
-                    btn.addEventListener('click', function() {
-                        handleCodeChoice(this.dataset.next);
-                    });
-
-                    codeChoicesEl.appendChild(btn);
-                });
-            } else if (codeChoicesEl) {
-                codeChoicesEl.innerHTML = '';
-            }
-
-            // Фокус на поле ввода
-            setTimeout(() => codeInput.focus(), 300);
-
-            // Прокручиваем наверх
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function checkCode() {
-            if (!currentCodeNode) return;
-
-            const inputCode = codeInput.value.trim();
-            const correctCode = currentCodeNode.correct_code;
-            const caseSensitive = currentCodeNode.case_sensitive !== false;
-
-            // Проверяем код с учетом регистра
-            const isCorrect = caseSensitive
-                ? inputCode === correctCode
-                : inputCode.toLowerCase() === correctCode.toLowerCase();
-
-            if (isCorrect) {
-                // Код верный - переходим к следующей ноде
-                codeScreen.style.display = 'none';
-                showNode(currentCodeNode.success_next);
-                currentCodeNode = null;
-            } else {
-                // Код неверный - показываем ошибку
-                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-
-                // Эффект тряски для поля ввода
-                codeInput.style.animation = "shake 0.5s";
-                codeInput.addEventListener('animationend', () => {
-                    codeInput.style.animation = "";
-                });
-            }
-        }
-        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
-        function handleCodeChoice(nextNodeId) {
-            codeScreen.style.display = 'none';
-            currentCodeNode = null;
-            showNode(nextNodeId);
-        }
-
-
-        // Обработчик кнопки подтверждения
-        submitCodeBtn.addEventListener('click', checkCode);
-
-        // Обработчик нажатия Enter в поле ввода
-        codeInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkCode();
-            }
-        });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-                20%, 40%, 60%, 80% { transform: translateX(6px); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadShipWorld(); // Загрузка системы корабля
-
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
-
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.MainButton.setText('Начать заново');
-                Telegram.WebApp.MainButton.show();
-                Telegram.WebApp.MainButton.onClick(() => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                });
-            } else {
-                const restartBtn = document.createElement('button');
-                restartBtn.className = 'choice-btn restart-btn';
-                restartBtn.textContent = 'Начать заново';
-                restartBtn.style.marginTop = '20px';
-                restartBtn.style.width = '100%';
-                restartBtn.onclick = () => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                };
-                document.getElementById('app').appendChild(restartBtn);
-            }
-
-            // 🔔 NOTIFICATION SYSTEM:  конфигурации
-            loadNotificationConfig().then(() => {
-                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
-                loadStory();
-            }).catch(e => {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                loadStory();
-            });
-            // END NOTIFICATION SYSTEM
-        });
-
-        // 🔔 NOTIFICATION SYSTEM:  конфигурации
-        async function loadNotificationConfig() {
-            try {
-                // Сначала пытаемся загрузить config.js
-                const configScript = document.createElement('script');
-                configScript.src = 'config.js?v=' + Date.now();
-                configScript.async = false;
-                document.head.appendChild(configScript);
-
-                // Ждем загрузки скрипта
-                await new Promise((resolve) => {
-                    configScript.onload = resolve;
-                    configScript.onerror = () => {
-                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
-                        resolve();
-                    };
-                });
-
-                // Проверяем глобальные переменные
-                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
-                    console.log('🔔 Конфигурация загружена из config.js');
-                } else {
-                    // Пытаемся получить из URL параметров (для тестирования)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const botToken = urlParams.get('bot_token');
-                    const chatId = urlParams.get('chat_id');
-
-                    if (botToken && chatId) {
-                        NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
-                            isEnabled: true
-                        };
-                        console.log('🔔 Конфигурация загружена из URL параметров');
-                    } else {
-                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
-                        NOTIFICATION_CONFIG.isEnabled = false;
-                    }
-                }
-            } catch (e) {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                NOTIFICATION_CONFIG.isEnabled = false;
-            }
-        }
-        // END NOTIFICATION SYSTEM
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
-                return;
-            }
-
-            console.log('🔄 Сброс прогресса игры...');
-
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            choices = {};
-
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-
-            // Перезагружаем страницу
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
-
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
-        
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
-        function hideNotificationBanner() {
-            localStorage.setItem('banner_hidden', 'true');
-            const banner = document.querySelector('.notification-banner');
-            if (banner) banner.style.display = 'none';
-        }
-        
-        // END NOTIFICATION SYSTEM
-
-        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
-        function isIOS() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform) ||
-                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-        }
-
-        function isTelegramIOS() {
-            const tg = window.Telegram?.WebApp;
-            return isIOS() && tg?.platform === 'ios';
-        }
-        // END ОПРЕДЕЛЕНИЕ iOS
-
-        window.handleChoice = function (nextId, choiceIndex = null) {
-            // Обработка DICE
-            if (nextId.startsWith("DICE:")) {
-                const parts = nextId.slice(5).split(',');
-                const success = parts[0] || null;
-                const partial = parts[1] || null;
-                const fail = parts[2] || null;
-                rollDice(success, partial, fail);
-                return;
-            }
-
-            // Обработка сбора предмета из ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.collect) {
-                    if (collectedKeys[choice.collect.id]) {
-                        alert("Здесь ничего нет. Вы уже осматривали это место.");
-                        return;
-                    }
-                    showKeyAnimation(choice.collect, currentNodeId);
-                    return;
-                }
-            }
-
-            // Проверка требований на уровне ВЫБОРА
-            if (choiceIndex !== null && currentNodeId) {
-                const choice = story[currentNodeId].choices[choiceIndex];
-                if (choice && choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
-                    if (missingMsgs.length > 0) {
-                        alert("Недоступно:\n" + missingMsgs.join("\n"));
-                        return;
-                    }
-                }
-            }
-
-            // Обработка перехода
-            if (nextId === "main_story") {
-                localStorage.removeItem('lingame_lastNode');
-                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-            }
-
-            if (nextId === "node_end") {
-                setTimeout(() => showNode("0"), 500);
-                return;
-            }
-
-            if (story[nextId]) {
-                showNode(nextId);
-            } else {
-                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
-                showNode("0");
-            }
-        };
-
-        function toggleAudio() {
-            if (isAudioPlaying) {
-                audioEl.pause();
-                audioBtn.textContent = '🔇';
-                isAudioPlaying = false;
-            } else {
-                audioEl.play().then(() => {
-                    audioBtn.textContent = '🔊';
-                    isAudioPlaying = true;
-                }).catch(e => {
-                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-                });
-            }
-        }
-
-        function showCodeScreen(node) {
-            // Скрываем основную сцену
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-
-            // Показываем экран ввода кода
-            codeScreen.style.display = 'block';
-            currentCodeNode = node;
-
-            // Устанавливаем тексты и подсказки
-            codeTitleEl.textContent = node.code_title || "Введите секретный код";
-            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
-            codeInput.value = '';
-            codeErrorEl.textContent = '';
-
-            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
-            const codeTextEl = document.getElementById('code-text');
-            if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
-            } else if (codeTextEl) {
-                codeTextEl.innerHTML = '';
-            }
-
-            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
-            const codeChoicesEl = document.getElementById('code-choices');
-            if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                // Очищаем контейнер
-                codeChoicesEl.innerHTML = '';
-
-                // Создаём кнопки через DOM (не через innerHTML)
-                node.choices.forEach((choice, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${index + 1}`;
-                    btn.dataset.next = choice.next; // Используем data-атрибут
-
-                    // Добавляем обработчик клика
-                    btn.addEventListener('click', function() {
-                        handleCodeChoice(this.dataset.next);
-                    });
-
-                    codeChoicesEl.appendChild(btn);
-                });
-            } else if (codeChoicesEl) {
-                codeChoicesEl.innerHTML = '';
-            }
-
-            // Фокус на поле ввода
-            setTimeout(() => codeInput.focus(), 300);
-
-            // Прокручиваем наверх
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function checkCode() {
-            if (!currentCodeNode) return;
-
-            const inputCode = codeInput.value.trim();
-            const correctCode = currentCodeNode.correct_code;
-            const caseSensitive = currentCodeNode.case_sensitive !== false;
-
-            // Проверяем код с учетом регистра
-            const isCorrect = caseSensitive
-                ? inputCode === correctCode
-                : inputCode.toLowerCase() === correctCode.toLowerCase();
-
-            if (isCorrect) {
-                // Код верный - переходим к следующей ноде
-                codeScreen.style.display = 'none';
-                showNode(currentCodeNode.success_next);
-                currentCodeNode = null;
-            } else {
-                // Код неверный - показываем ошибку
-                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-
-                // Эффект тряски для поля ввода
-                codeInput.style.animation = "shake 0.5s";
-                codeInput.addEventListener('animationend', () => {
-                    codeInput.style.animation = "";
-                });
-            }
-        }
-
-        // Обработчик кнопки подтверждения
-        submitCodeBtn.addEventListener('click', checkCode);
-
-        // Обработчик нажатия Enter в поле ввода
-        codeInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkCode();
-            }
-        });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-                20%, 40%, 60%, 80% { transform: translateX(6px); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
-
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.MainButton.setText('Начать заново');
-                Telegram.WebApp.MainButton.show();
-                Telegram.WebApp.MainButton.onClick(() => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                });
-            } else {
-                const restartBtn = document.createElement('button');
-                restartBtn.className = 'choice-btn restart-btn';
-                restartBtn.textContent = 'Начать заново';
-                restartBtn.style.marginTop = '20px';
-                restartBtn.style.width = '100%';
-                restartBtn.onclick = () => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                };
-                document.getElementById('app').appendChild(restartBtn);
-            }
-
-            // 🔔 NOTIFICATION SYSTEM:  конфигурации
-            loadNotificationConfig().then(() => {
-                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
-                loadStory();
-            }).catch(e => {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                loadStory();
-            });
-            // END NOTIFICATION SYSTEM
-        });
-
-        // 🔔 NOTIFICATION SYSTEM:  конфигурации
-        async function loadNotificationConfig() {
-            try {
-                // Сначала пытаемся загрузить config.js
-                const configScript = document.createElement('script');
-                configScript.src = 'config.js?v=' + Date.now();
-                configScript.async = false;
-                document.head.appendChild(configScript);
-
-                // Ждем загрузки скрипта
-                await new Promise((resolve) => {
-                    configScript.onload = resolve;
-                    configScript.onerror = () => {
-                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
-                        resolve();
-                    };
-                });
-
-                // Проверяем глобальные переменные
-                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
-                    console.log('🔔 Конфигурация загружена из config.js');
-                } else {
-                    // Пытаемся получить из URL параметров (для тестирования)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const botToken = urlParams.get('bot_token');
-                    const chatId = urlParams.get('chat_id');
-
-                    if (botToken && chatId) {
-                        NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
-                            isEnabled: true
-                        };
-                        console.log('🔔 Конфигурация загружена из URL параметров');
-                    } else {
-                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
-                        NOTIFICATION_CONFIG.isEnabled = false;
-                    }
-                }
-            } catch (e) {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                NOTIFICATION_CONFIG.isEnabled = false;
-            }
-        }
-        // END NOTIFICATION SYSTEM
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
-                return;
-            }
-
-            console.log('🔄 Сброс прогресса игры...');
-
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            choices = {};
-
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-
-            // Перезагружаем страницу
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
-</style>
 </head>
 
 <body>
 
-    
-    <!-- Полноэкранный показ NPC -->
-    <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
-        <img id="npc-image" src="" alt="NPC">
-
-        <div id="npc-overlay-ui">
-            <div id="npc-loader" aria-hidden="true"></div>
-            <div id="npc-speech" aria-live="polite"></div>
-
-            <div id="npc-continue">
-                <div class="npc-continue-arrow">^</div>
-                <div class="npc-continue-label">Продолжить</div>
-            </div>
-        </div>
-    </div>
-<div id="app">
-        <!-- СТАТЫ ПЕРСОНАЖА -->
-        <div id="player-stats" style="display: none;">
+    <!-- ===== RPG СИСТЕМЫ: ПАНЕЛЬ СТАТОВ ===== -->
+    <div id="player-stats">
             <div class="stat-item">
                 <div class="stat-label">❤️ ЗДОРОВЬЕ</div>
                 <div class="stat-value health" id="health-value">100/100</div>
@@ -1782,7 +1305,48 @@
             </div>
         </div>
 
+        <div id="story-text">Загрузка истории...</div>
+        <div id="choices"></div>
+    </div>
 
+    <div id="inventory">
+        <h3>📦 ИНВЕНТАРЬ</h3>
+
+        <div class="inventory-section">
+            <div class="inventory-section-title">🎯 Квесты</div>
+            <div id="quests-list"></div>
+        </div>
+
+        <div class="inventory-section">
+            <div class="inventory-section-title">📦 Предметы</div>
+            <div id="items-list"></div>
+        </div>
+
+        <div class="inventory-section">
+            <div class="inventory-section-title">🔑 Ключи</div>
+            <div id="keys-list"></div>
+        </div>
+    </div
+
+    <button id="shop-button" style="display: none;">🏪 Магазин</button>
+
+
+    
+    <!-- Полноэкранный показ NPC -->
+    <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
+        <img id="npc-image" src="" alt="NPC">
+
+        <div id="npc-overlay-ui">
+            <div id="npc-loader" aria-hidden="true"></div>
+            <div id="npc-speech" aria-live="polite"></div>
+
+            <div id="npc-continue">
+                <div class="npc-continue-arrow">^</div>
+                <div class="npc-continue-label">Продолжить</div>
+            </div>
+        </div>
+    </div>
+<div id="app">
         <div id="scene" class="loading"> вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
@@ -1836,6 +1400,656 @@
     </audio>
 
     <script>
+
+        // ===== RPG СИСТЕМЫ: ПЕРЕМЕННЫЕ =====
+        const shopItems = [
+            {
+                id: "item_medkit",
+                name: "💊 Медпак",
+                price: 50,
+                description: "Восстанавливает 50 HP"
+            },
+            {
+                id: "item_energy_drink",
+                name: "⚡ Энергетик",
+                price: 30,
+                description: "Восстанавливает 30 энергии"
+            },
+            {
+                id: "key_special_key",
+                name: "🗝️ Особый ключ",
+                price: 200,
+                description: "Открывает секретные двери"
+            },
+            {
+                id: "item_repair_kit",
+                name: "🔧 Ремкомплект",
+                price: 150,
+                description: "Для ремонта систем"
+            }
+        ];
+
+        // ============= СОСТОЯНИЕ ИГРЫ =============
+        let playerStats = {
+            health: 100,
+            maxHealth: 100,
+            stamina: 100,
+            maxStamina: 100,
+            money: 100
+        };
+
+        let currentNodeId = "start";
+        let collectedItems = {}; // { "item_medkit": 3, "key_keycard": 1 }
+        let currentPasswordNode = null;
+        let currentDiceNode = null;
+
+        // ===== RPG СИСТЕМЫ: ФУНКЦИИ ПРЕДМЕТОВ =====
+        function hasItem(itemId, quantity = 1) {
+            return (collectedItems[itemId] || 0) >= quantity;
+        }
+
+        function addItem(itemId, quantity = 1) {
+            if (!collectedItems[itemId]) {
+                collectedItems[itemId] = 0;
+            }
+            collectedItems[itemId] += quantity;
+        }
+
+        function removeItem(itemId, quantity = 1) {
+            if (collectedItems[itemId]) {
+                collectedItems[itemId] -= quantity;
+                if (collectedItems[itemId] <= 0) {
+                    delete collectedItems[itemId];
+                }
+            }
+        }
+
+        function collectKey(keyData) {
+            if (keyData && keyData.id) {
+                const qty = keyData.quantity || 1;
+                addItem(keyData.id, qty);
+                saveGame();
+                updateInventory();
+                updateStats();
+
+                if (keyData.label && keyData.label.trim() !== "") {
+                    showKeyAnimation(keyData);
+                }
+            }
+        }
+
+        function consumeItem(consumeData) {
+            if (consumeData && consumeData.id) {
+                const qty = consumeData.quantity || 1;
+                removeItem(consumeData.id, qty);
+                saveGame();
+                updateInventory();
+            }
+        }
+
+        // ============= СТАТЫ =============
+
+        // ===== RPG СИСТЕМЫ: ФУНКЦИИ СТАТОВ =====
+        function modifyHealth(amount) {
+            playerStats.health = Math.max(0, Math.min(playerStats.maxHealth, playerStats.health + amount));
+            updateStats();
+
+            if (playerStats.health === 0) {
+                alert("💀 ВЫ ПОГИБЛИ!");
+                resetGame();
+            }
+        }
+
+        function modifyStamina(amount) {
+            playerStats.stamina = Math.max(0, Math.min(playerStats.maxStamina, playerStats.stamina + amount));
+            updateStats();
+        }
+
+        function modifyMoney(amount) {
+            playerStats.money += amount;
+            if (playerStats.money < 0) playerStats.money = 0;
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('health-value').textContent = 
+                `${playerStats.health}/${playerStats.maxHealth}`;
+            document.getElementById('stamina-value').textContent = 
+                `${playerStats.stamina}/${playerStats.maxStamina}`;
+            document.getElementById('money-value').textContent = 
+                playerStats.money;
+
+            const healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
+            const staminaPercent = (playerStats.stamina / playerStats.maxStamina) * 100;
+
+            document.getElementById('health-bar').style.width = healthPercent + '%';
+            document.getElementById('stamina-bar').style.width = staminaPercent + '%';
+
+            saveGame();
+        }
+
+        // ============= АНИМАЦИЯ =============
+
+        function showKeyAnimation(keyData) {
+            const targetList = getInventoryListForType(keyData.type || keyData.id.split('_')[0]);
+            if (!targetList) return;
+
+            const keyItem = document.createElement('div');
+            keyItem.className = 'key-item key-animation';
+
+            const qty = collectedItems[keyData.id] || 1;
+            const label = document.createElement('span');
+            label.textContent = keyData.label;
+            keyItem.appendChild(label);
+
+            if (qty > 1) {
+                const qtyBadge = document.createElement('span');
+                qtyBadge.className = 'item-quantity';
+                qtyBadge.textContent = `x${qty}`;
+                keyItem.appendChild(qtyBadge);
+            }
+
+            const prefix = keyData.id.split('_')[0];
+            keyItem.classList.add(`${prefix}-type`);
+
+            targetList.appendChild(keyItem);
+
+            setTimeout(() => {
+                keyItem.classList.remove('key-animation');
+            }, 500);
+        }
+
+        function getInventoryListForType(type) {
+            switch(type) {
+                case 'quest': return document.getElementById('quests-list');
+                case 'item': return document.getElementById('items-list');
+                case 'key': return document.getElementById('keys-list');
+                default: return document.getElementById('items-list');
+            }
+        }
+
+        function updateInventory() {
+            document.getElementById('quests-list').innerHTML = '';
+            document.getElementById('items-list').innerHTML = '';
+            document.getElementById('keys-list').innerHTML = '';
+
+            let hasAnyItems = false;
+
+            for (let itemId in collectedItems) {
+                const qty = collectedItems[itemId];
+                if (qty <= 0) continue;
+
+                const keyData = findKeyData(itemId);
+                if (!keyData || !keyData.label || keyData.label.trim() === "") continue;
+
+                hasAnyItems = true;
+                const prefix = itemId.split('_')[0];
+                const targetList = getInventoryListForType(keyData.type || prefix);
+
+                if (!targetList) continue;
+
+                const keyItem = document.createElement('div');
+                keyItem.className = `key-item ${prefix}-type`;
+
+                const label = document.createElement('span');
+                label.textContent = keyData.label;
+                keyItem.appendChild(label);
+
+                if (qty > 1) {
+                    const qtyBadge = document.createElement('span');
+                    qtyBadge.className = 'item-quantity';
+                    qtyBadge.textContent = `x${qty}`;
+                    keyItem.appendChild(qtyBadge);
+                }
+
+                targetList.appendChild(keyItem);
+            }
+
+            if (!document.getElementById('quests-list').children.length) {
+                document.getElementById('quests-list').innerHTML = '<p style="color: #666; font-size: 0.85em;">Нет квестов</p>';
+            }
+            if (!document.getElementById('items-list').children.length) {
+                document.getElementById('items-list').innerHTML = '<p style="color: #666; font-size: 0.85em;">Нет предметов</p>';
+            }
+            if (!document.getElementById('keys-list').children.length) {
+                document.getElementById('keys-list').innerHTML = '<p style="color: #666; font-size: 0.85em;">Нет ключей</p>';
+            }
+        }
+
+        function findKeyData(keyId) {
+            for (let nodeId in story) {
+                const node = story[nodeId];
+                if (node.choices) {
+                    for (let choice of node.choices) {
+                        if (choice.collect && choice.collect.id === keyId) {
+                            return choice.collect;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        // ============= ПРОВЕРКА ТРЕБОВАНИЙ =============
+
+        function checkRequirements(requires) {
+            if (!requires || requires.length === 0) return true;
+            return requires.every(keyId => hasItem(keyId, 1));
+        }
+
+        function getMissingKeyMessages(requires, missingMessages = {}) {
+            if (!requires || requires.length === 0) return [];
+
+            const missing = [];
+            requires.forEach(keyId => {
+                if (!hasItem(keyId, 1)) {
+                    const message = missingMessages[keyId] || `❌ Требуется: ${keyId}`;
+                    missing.push(message);
+                }
+            });
+            return missing;
+        }
+
+        // ============= РЕНДЕРИНГ УЗЛА =============
+
+        function renderNode(nodeId) {
+            const node = story[nodeId];
+            if (!node) {
+                document.getElementById('story-text').textContent = "❌ Узел не найден: " + nodeId;
+                return;
+            }
+
+            currentNodeId = nodeId;
+            document.getElementById('story-text').textContent = node.text;
+
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+
+            if (node.password) {
+                currentPasswordNode = node;
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                button.textContent = '🔐 Ввести пароль';
+                button.onclick = () => openPasswordModal();
+                choicesContainer.appendChild(button);
+                return;
+            }
+
+            if (node.dice) {
+                currentDiceNode = node;
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                button.textContent = '🎲 Бросить кости';
+                button.onclick = () => openDiceModal();
+                choicesContainer.appendChild(button);
+                return;
+            }
+
+            if (node.choices) {
+                node.choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-button';
+                    button.textContent = choice.text;
+
+                    // Показываем стоимость
+                    if (choice.cost) {
+                        const costSpan = document.createElement('span');
+                        costSpan.className = 'choice-cost';
+                        costSpan.textContent = `-${choice.cost}₡`;
+                        button.appendChild(costSpan);
+                    }
+
+                    const requirementsMet = checkRequirements(choice.requires);
+                    const hideUntilUnlocked = choice.hide_until_unlocked !== undefined ? choice.hide_until_unlocked : false;
+
+                    // Проверка стоимости
+                    const canAfford = !choice.cost || playerStats.money >= choice.cost;
+
+                    // Проверка стамины
+                    const hasStamina = !choice.stamina || (choice.stamina > 0 || playerStats.stamina >= Math.abs(choice.stamina));
+
+                    if (choice.requires && choice.requires.length > 0) {
+                        if (!requirementsMet) {
+                            if (hideUntilUnlocked === true) {
+                                button.classList.add('choice-hidden');
+                            } else {
+                                button.disabled = true;
+                                button.onclick = () => {
+                                    const messages = getMissingKeyMessages(choice.requires, choice.missing_messages);
+                                    if (messages.length > 0) {
+                                        alert("Недоступно:\n" + messages.join("\n"));
+                                    }
+                                };
+                            }
+                        } else if (!canAfford) {
+                            button.disabled = true;
+                            button.onclick = () => alert("❌ Недостаточно кредитов!");
+                        } else if (!hasStamina) {
+                            button.disabled = true;
+                            button.onclick = () => alert("❌ Недостаточно энергии!");
+                        } else {
+                            button.onclick = () => handleChoice(choice, index);
+                        }
+                    } else {
+                        if (!canAfford) {
+                            button.disabled = true;
+                            button.onclick = () => alert("❌ Недостаточно кредитов!");
+                        } else if (!hasStamina) {
+                            button.disabled = true;
+                            button.onclick = () => alert("❌ Недостаточно энергии!");
+                        } else {
+                            button.onclick = () => handleChoice(choice, index);
+                        }
+                    }
+
+                    choicesContainer.appendChild(button);
+                });
+            }
+        }
+
+        function handleChoice(choice, choiceIndex) {
+            // Действия
+            if (choice.action === 'open_shop') {
+                openShop();
+                return;
+            }
+
+            // Стоимость
+            if (choice.cost) {
+                modifyMoney(-choice.cost);
+            }
+
+            // Деньги
+            if (choice.money) {
+                modifyMoney(choice.money);
+            }
+
+            // Здоровье
+            if (choice.health) {
+                modifyHealth(choice.health);
+            }
+
+            // Энергия
+            if (choice.stamina) {
+                modifyStamina(choice.stamina);
+            }
+
+            // Потребление предметов
+            if (choice.consume) {
+                consumeItem(choice.consume);
+            }
+
+            // Сбор предметов
+            if (choice.collect) {
+                collectKey(choice.collect);
+            }
+
+            // Переход
+            if (choice.next) {
+                renderNode(choice.next);
+            }
+        }
+
+        // ============= ПАРОЛЬ =============
+
+        function openPasswordModal() {
+            document.getElementById('password-modal').style.display = 'flex';
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-input').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').style.display = 'none';
+        }
+
+        function submitPassword() {
+            const input = document.getElementById('password-input').value;
+            const correct = currentPasswordNode.password.correct;
+
+            closePasswordModal();
+
+            if (input === correct) {
+                renderNode(currentPasswordNode.password.success);
+            } else {
+                renderNode(currentPasswordNode.password.fail);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('password-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    submitPassword();
+                }
+            });
+        });
+
+        // ============= КОСТИ =============
+
+        function openDiceModal() {
+            document.getElementById('dice-modal').style.display = 'flex';
+            document.getElementById('dice1').textContent = '?';
+            document.getElementById('dice2').textContent = '?';
+            document.getElementById('dice-result').textContent = '';
+            document.getElementById('dice-continue-btn').style.display = 'none';
+        }
+
+        function rollDice() {
+            const dice1 = Math.floor(Math.random() * 6) + 1;
+            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const total = dice1 + dice2;
+
+            document.getElementById('dice1').textContent = dice1;
+            document.getElementById('dice2').textContent = dice2;
+
+            const difficulty = currentDiceNode.dice.difficulty;
+            const success = total >= difficulty;
+
+            const resultText = success 
+                ? `✅ Успех! (${total} >= ${difficulty})`
+                : `❌ Провал! (${total} < ${difficulty})`;
+
+            document.getElementById('dice-result').textContent = resultText;
+            document.getElementById('dice-continue-btn').style.display = 'block';
+            document.getElementById('dice-continue-btn').dataset.result = success ? 'success' : 'fail';
+        }
+
+        function continueDiceStory() {
+            const success = document.getElementById('dice-continue-btn').dataset.result === 'success';
+            document.getElementById('dice-modal').style.display = 'none';
+
+            const nextNode = success 
+                ? currentDiceNode.dice.success 
+                : currentDiceNode.dice.fail;
+
+            renderNode(nextNode);
+        }
+
+        // ============= КАРТА =============
+
+        document.getElementById('map-button').onclick = () => {
+            document.getElementById('map-modal').style.display = 'flex';
+            updateMap();
+        };
+
+        function closeMap() {
+            document.getElementById('map-modal').style.display = 'none';
+        }
+
+        function updateMap() {
+            const mapContainer = document.getElementById('map-locations');
+            mapContainer.innerHTML = '';
+
+            const locations = [
+                { name: "🚀 Капсула", id: "start" },
+                { name: "🏥 Медбай", id: "medbay" },
+                { name: "🌉 Мостик", id: "bridge" },
+                { name: "⚙️ Инженерия", id: "engineering", requires: ["key_keycard"] }
+            ];
+
+            locations.forEach(loc => {
+                const div = document.createElement('div');
+                div.style.padding = '10px';
+                div.style.margin = '5px 0';
+                div.style.background = 'rgba(0,255,255,0.1)';
+                div.style.borderRadius = '5px';
+                div.style.cursor = 'pointer';
+
+                const canAccess = !loc.requires || checkRequirements(loc.requires);
+
+                if (!canAccess) {
+                    div.style.opacity = '0.5';
+                    div.style.cursor = 'not-allowed';
+                }
+
+                div.textContent = loc.name + (canAccess ? '' : ' 🔒');
+
+                if (canAccess) {
+                    div.onclick = () => {
+                        closeMap();
+                        renderNode(loc.id);
+                    };
+                }
+
+                mapContainer.appendChild(div);
+            });
+        }
+
+        // ============= МАГАЗИН =============
+
+        document.getElementById('shop-button').onclick = openShop;
+
+        // ===== RPG СИСТЕМЫ: ФУНКЦИИ МАГАЗИНА =====
+        function openShop() {
+            document.getElementById('shop-modal').style.display = 'flex';
+            document.getElementById('shop-money').textContent = playerStats.money;
+
+            const shopContainer = document.getElementById('shop-items');
+            shopContainer.innerHTML = '';
+
+            shopItems.forEach(item => {
+                const shopItem = document.createElement('div');
+                shopItem.className = 'shop-item';
+
+                const info = document.createElement('div');
+                info.className = 'shop-item-info';
+
+                const name = document.createElement('div');
+                name.className = 'shop-item-name';
+                name.textContent = item.name;
+
+                const desc = document.createElement('div');
+                desc.style.color = '#888';
+                desc.style.fontSize = '0.85em';
+                desc.textContent = item.description;
+
+                const price = document.createElement('div');
+                price.className = 'shop-item-price';
+                price.textContent = `💰 ${item.price} кредитов`;
+
+                info.appendChild(name);
+                info.appendChild(desc);
+                info.appendChild(price);
+
+                const buyBtn = document.createElement('button');
+                buyBtn.className = 'shop-buy-btn';
+                buyBtn.textContent = 'Купить';
+                buyBtn.onclick = () => buyItem(item);
+
+                if (playerStats.money < item.price) {
+                    buyBtn.disabled = true;
+                }
+
+                shopItem.appendChild(info);
+                shopItem.appendChild(buyBtn);
+                shopContainer.appendChild(shopItem);
+            });
+        }
+
+        function buyItem(item) {
+            if (playerStats.money >= item.price) {
+                modifyMoney(-item.price);
+                addItem(item.id, 1);
+
+                const keyData = {
+                    id: item.id,
+                    label: item.name,
+                    type: item.id.split('_')[0],
+                    quantity: 1
+                };
+
+                updateInventory();
+                showKeyAnimation(keyData);
+
+                alert(`✅ Куплено: ${item.name}`);
+                openShop(); // Обновляем магазин
+            } else {
+                alert("❌ Недостаточно кредитов!");
+            }
+        }
+
+        function closeShop() {
+            document.getElementById('shop-modal').style.display = 'none';
+        }
+
+        // ============= СОХРАНЕНИЕ/ЗАГРУЗКА =============
+
+        function saveGame() {
+            const gameState = {
+                currentNodeId: currentNodeId,
+                collectedItems: collectedItems,
+                playerStats: playerStats
+            };
+            localStorage.setItem('rpgGameSave', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('rpgGameSave');
+            if (saved) {
+                const gameState = JSON.parse(saved);
+                currentNodeId = gameState.currentNodeId || 'start';
+                collectedItems = gameState.collectedItems || {};
+                playerStats = gameState.playerStats || {
+                    health: 100,
+                    maxHealth: 100,
+                    stamina: 100,
+                    maxStamina: 100,
+                    money: 100
+                };
+            }
+        }
+
+        function resetGame() {
+            if (confirm('Сбросить весь прогресс?')) {
+                localStorage.removeItem('rpgGameSave');
+                collectedItems = {};
+                currentNodeId = 'start';
+                playerStats = {
+                    health: 100,
+                    maxHealth: 100,
+                    stamina: 100,
+                    maxStamina: 100,
+                    money: 100
+                };
+                updateInventory();
+                updateStats();
+                renderNode('start');
+            }
+        }
+
+        // ============= ИНИЦИАЛИЗАЦИЯ =============
+
+        window.onload = () => {
+            loadGame();
+            updateInventory();
+            updateStats();
+            renderNode(currentNodeId);
+        };
+
+        window.addEventListener('beforeunload', saveGame);
+
+        // ===== КОНЕЦ RPG СИСТЕМ =====
+
+
         // === Фильтр карты: показывать только когда map_view: true
         function hasMapView(node) {
             return node && node.map_view === true;
@@ -2373,80 +2587,20 @@
         // === СИСТЕМА КЛЮЧЕЙ ===
         let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
 
-        // ===== RPG СИСТЕМЫ: НОВЫЕ ПЕРЕМЕННЫЕ =====
-        let collectedItems = {}; // Количество предметов: {"item_medkit": 3}
-        let playerStats = {
-            health: 100,
-            maxHealth: 100,
-            stamina: 100,
-            maxStamina: 100,
-            money: 100
-        };
-
-        // Магазин
-        const shopItems = [
-            {
-                id: "item_medkit",
-                name: "💊 Медпак",
-                price: 50,
-                description: "Восстанавливает 50 HP"
-            },
-            {
-                id: "item_energy_drink",
-                name: "⚡ Энергетик",
-                price: 30,
-                description: "Восстанавливает 30 энергии"
-            },
-            {
-                id: "key_special_key",
-                name: "🗝️ Особый ключ",
-                price: 200,
-                description: "Открывает секретные двери"
-            },
-            {
-                id: "item_repair_kit",
-                name: "🔧 Ремкомплект",
-                price: 150,
-                description: "Для ремонта систем"
-            }
-        ];
-
-
         function saveKeys() {
-            // Сохраняем статы и предметы
-        localStorage.setItem("playerStats", JSON.stringify(playerStats));
-        localStorage.setItem("collectedItems", JSON.stringify(collectedItems));
-
-        // Сохраняем старые ключи
-        localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
+            localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
         }
 
         function collectKey(keyData) {
-        if (!keyData || !keyData.id) return;
-
-        const keyId = keyData.id;
-        const quantity = keyData.quantity || 1;
-
-        // Добавляем в новый формат (с количеством)
-        addItem(keyId, quantity);
-
-        // Также добавляем в старый формат для совместимости
-        collectedKeys.add(keyId);
-
-        saveKeys();
-
-        // Показываем анимацию только если есть метка
-        if (keyData.label && keyData.label.trim() !== "") {
-            showKeyAnimation(keyData);
-        }
-
-        // Обновляем инвентарь
-        if (typeof showInventory === 'function') {
-            showInventory();
-        }
-    };
+            if (keyData && keyData.id) {
+                collectedKeys[keyData.id] = {
+                    label: keyData.label || keyData.id,
+                    type: keyData.type || 'regular'
+                };
                 saveKeys();
                 console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')');
+            }
+        }
 
         function hasAllKeys(requiredKeys) {
             if (!requiredKeys) return true;
@@ -2917,7 +3071,7 @@
         }
 
         function initGame() {
-        // Загружаем статы персонажа
+        // ===== RPG СИСТЕМЫ: ЗАГРУЗКА =====
         const savedStats = localStorage.getItem("playerStats");
         if (savedStats) {
             try {
@@ -2927,7 +3081,6 @@
             }
         }
 
-        // Загружаем предметы
         const savedItems = localStorage.getItem("collectedItems");
         if (savedItems) {
             try {
@@ -2937,14 +3090,10 @@
             }
         }
 
-        // Миграция старых ключей
-        migrateOldKeysToItems();
-
-        // Обновляем отображение статов
         updateStats();
-
-        // Инициализируем магазин
         initShopButton();
+        // ===== КОНЕЦ RPG СИСТЕМ =====
+
 
             // Загружаем сохраненные локации
             visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
@@ -2997,8 +3146,7 @@
 
         function loadNodeContent(node, nodeId) {
             window.__nodeTransitionLock = false;
-            window.__nodeTransitionLock = false;
-            currentNodeId = nodeId;
+            window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
             // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
@@ -3104,40 +3252,10 @@
                     choices = shuffleArray(choices);
                 }
                 choicesHtml = choices.map((c, index) => {
-                    // === RPG СИСТЕМЫ: ПРОВЕРКА УСЛОВИЙ ===
-
-                    // Проверка требований
-                    const requirementsMet = !c.requires || checkRequirements(c.requires);
-                    const hideUntilUnlocked = c.hide_until_unlocked !== undefined ? c.hide_until_unlocked : false;
-
-                    // Скрываем кнопку если hide_until_unlocked === true и требования не выполнены
-                    if (c.requires && !requirementsMet && hideUntilUnlocked === true) {
-                        return ''; // Не показываем кнопку
-                    }
-
-                    // Проверка стоимости
-                    const canAfford = !c.cost || playerStats.money >= c.cost;
-
-                    // Проверка энергии
-                    const hasEnergy = !c.stamina || (c.stamina > 0 || playerStats.stamina >= Math.abs(c.stamina));
-
-                    // Определяем доступность кнопки
-                    let isDisabled = false;
-                    if (c.requires && !requirementsMet) {
-                        isDisabled = true;
-                    }
-                    if (!canAfford || !hasEnergy) {
-                        isDisabled = true;
-                    }
-
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     const btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-
-                    // Отображение стоимости
-                    const costDisplay = c.cost ? `<span class="choice-cost">-${c.cost}₡</span>` : '';
-
-                    return `<button class="${btnClass}" ${isDisabled ? 'disabled' : ''} onclick="handleChoice('${c.next}', ${index})">${c.text}${costDisplay}</button>`;
-                }).filter(btn => btn !== '').join('');
+                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${index})">${c.text}</button>`;
+                }).join('');
             }
 
             let inventoryButtonHtml = '';
@@ -3173,287 +3291,731 @@
                 70% { transform: scale(1.2); opacity: 1; }
                 100% { transform: scale(1); opacity: 1; }
             }
-        
-        /* ===== RPG СИСТЕМЫ: СТАТЫ И МАГАЗИН ===== */
-        #player-stats {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 12px 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-        }
-
-        .stat-item {
-            flex: 1;
-            min-width: 100px;
-            text-align: center;
-        }
-
-        .stat-label {
-            color: #888;
-            font-size: 0.75em;
-            margin-bottom: 3px;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-size: 1.1em;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .stat-value.health { color: #ff4444; }
-        .stat-value.stamina { color: #44ff44; }
-        .stat-value.money { color: #ffaa00; }
-
-        .stat-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .stat-bar-fill {
-            height: 100%;
-            transition: width 0.3s ease;
-        }
-
-        .stat-bar-fill.health { background: linear-gradient(90deg, #ff4444, #ff8844); }
-        .stat-bar-fill.stamina { background: linear-gradient(90deg, #44ff44, #88ff44); }
-
-        .inventory-section {
-            margin: 12px 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .inventory-section:last-child {
-            border-bottom: none;
-        }
-
-        .inventory-section-title {
-            color: #888;
-            font-size: 0.8em;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .item-quantity {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 7px;
-            border-radius: 10px;
-            font-size: 0.8em;
-            font-weight: bold;
-            margin-left: 5px;
-        }
-
-        .key-item.key-type {
-            border-left-color: #ff00ff;
-            background: rgba(255, 0, 255, 0.1);
-        }
-
-        .choice-cost {
-            background: rgba(255, 170, 0, 0.3);
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            color: #ffaa00;
-            margin-left: 10px;
-        }
-
-        
-        
-    
-
-    // ===== RPG СИСТЕМЫ: НОВЫЕ ФУНКЦИИ =====
-
-    // Работа с предметами (количество)
-    function hasItem(itemId, quantity = 1) {
-        return (collectedItems[itemId] || 0) >= quantity;
-    }
-
-    function addItem(itemId, quantity = 1) {
-        if (!collectedItems[itemId]) {
-            collectedItems[itemId] = 0;
-        }
-        collectedItems[itemId] += quantity;
-    }
-
-    function removeItem(itemId, quantity = 1) {
-        if (collectedItems[itemId]) {
-            collectedItems[itemId] -= quantity;
-            if (collectedItems[itemId] <= 0) {
-                delete collectedItems[itemId];
+        </style>
+    `;
             }
-        }
-    }
 
-    function consumeItem(consumeData) {
-        if (consumeData && consumeData.id) {
-            const qty = consumeData.quantity || 1;
-            removeItem(consumeData.id, qty);
-            saveKeys();
-            showInventory();
-        }
-    }
-
-    // Статы персонажа
-    function modifyHealth(amount) {
-        playerStats.health = Math.max(0, Math.min(playerStats.maxHealth, playerStats.health + amount));
-        updateStats();
-
-        if (playerStats.health === 0) {
-            alert("💀 ВЫ ПОГИБЛИ!");
-            if (confirm("Начать сначала?")) {
-                resetProgress();
+            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
+            let notificationBanner = '';
+            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
+                notificationBanner = `
+                <div class="notification-banner">
+                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
+                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
+                </div>
+                `;
             }
-        }
-    }
+            // END NOTIFICATION SYSTEM
 
-    function modifyStamina(amount) {
-        playerStats.stamina = Math.max(0, Math.min(playerStats.maxStamina, playerStats.stamina + amount));
-        updateStats();
-    }
-
-    function modifyMoney(amount) {
-        playerStats.money += amount;
-        if (playerStats.money < 0) playerStats.money = 0;
-        updateStats();
-    }
-
-    function updateStats() {
-        const healthElem = document.getElementById('health-value');
-        const staminaElem = document.getElementById('stamina-value');
-        const moneyElem = document.getElementById('money-value');
-        const healthBar = document.getElementById('health-bar');
-        const staminaBar = document.getElementById('stamina-bar');
-
-        if (healthElem) healthElem.textContent = `${playerStats.health}/${playerStats.maxHealth}`;
-        if (staminaElem) staminaElem.textContent = `${playerStats.stamina}/${playerStats.maxStamina}`;
-        if (moneyElem) moneyElem.textContent = playerStats.money;
-
-        const healthPercent = (playerStats.health / playerStats.maxHealth) * 100;
-        const staminaPercent = (playerStats.stamina / playerStats.maxStamina) * 100;
-
-        if (healthBar) healthBar.style.width = healthPercent + '%';
-        if (staminaBar) staminaBar.style.width = staminaPercent + '%';
-
-        // Показываем панель статов
-        const statsPanel = document.getElementById('player-stats');
-        if (statsPanel) statsPanel.style.display = 'flex';
-
-        saveKeys(); // Сохраняем изменения
-    }
-
-    // Магазин
-    function openShop() {
-        document.getElementById('shop-modal').style.display = 'flex';
-        document.getElementById('shop-money-display').textContent = playerStats.money;
-
-        const container = document.getElementById('shop-items-container');
-        container.innerHTML = '';
-
-        shopItems.forEach(item => {
-            const canBuy = playerStats.money >= item.price;
-
-            const shopItem = document.createElement('div');
-            shopItem.className = 'shop-item';
-
-            const info = document.createElement('div');
-            info.className = 'shop-item-info';
-
-            const name = document.createElement('div');
-            name.className = 'shop-item-name';
-            name.textContent = item.name;
-
-            const desc = document.createElement('div');
-            desc.className = 'shop-item-desc';
-            desc.textContent = item.description;
-
-            const price = document.createElement('div');
-            price.className = 'shop-item-price';
-            price.textContent = `💰 ${item.price} кредитов`;
-
-            info.appendChild(name);
-            info.appendChild(desc);
-            info.appendChild(price);
-
-            const buyBtn = document.createElement('button');
-            buyBtn.className = 'shop-buy-btn';
-            buyBtn.textContent = 'Купить';
-            buyBtn.disabled = !canBuy;
-            buyBtn.onclick = () => buyItem(item.id);
-
-            shopItem.appendChild(info);
-            shopItem.appendChild(buyBtn);
-            container.appendChild(shopItem);
-        });
-
-        // Показываем кнопку магазина
-        const shopBtn = document.getElementById('shop-button');
-        if (shopBtn) shopBtn.style.display = 'block';
-    }
-
-    function buyItem(itemId) {
-        const item = shopItems.find(i => i.id === itemId);
-        if (item && playerStats.money >= item.price) {
-            modifyMoney(-item.price);
-            addItem(item.id, 1);
-
-            // Обновляем инвентарь
-            showInventory();
-
-            alert(`✅ Куплено: ${item.name}`);
-            openShop(); // Обновляем магазин
-        } else {
-            alert("❌ Недостаточно кредитов!");
-        }
-    }
-
-    function closeShop() {
-        document.getElementById('shop-modal').style.display = 'none';
-    }
-
-    // Инициализация кнопки магазина
-    function initShopButton() {
-        const shopBtn = document.getElementById('shop-button');
-        if (shopBtn) {
-            shopBtn.onclick = openShop;
-            shopBtn.style.display = 'block';
-        }
-    }
-
-    // Обновленная проверка требований (с поддержкой количества)
-    function checkRequirements(requires) {
-        if (!requires || requires.length === 0) return true;
-
-        return requires.every(keyId => {
-            // Проверяем и в старом формате (collectedKeys) и в новом (collectedItems)
-            return collectedKeys.has(keyId) || hasItem(keyId, 1);
-        });
-    }
-
-    // Конвертация старого формата в новый
-    function migrateOldKeysToItems() {
-        if (collectedKeys && collectedKeys.size > 0) {
-            collectedKeys.forEach(keyId => {
-                if (!collectedItems[keyId]) {
-                    collectedItems[keyId] = 1;
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
                 }
-            });
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
         }
-    }
-</script>
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
+                node.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
+                });
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
+        function handleCodeChoice(nextNodeId) {
+            codeScreen.style.display = 'none';
+            currentCodeNode = null;
+            showNode(nextNodeId);
+        }
+
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShipWorld(); // Загрузка системы корабля
+
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                return;
+            }
+
+            console.log('🔄 Сброс прогресса игры...');
+
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
+
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
+
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
+
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+
+
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }, 320);
+        }
+
+        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+        function hideNotificationBanner() {
+            localStorage.setItem('banner_hidden', 'true');
+            const banner = document.querySelector('.notification-banner');
+            if (banner) banner.style.display = 'none';
+        }
+        // END NOTIFICATION SYSTEM
+
+        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) ||
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
+
+        function isTelegramIOS() {
+            const tg = window.Telegram?.WebApp;
+            return isIOS() && tg?.platform === 'ios';
+        }
+        // END ОПРЕДЕЛЕНИЕ iOS
+
+        window.handleChoice = function (nextId, choiceIndex = null) {
+            // Обработка DICE
+            if (nextId.startsWith("DICE:")) {
+                const parts = nextId.slice(5).split(',');
+                const success = parts[0] || null;
+                const partial = parts[1] || null;
+                const fail = parts[2] || null;
+                rollDice(success, partial, fail);
+                return;
+            }
+
+            // Обработка сбора предмета из ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.collect) {
+                    if (collectedKeys[choice.collect.id]) {
+                        alert("Здесь ничего нет. Вы уже осматривали это место.");
+                        return;
+                    }
+                    showKeyAnimation(choice.collect, currentNodeId);
+                    return;
+                }
+            }
+
+            // Проверка требований на уровне ВЫБОРА
+            if (choiceIndex !== null && currentNodeId) {
+                const choice = story[currentNodeId].choices[choiceIndex];
+                if (choice && choice.requires) {
+                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missingMessages || {});
+                    if (missingMsgs.length > 0) {
+                        alert("Недоступно:\n" + missingMsgs.join("\n"));
+                        return;
+                    }
+                }
+            }
+
+            // Обработка перехода
+            if (nextId === "main_story") {
+                localStorage.removeItem('lingame_lastNode');
+                collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+            }
+
+            if (nextId === "node_end") {
+                setTimeout(() => showNode("0"), 500);
+                return;
+            }
+
+            if (story[nextId]) {
+                showNode(nextId);
+            } else {
+                console.warn(`Узел "${nextId}" не найден. Возврат к началу.`);
+                showNode("0");
+            }
+        };
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                audioEl.pause();
+                audioBtn.textContent = '🔇';
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    audioBtn.textContent = '🔊';
+                    isAudioPlaying = true;
+                }).catch(e => {
+                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                });
+            }
+        }
+
+        function showCodeScreen(node) {
+            // Скрываем основную сцену
+            sceneEl.style.display = 'none';
+            diceScreen.style.display = 'none';
+            inventoryScreen.style.display = 'none';
+            keyAnimScreen.style.display = 'none';
+            mapScreen.style.display = 'none';
+
+            // Показываем экран ввода кода
+            codeScreen.style.display = 'block';
+            currentCodeNode = node;
+
+            // Устанавливаем тексты и подсказки
+            codeTitleEl.textContent = node.code_title || "Введите секретный код";
+            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+            codeInput.value = '';
+            codeErrorEl.textContent = '';
+
+            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+            const codeTextEl = document.getElementById('code-text');
+            if (codeTextEl && node.text) {
+                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+            } else if (codeTextEl) {
+                codeTextEl.innerHTML = '';
+            }
+
+            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+            const codeChoicesEl = document.getElementById('code-choices');
+            if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                // Очищаем контейнер
+                codeChoicesEl.innerHTML = '';
+
+                // Создаём кнопки через DOM (не через innerHTML)
+                node.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${index + 1}`;
+                    btn.dataset.next = choice.next; // Используем data-атрибут
+
+                    // Добавляем обработчик клика
+                    btn.addEventListener('click', function() {
+                        handleCodeChoice(this.dataset.next);
+                    });
+
+                    codeChoicesEl.appendChild(btn);
+                });
+            } else if (codeChoicesEl) {
+                codeChoicesEl.innerHTML = '';
+            }
+
+            // Фокус на поле ввода
+            setTimeout(() => codeInput.focus(), 300);
+
+            // Прокручиваем наверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function checkCode() {
+            if (!currentCodeNode) return;
+
+            const inputCode = codeInput.value.trim();
+            const correctCode = currentCodeNode.correct_code;
+            const caseSensitive = currentCodeNode.case_sensitive !== false;
+
+            // Проверяем код с учетом регистра
+            const isCorrect = caseSensitive
+                ? inputCode === correctCode
+                : inputCode.toLowerCase() === correctCode.toLowerCase();
+
+            if (isCorrect) {
+                // Код верный - переходим к следующей ноде
+                codeScreen.style.display = 'none';
+                showNode(currentCodeNode.success_next);
+                currentCodeNode = null;
+            } else {
+                // Код неверный - показываем ошибку
+                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
+
+                // Эффект тряски для поля ввода
+                codeInput.style.animation = "shake 0.5s";
+                codeInput.addEventListener('animationend', () => {
+                    codeInput.style.animation = "";
+                });
+            }
+        }
+
+        // Обработчик кнопки подтверждения
+        submitCodeBtn.addEventListener('click', checkCode);
+
+        // Обработчик нажатия Enter в поле ввода
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                checkCode();
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+                20%, 40%, 60%, 80% { transform: translateX(6px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.MainButton.setText('Начать заново');
+                Telegram.WebApp.MainButton.show();
+                Telegram.WebApp.MainButton.onClick(() => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                });
+            } else {
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'choice-btn restart-btn';
+                restartBtn.textContent = 'Начать заново';
+                restartBtn.style.marginTop = '20px';
+                restartBtn.style.width = '100%';
+                restartBtn.onclick = () => {
+                    localStorage.removeItem('lingame_lastNode');
+                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                    showNode("0");
+                };
+                document.getElementById('app').appendChild(restartBtn);
+            }
+
+            // 🔔 NOTIFICATION SYSTEM:  конфигурации
+            loadNotificationConfig().then(() => {
+                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                loadStory();
+            }).catch(e => {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                loadStory();
+            });
+            // END NOTIFICATION SYSTEM
+        });
+
+        // 🔔 NOTIFICATION SYSTEM:  конфигурации
+        async function loadNotificationConfig() {
+            try {
+                // Сначала пытаемся загрузить config.js
+                const configScript = document.createElement('script');
+                configScript.src = 'config.js?v=' + Date.now();
+                configScript.async = false;
+                document.head.appendChild(configScript);
+
+                // Ждем загрузки скрипта
+                await new Promise((resolve) => {
+                    configScript.onload = resolve;
+                    configScript.onerror = () => {
+                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                        resolve();
+                    };
+                });
+
+                // Проверяем глобальные переменные
+                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
+                    NOTIFICATION_CONFIG = {
+                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
+                        isEnabled: true
+                    };
+                    console.log('🔔 Конфигурация загружена из config.js');
+                } else {
+                    // Пытаемся получить из URL параметров (для тестирования)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const botToken = urlParams.get('bot_token');
+                    const chatId = urlParams.get('chat_id');
+
+                    if (botToken && chatId) {
+                        NOTIFICATION_CONFIG = {
+                            BOT_TOKEN: botToken,
+                            PUBLIC_CHAT_ID: chatId,
+                            isEnabled: true
+                        };
+                        console.log('🔔 Конфигурация загружена из URL параметров');
+                    } else {
+                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                        NOTIFICATION_CONFIG.isEnabled = false;
+                    }
+                }
+            } catch (e) {
+                console.error('🔔 Ошибка загрузки конфигурации:', e);
+                NOTIFICATION_CONFIG.isEnabled = false;
+            }
+        }
+        // END NOTIFICATION SYSTEM
+        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+        function resetProgress() {
+            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                return;
+            }
+
+            console.log('🔄 Сброс прогресса игры...');
+
+            // Очищаем localStorage
+            localStorage.removeItem('lingame_lastNode');
+            localStorage.removeItem('lingame_keys');
+            localStorage.removeItem('lingame_locations');
+            localStorage.removeItem('banner_hidden');
+            localStorage.removeItem('hide_map_tutorial');
+
+            // Очищаем глобальные переменные
+            collectedKeys = {};
+            visitedLocations = [];
+            choices = {};
+
+            console.log('✅ Прогресс сброшен!');
+            console.log('🔄 Перезагрузка страницы...');
+
+            // Перезагружаем страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+        
+    </script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
-        <button id="shop-button" style="display: none;">🏪 Магазин</button>
-
     <div id="resetButton" style="
         position: fixed;
         bottom: 20px;
@@ -3479,15 +4041,13 @@
         </button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО МАГАЗИНА -->
+    <!-- ===== RPG СИСТЕМЫ: МАГАЗИН ===== -->
     <div id="shop-modal">
-        <div class="shop-content">
-            <div class="shop-header">
-                <h2 style="color: #00ffff; margin-bottom: 10px;">🏪 МАГАЗИН</h2>
-                <div class="shop-money">💰 Ваши кредиты: <span id="shop-money-display">100</span></div>
-            </div>
-            <div id="shop-items-container"></div>
-            <button class="choice-btn" onclick="closeShop()" style="margin-top: 20px; width: 100%; max-width: 300px;">← Закрыть</button>
+        <div class="modal-content" style="max-width: 600px;">
+            <h2>🏪 МАГАЗИН</h2>
+            <p style="color: #ffaa00; margin: 10px 0;">💰 Ваши кредиты: <span id="shop-money">100</span></p>
+            <div id="shop-items"></div>
+            <button class="modal-button" onclick="closeShop()">← Назад</button>
         </div>
     </div>
 
