@@ -1677,25 +1677,32 @@
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 
-        function showCollectMessage(message, icon = '💬') {
-            keyAnimScreen.style.display = 'block';
-            keyAnimScreen.innerHTML = `
-                <div class="key-anim-content" style="cursor: pointer;">
-                    <div class="key-icon-big">${icon}</div>
-                    <div class="key-label-big">${message}</div>
-                    <p style="margin-top: 20px; color: #888; font-size: 14px;">Нажмите для продолжения</p>
-                </div>
-            `;
+        function showCollectMessage(message, icon = '📢') {
+            console.log('📢 showCollectMessage вызван');
+            console.log('message:', message);
+            console.log('icon:', icon);
 
-            // Закрытие по клику
-            keyAnimScreen.onclick = function() {
-                keyAnimScreen.style.display = 'none';
-                keyAnimScreen.onclick = null;
-            };
+            const overlay = document.getElementById('collect-overlay');
+            const messageDiv = document.getElementById('collect-message');
+
+            if (!overlay || !messageDiv) {
+                console.error('❌ Элементы overlay не найдены! Используем alert.');
+                alert(icon + '\n\n' + message);
+                return;
+            }
+
+            messageDiv.querySelector('.icon').textContent = icon;
+            messageDiv.querySelector('.text').textContent = message;
+            overlay.style.display = 'flex';
         }
 
-
-        // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
+        function closeCollectMessage() {
+            console.log('✅ Закрытие всплывающего окна');
+            const overlay = document.getElementById('collect-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
         function goToNode(nodeId) {
             showNode(nodeId);
         }
@@ -3042,6 +3049,22 @@
                 window.location.reload();
             }, 500);
         }
+
+
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработчик клика на фон overlay для закрытия
+            const overlay = document.getElementById('collect-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        closeCollectMessage();
+                    }
+                });
+                console.log('✅ Обработчик клика на overlay установлен');
+            }
+        });
 
 </script>
 
