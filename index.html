@@ -2303,13 +2303,28 @@
         // END ОПРЕДЕЛЕНИЕ iOS
 
         window.handleChoice = function(nextNodeId, choiceIndex = 0, originalIndex = null) {
+            console.log('=== handleChoice вызван ===');
+            console.log('nextNodeId:', nextNodeId);
+            console.log('choiceIndex:', choiceIndex);
+            console.log('originalIndex:', originalIndex);
+
             const node = story[currentNodeId];
-            if (!node || !node.choices) return;
+            if (!node || !node.choices) {
+                console.error('❌ Узел не найден или нет choices');
+                return;
+            }
 
             // Используем originalIndex если передан (после shuffle), иначе choiceIndex
             const actualIndex = originalIndex !== null ? originalIndex : choiceIndex;
+            console.log('actualIndex:', actualIndex);
+
             const choice = node.choices[actualIndex];
-            if (!choice) return;
+            if (!choice) {
+                console.error('❌ Choice не найден по индексу', actualIndex);
+                return;
+            }
+
+            console.log('choice:', choice);
 
             // ═══════════════════════════════════════════════════════════════
             // ОБРАБОТКА COLLECT
@@ -2331,9 +2346,16 @@
 
                 // 2. Проверяем requires: есть ли все нужные ключи?
                 if (choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
+                    console.log('🔒 Проверка requires:', choice.requires);
+                    // Поддержка обоих вариантов: missing_messages (snake_case) и missingMessages (camelCase)
+                    const missingMessagesObj = choice.missing_messages || choice.missingMessages || {};
+                    console.log('missing_messages:', missingMessagesObj);
+                    const missingMsgs = getMissingKeyMessages(choice.requires, missingMessagesObj);
 
                     if (missingMsgs.length > 0) {
+                        console.log('❌ Нет ключей, показываем missing_message');
+                        console.log('missingMsgs:', missingMsgs);
+
                         // ═══ ДВЕРЬ ЗАПЕРТА ═══
                         // Сохраняем collect-флаг (что игрок пытался войти)
                         collectedKeys[collectId] = {
@@ -2341,6 +2363,7 @@
                             type: choice.collect.type || 'regular'
                         };
                         saveKeys();
+                        console.log('✅ Флаг collect сохранён:', collectId);
 
                         // Показываем missing_message в красивом окне
                         const missingIcon = choice.collect.icon || '🔒';
