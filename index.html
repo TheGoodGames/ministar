@@ -2307,49 +2307,64 @@
             const choice = node.choices[choiceIndex];
             if (!choice) return;
 
+            // ═══════════════════════════════════════════════════════════════
             // ОБРАБОТКА COLLECT
+            // ═══════════════════════════════════════════════════════════════
             if (choice.collect) {
-                // 1. Проверяем был ли уже собран
-                if (collectedKeys[choice.collect.id]) {
-                    const repeatMsg = choice.collect.already_collected_message ||
-                                     choice.already_collected_message ||
-                                     "Здесь больше ничего нет.";
-                    showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
-                    return;
+                const collectId = choice.collect.id;
+
+                // 1. Проверяем: уже собран ли этот КОНКРЕТНЫЙ collect?
+                if (collectedKeys[collectId]) {
+                    // Берём кастомное сообщение из JSON или дефолтное
+                    const repeatMsg = choice.collect.already_collected_message || 
+                                     choice.already_collected_message || 
+                                     "Вы уже осматривали это место.";
+                    const repeatIcon = choice.collect.icon || '🔍';
+
+                    showCollectMessage(repeatMsg, repeatIcon);
+                    return; // Останавливаем только ЭТОТ choice
                 }
 
-                // 2. Если есть requires и НЕТ ключа - блокируем переход
+                // 2. Проверяем requires: есть ли все нужные ключи?
                 if (choice.requires) {
                     const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
+
                     if (missingMsgs.length > 0) {
-                        // Сохраняем collect СРАЗУ (без анимации)
-                        collectedKeys[choice.collect.id] = {
+                        // ═══ ДВЕРЬ ЗАПЕРТА ═══
+                        // Сохраняем collect-флаг (что игрок пытался войти)
+                        collectedKeys[collectId] = {
                             label: choice.collect.label,
                             type: choice.collect.type || 'regular'
                         };
                         saveKeys();
 
-                        // Показываем ОДНО окно с missing_message
-                        showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
-                        return;
+                        // Показываем missing_message в красивом окне
+                        const missingIcon = choice.collect.icon || '🔒';
+                        showCollectMessage(missingMsgs.join('\n'), missingIcon);
+                        return; // Остаёмся в текущем узле
                     }
                 }
 
-                // 3. Обычный collect - показываем анимацию и переходим
+                // 3. ВСЁ ОК: Собираем предмет с анимацией и переходим
                 showKeyAnimation(choice.collect, nextNodeId);
                 return;
             }
 
-            // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
+            // ═══════════════════════════════════════════════════════════════
+            // ОБЫЧНЫЙ ПЕРЕХОД БЕЗ COLLECT
+            // ═══════════════════════════════════════════════════════════════
+
+            // Проверяем requires для обычных переходов
             if (choice.requires) {
                 const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
+
                 if (missingMsgs.length > 0) {
                     showCollectMessage(missingMsgs.join('\n'), '🔒');
                     return;
                 }
             }
 
-            // ПЕРЕХОД к следующему узлу (если нет collect)
+            // Обычный переход
             goToNode(nextNodeId);
         };
 
