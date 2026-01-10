@@ -360,7 +360,8 @@
           "id": "quest_kc_lin_room",
           "label": "Найти ключ от своей команты",
           "type": "key_card",
-          "icon": ""
+          "icon": "",
+          "quantity": 1
         }
       },
       {
