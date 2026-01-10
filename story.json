@@ -27,7 +27,15 @@
       {
         "text": "Комната",
         "next": "20",
-        "requires": "keyma"
+        "collect": {
+          "id": "state_kc_lin_room",
+          "label": "Найти ключ от своей команты",
+          "type": "key_card",
+          "icon": "💳"
+        },
+        "requires": [
+          "item_keyma"
+        ]
       }
     ],
     "tag": "Гарпун 3",
@@ -175,7 +183,9 @@
       {
         "text": "Я вчера тут зависла надолго да?",
         "next": "23",
-        "requires": "state_kc_lin_room",
+        "requires": [
+          "state_kc_lin_room"
+        ],
         "hide_until_unlocked": true
       }
     ],
@@ -356,19 +366,21 @@
     "choices": [
       {
         "text": "Вернуться в космопорт",
-        "next": "5"
-      },
-      {
-        "text": "Войти в свою комнату",
-        "next": "22",
+        "next": "5",
         "collect": {
-          "id": "item_kc_lin_room",
+          "id": "state_kc_lin_room",
           "label": "Найти ключ от своей команты",
           "type": "key_card",
           "icon": "💳",
           "quantity": 1
-        },
-        "requires": "key_kc_lin_room",
+        }
+      },
+      {
+        "text": "Войти в свою комнату",
+        "next": "22",
+        "requires": [
+          "key_kc_lin_room"
+        ],
         "missing_messages": {
           "key_kc_lin_room": "Нужен ключ от комнаты"
         }
