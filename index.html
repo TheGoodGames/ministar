@@ -1630,12 +1630,14 @@
                 </div>
             `;
 
-            // При клике просто закрываем окно, БЕЗ перехода
-            // Переход сделает handleChoice после закрытия
+            // При клике закрываем окно и переходим
             keyAnimScreen.onclick = function() {
                 keyAnimScreen.style.display = 'none';
                 keyAnimScreen.onclick = null;
-                // НЕ вызываем goToNode! handleChoice сделает это сам
+                // Переходим к nextNodeId после закрытия окна
+                if (nextNodeId) {
+                    goToNode(nextNodeId);
+                }
             };
         }
 
@@ -2170,8 +2172,16 @@
                 if (!hasRestartOption) {
                     choices = shuffleArray(choices);
                 }
+
+                // Создаём mapping для сохранения оригинальных индексов
+                const choicesWithIndex = choices.map((c, idx) => ({
+                    choice: c,
+                    shuffledIndex: idx,
+                    originalIndex: node.choices.indexOf(c)
+                }));
+
                 // ФИЛЬТРАЦИЯ choices по hide_until_unlocked
-                const filteredChoices = choices.filter((c) => {
+                const filteredChoices = choicesWithIndex.filter(({choice: c}) => {
                     // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
                     if (c.hide_until_unlocked === true && c.requires) {
                         const hasKeys = hasAllKeys(c.requires);
@@ -2180,7 +2190,7 @@
                     return true;
                 });
 
-                choicesHtml = filteredChoices.map((c, index) => {
+                choicesHtml = filteredChoices.map(({choice: c, originalIndex}) => {
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
 
@@ -2188,7 +2198,6 @@
                     const isLocked = c.requires && !hasAllKeys(c.requires);
                     if (isLocked) btnClass += ' choice-btn-locked';
 
-                    const originalIndex = choices.indexOf(c);
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
                     const disabled = isLocked ? 'disabled' : '';
 
@@ -2313,29 +2322,33 @@
                                      choice.already_collected_message || 
                                      "Здесь больше ничего нет.";
                     showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
-                    return; // Останавливаем, не переходим
+                    return;
                 }
 
                 // 2. Если есть requires и НЕТ ключа - блокируем переход
                 if (choice.requires) {
                     const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
                     if (missingMsgs.length > 0) {
-                        // Показываем в красивом окне
+                        // Сохраняем collect СРАЗУ (без анимации)
+                        collectedKeys[choice.collect.id] = {
+                            label: choice.collect.label,
+                            type: choice.collect.type || 'regular'
+                        };
+                        saveKeys();
+
+                        // Показываем ОДНО окно с missing_message
                         showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
-                        // ДАЁМ collect (квестовый флаг)
-                        showKeyAnimation(choice.collect, currentNodeId);
-                        return; // Останавливаем переход
+                        return;
                     }
                 }
 
-                // 3. Обычный collect - показываем анимацию, ЗАТЕМ переходим
-                // (требования выполнены или их нет)
-                showKeyAnimation(choice.collect, currentNodeId);
-                // НЕ ДЕЛАЕМ return! Продолжаем к переходу
+                // 3. Обычный collect - показываем анимацию и переходим
+                showKeyAnimation(choice.collect, nextNodeId);
+                return;
             }
 
             // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
-            if (choice.requires && !choice.collect) {
+            if (choice.requires) {
                 const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
                 if (missingMsgs.length > 0) {
                     showCollectMessage(missingMsgs.join('\n'), '🔒');
@@ -2343,7 +2356,7 @@
                 }
             }
 
-            // ПЕРЕХОД к следующему узлу
+            // ПЕРЕХОД к следующему узлу (если нет collect)
             goToNode(nextNodeId);
         };
 
@@ -2665,29 +2678,33 @@
                                      choice.already_collected_message || 
                                      "Здесь больше ничего нет.";
                     showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
-                    return; // Останавливаем, не переходим
+                    return;
                 }
 
                 // 2. Если есть requires и НЕТ ключа - блокируем переход
                 if (choice.requires) {
                     const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
                     if (missingMsgs.length > 0) {
-                        // Показываем в красивом окне
+                        // Сохраняем collect СРАЗУ (без анимации)
+                        collectedKeys[choice.collect.id] = {
+                            label: choice.collect.label,
+                            type: choice.collect.type || 'regular'
+                        };
+                        saveKeys();
+
+                        // Показываем ОДНО окно с missing_message
                         showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
-                        // ДАЁМ collect (квестовый флаг)
-                        showKeyAnimation(choice.collect, currentNodeId);
-                        return; // Останавливаем переход
+                        return;
                     }
                 }
 
-                // 3. Обычный collect - показываем анимацию, ЗАТЕМ переходим
-                // (требования выполнены или их нет)
-                showKeyAnimation(choice.collect, currentNodeId);
-                // НЕ ДЕЛАЕМ return! Продолжаем к переходу
+                // 3. Обычный collect - показываем анимацию и переходим
+                showKeyAnimation(choice.collect, nextNodeId);
+                return;
             }
 
             // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
-            if (choice.requires && !choice.collect) {
+            if (choice.requires) {
                 const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
                 if (missingMsgs.length > 0) {
                     showCollectMessage(missingMsgs.join('\n'), '🔒');
@@ -2695,7 +2712,7 @@
                 }
             }
 
-            // ПЕРЕХОД к следующему узлу
+            // ПЕРЕХОД к следующему узлу (если нет collect)
             goToNode(nextNodeId);
         };
 
