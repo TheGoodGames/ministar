@@ -2163,6 +2163,8 @@
             if (hasChoices && !isRestartNode) {
                 let choices = [...node.choices];
                 if (!hasRestartOption) {
+                    // Сохраняем originalIndex перед shuffle
+                    choices = choices.map((c, i) => ({ ...c, originalIndex: i }));
                     choices = shuffleArray(choices);
                 }
 
@@ -2300,11 +2302,13 @@
         }
         // END ОПРЕДЕЛЕНИЕ iOS
 
-        window.handleChoice = function(nextNodeId, choiceIndex = 0) {
+        window.handleChoice = function(nextNodeId, choiceIndex = 0, originalIndex = null) {
             const node = story[currentNodeId];
             if (!node || !node.choices) return;
 
-            const choice = node.choices[choiceIndex];
+            // Используем originalIndex если передан (после shuffle), иначе choiceIndex
+            const actualIndex = originalIndex !== null ? originalIndex : choiceIndex;
+            const choice = node.choices[actualIndex];
             if (!choice) return;
 
             // ═══════════════════════════════════════════════════════════════
