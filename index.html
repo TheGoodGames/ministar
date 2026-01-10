@@ -884,6 +884,179 @@
         .map-item.jump-point {
             background: rgba(100, 150, 255, 0.35) !important;
         }
+
+        /* === СТИЛИ МАГАЗИНА === */
+#shop-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .shop-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+        }
+
+        .shop-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .shop-money {
+            color: #ffaa00;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .shop-item:hover {
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .shop-item-info {
+            text-align: left;
+            flex: 1;
+        }
+
+        .shop-item-name {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #00ffff;
+        }
+
+        .shop-item-desc {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-price {
+            color: #ffaa00;
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn {
+            background: linear-gradient(135deg, #44ff44, #22aa22);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .shop-buy-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(68, 255, 68, 0.5);
+        }
+
+        .shop-buy-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #shop-button {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
+            transition: all 0.3s ease;
+            z-index: 900;
+        }
+
+        #shop-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 170, 0, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            #shop-button {
+                bottom: auto;
+                top: 120px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    `;
+            }
+
+            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
+            let notificationBanner = '';
+            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
+                notificationBanner = `
+                <div class="notification-banner">
+                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
+                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
+                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
+                </div>
+                `;
+            }
+            // END NOTIFICATION SYSTEM
+
+            sceneEl.classList.remove('active');
+            setTimeout(() => {
+                sceneEl.className = 'scene';
+                if (!hasChoices || isRestartNode) {
+                    sceneEl.className += ' deadend';
+                }
+                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
+        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
+            ${inventoryButtonHtml}
+            ${mapButtonHtml}
+        </div>
+    ` : ''}`;
+                sceneEl.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                if (isAudioPlaying) {
+                    audioEl.play().catch(e => console.log("Audio play failed:", e));
+                }
+
+                if (isRestartNode && window.Telegram?.WebApp) {
+                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
+                }
+            }
+
 </style>
 </head>
 
@@ -2412,176 +2585,7 @@
             margin-left: 10px;
         }
 
-        #shop-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .shop-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 30px;
-            border-radius: 15px;
-            border: 2px solid #00ffff;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
-        }
-
-        .shop-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .shop-money {
-            color: #ffaa00;
-            font-size: 1.2em;
-            margin: 10px 0;
-        }
-
-        .shop-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border: 2px solid #444;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .shop-item:hover {
-            border-color: #00ffff;
-            background: rgba(0, 255, 255, 0.1);
-        }
-
-        .shop-item-info {
-            text-align: left;
-            flex: 1;
-        }
-
-        .shop-item-name {
-            font-size: 1.1em;
-            margin-bottom: 5px;
-            color: #00ffff;
-        }
-
-        .shop-item-desc {
-            color: #888;
-            font-size: 0.85em;
-            margin-bottom: 5px;
-        }
-
-        .shop-item-price {
-            color: #ffaa00;
-            font-size: 0.95em;
-            font-weight: bold;
-        }
-
-        .shop-buy-btn {
-            background: linear-gradient(135deg, #44ff44, #22aa22);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.95em;
-            transition: all 0.3s ease;
-            color: #000;
-            font-weight: bold;
-        }
-
-        .shop-buy-btn:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(68, 255, 68, 0.5);
-        }
-
-        .shop-buy-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-        }
-
-        #shop-button {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: linear-gradient(135deg, #ffaa00, #ff8800);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
-            transition: all 0.3s ease;
-            z-index: 900;
-        }
-
-        #shop-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 170, 0, 0.6);
-        }
-
-        @media (max-width: 768px) {
-            #shop-button {
-                bottom: auto;
-                top: 120px;
-                right: 10px;
-                padding: 10px 15px;
-                font-size: 0.9em;
-            }
-        }
-    </style>
-    `;
-            }
-
-            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
-            let notificationBanner = '';
-            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-                <div class="notification-banner">
-                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Следите за прогрессом всех игроков в нашем канале: 
-                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
-                </div>
-                `;
-            }
-            // END NOTIFICATION SYSTEM
-
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
+        , 320);
 
         // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
         function hideNotificationBanner() {
