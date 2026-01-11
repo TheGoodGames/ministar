@@ -2612,11 +2612,7 @@
                     const buttonsDiv = createElement('div', { className: 'choices' });
                     setHTMLContent(buttonsDiv, (inventoryButtonHtml || '') + (mapButtonHtml || ''));
                     sceneEl.appendChild(buttonsDiv);
-                }; gap: 12px; margin - top: 16px; justify - content: center; flex - wrap: wrap; ">
-            ${ inventoryButtonHtml }
-            ${ mapButtonHtml }
-        </div >
-                    ` : ''}`;
+                }
                 sceneEl.classList.add('active');
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
