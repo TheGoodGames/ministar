@@ -3075,8 +3075,7 @@
             const codeTextEl = document.getElementById('code-text');
             if (codeTextEl && node.text) {
                 clearElement(codeTextEl);
-                const textLines = node.text.split('
-');
+                    const textLines = node.text.split('\n');
                 textLines.forEach((line, i) => {
                     if (i > 0) codeTextEl.appendChild(createElement('br'));
                     codeTextEl.appendChild(document.createTextNode(line));
