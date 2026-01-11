@@ -2009,6 +2009,7 @@ transition: all 0.3s;
                 showNode(Object.keys(story)[0]);
                 return;
             }
+            currentNodeId = nodeId; // ✅ КРИТИЧЕСКИ ВАЖНО: Устанавливаем текущий узел ДО загрузки контента
             const node = story[nodeId];
             // ============================================
             // ПРОВЕРКА NPC ТЕГА
@@ -2270,8 +2271,13 @@ opacity: 0;
             }, 320);
         }
 
-        // === ОБРАБОТКА ВЫБОРА ===
+        // ✅ ИСПРАВЛЕНО: Правильная обработка выбора с учетом текущего узла
         function handleChoice(nextNodeId, choiceIndex = 0) {
+            // ✅ КРИТИЧЕСКИ ВАЖНО: Проверяем, что currentNodeId установлен
+            if (!currentNodeId || !story[currentNodeId]) {
+                console.error('Текущий узел не определен');
+                return;
+            }
             const node = story[currentNodeId];
             if (!node || !node.choices) return;
             const choice = node.choices[choiceIndex];
