@@ -184,7 +184,7 @@
         "text": "Я вчера тут зависла надолго да?",
         "next": "8",
         "collect": {
-          "id": "key_kc_lin_room",
+          "id": "key_lin_room",
           "label": "КЛЮЧ ОТ КОМНАТЫ",
           "type": "",
           "icon": "💳"
@@ -385,10 +385,10 @@
           "quantity": 1
         },
         "requires": [
-          "key_kc_lin_room"
+          "key_lin_room"
         ],
         "missing_messages": {
-          "key_kc_lin_room": "Нужен ключ от комнаты"
+          "key_lin_room": "Нужен ключ от комнаты"
         }
       }
     ],
