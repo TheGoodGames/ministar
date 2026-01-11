@@ -1579,7 +1579,7 @@
 
             if (!overlay) {
                 console.error('collect-overlay не найден!');
-                alert(icon + ' ' + message);
+                alert((icon || '🔒') + ' ' + message);
                 return;
             }
 
@@ -1589,9 +1589,11 @@
             if (iconEl) iconEl.textContent = icon || '🔒';
             if (textEl) textEl.textContent = message;
 
+            // Используем класс для показа вместо inline style
+            overlay.classList.add('active');
             overlay.style.display = 'flex';
 
-            // Закрытие по клику в любое место
+            // Закрытие по клику
             overlay.onclick = closeCollectMessage;
         }
 
@@ -1599,8 +1601,9 @@
             console.log('closeCollectMessage вызвана');
             const overlay = document.getElementById('collect-overlay');
             if (overlay) {
+                overlay.classList.remove('active');
                 overlay.style.display = 'none';
-                overlay.onclick = null; // Убираем обработчик
+                overlay.onclick = null;
             }
         }
 
@@ -2269,7 +2272,7 @@ function shuffle(array) {
                     if (isLocked) btnClass += ' choice-btn-locked';
 
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
-                    // НЕ используем disabled - handleChoice сам проверит requires
+                    // НЕ используем disabled - handleChoice проверит requires
                     return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${originalIndex})">${btnText}</button>`;
                 }).join('');
             }
@@ -2310,36 +2313,47 @@ function shuffle(array) {
         
         /* === МОДАЛЬНОЕ ОКНО ДЛЯ СООБЩЕНИЙ === */
         #collect-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.85) !important;
+            display: none !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 10000 !important;
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             animation: fadeIn 0.3s ease;
             cursor: pointer;
         }
 
+        #collect-overlay.active {
+            display: flex !important;
+        }
+
         #collect-message {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 50px 40px;
-            border-radius: 25px;
-            text-align: center;
-            max-width: 500px;
-            min-height: 250px;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.7);
-            border: 3px solid rgba(106, 90, 205, 0.5);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+            padding: 50px 40px !important;
+            border-radius: 25px !important;
+            text-align: center !important;
+            max-width: 500px !important;
+            min-height: 250px !important;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.7) !important;
+            border: 3px solid rgba(106, 90, 205, 0.5) !important;
             animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            position: relative !important;
+            margin: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes scaleIn {
@@ -2354,9 +2368,10 @@ function shuffle(array) {
         }
 
         #collect-message .collect-icon {
-            font-size: 80px;
-            margin-bottom: 25px;
+            font-size: 80px !important;
+            margin-bottom: 25px !important;
             animation: pulse 1.5s ease infinite;
+            line-height: 1;
         }
 
         @keyframes pulse {
@@ -2369,35 +2384,36 @@ function shuffle(array) {
         }
 
         #collect-message .collect-text {
-            color: #fff;
-            font-size: 22px;
-            margin-bottom: 30px;
-            line-height: 1.8;
-            font-weight: 500;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            white-space: pre-line;
+            color: #fff !important;
+            font-size: 22px !important;
+            margin-bottom: 30px !important;
+            line-height: 1.8 !important;
+            font-weight: 500 !important;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+            white-space: pre-line !important;
+            max-width: 100% !important;
         }
 
         #collect-message .collect-hint {
-            color: #888;
-            font-size: 14px;
-            font-style: italic;
-            margin-top: 10px;
-            opacity: 0.7;
+            color: #888 !important;
+            font-size: 14px !important;
+            font-style: italic !important;
+            margin-top: 10px !important;
+            opacity: 0.7 !important;
         }
 
         @media (max-width: 600px) {
             #collect-message {
-                max-width: 90%;
-                padding: 40px 30px;
+                max-width: 90% !important;
+                padding: 40px 30px !important;
             }
 
             #collect-message .collect-icon {
-                font-size: 60px;
+                font-size: 60px !important;
             }
 
             #collect-message .collect-text {
-                font-size: 18px;
+                font-size: 18px !important;
             }
         }
 
@@ -3085,12 +3101,13 @@ function shuffle(array) {
     </div>
 
     <!-- Всплывающее окно для сообщений -->
-    <div id="collect-overlay" style="display:none;">
+    <div id="collect-overlay">
         <div id="collect-message">
             <div class="collect-icon"></div>
             <div class="collect-text"></div>
             <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
         </div>
+    </div>
     </body>
 
 </html>
