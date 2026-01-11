@@ -383,9 +383,9 @@
           "type": "key_card",
           "icon": "💳"
         },
-        "requires": [
+        "requires": {
           "key_kc_lin_room"
-        ],
+        },
         "missing_messages": {
           "key_kc_lin_room": "Нужен ключ от комнаты"
         }
