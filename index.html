@@ -599,7 +599,7 @@
         }
 
         /* END NOTIFICATION SYSTEM */
-    
+
 
         /* ============================================
            ПОЛНОЭКРАННЫЙ ПОКАЗ NPC (тап для продолжения)
@@ -628,8 +628,13 @@
         }
 
         @keyframes npcFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         #npc-screen.fade-out {
@@ -637,8 +642,13 @@
         }
 
         @keyframes npcFadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
         }
 
         #npc-image {
@@ -654,7 +664,8 @@
         #npc-overlay-ui {
             position: absolute;
             inset: 0;
-            pointer-events: none; /* кликается весь экран */
+            pointer-events: none;
+            /* кликается весь экран */
         }
 
         /* Облачко текста (комикс) */
@@ -672,7 +683,7 @@
             font-size: 22px;
             line-height: 1.25;
             text-align: left;
-            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
             white-space: pre-wrap;
         }
 
@@ -717,7 +728,7 @@
             align-items: center;
             gap: 6px;
             color: rgba(255, 255, 255, 0.92);
-            text-shadow: 0 8px 18px rgba(0,0,0,0.55);
+            text-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
             font-size: 28px;
             letter-spacing: 0.2px;
         }
@@ -734,9 +745,20 @@
         }
 
         @keyframes npcArrowBlink {
-            0%   { opacity: 0.25; transform: translateY(6px); }
-            50%  { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0.25; transform: translateY(6px); }
+            0% {
+                opacity: 0.25;
+                transform: translateY(6px);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0.25;
+                transform: translateY(6px);
+            }
         }
 
         /* Для телефонов - картинка на весь экран */
@@ -799,17 +821,19 @@
             filter: brightness(1.05);
         }
 
-        .map-item.level-0 { 
-            padding-left: 14px; 
+        .map-item.level-0 {
+            padding-left: 14px;
             background: rgba(86, 78, 132, 0.55);
         }
-        .map-item.level-1 { 
-            padding-left: 28px; 
+
+        .map-item.level-1 {
+            padding-left: 28px;
             background: rgba(70, 95, 145, 0.48);
             font-size: 17px;
         }
-        .map-item.level-2 { 
-            padding-left: 44px; 
+
+        .map-item.level-2 {
+            padding-left: 44px;
             background: rgba(60, 105, 155, 0.42);
             font-size: 16px;
         }
@@ -820,7 +844,10 @@
             gap: 10px;
         }
 
-        .map-icon { width: 24px; text-align: center; }
+        .map-icon {
+            width: 24px;
+            text-align: center;
+        }
 
         .map-label {
             flex: 1;
@@ -841,9 +868,18 @@
             line-height: 1.3;
         }
 
-        .map-group { margin: 0; }
-        .map-children { display: none; margin: 0; }
-        .map-group.open > .map-children { display: block; }
+        .map-group {
+            margin: 0;
+        }
+
+        .map-children {
+            display: none;
+            margin: 0;
+        }
+
+        .map-group.open>.map-children {
+            display: block;
+        }
 
 
 
@@ -884,12 +920,12 @@
         .map-item.jump-point {
             background: rgba(100, 150, 255, 0.35) !important;
         }
-</style>
+    </style>
 </head>
 
 <body>
 
-    
+
     <!-- Полноэкранный показ NPC -->
     <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
         <img id="npc-image" src="" alt="NPC">
@@ -904,7 +940,7 @@
             </div>
         </div>
     </div>
-<div id="app">
+    <div id="app">
         <div id="scene" class="loading"> вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
@@ -939,7 +975,7 @@
     </div>
 
     <!-- Экран карты мира -->
-    
+
     <div id="map-screen" class="screen" style="display:none;">
         <h2 class="map-title">🗺️ Карта мира</h2>
         <div id="map-accordion" class="map-accordion"></div>
@@ -1236,7 +1272,7 @@
             const openSubName = current ? (current.subcategory_name || '').toString() : '';
 
             const tree = buildMapTree();
-            const categories = Object.keys(tree).sort((a,b)=>a.localeCompare(b,'ru'));
+            const categories = Object.keys(tree).sort((a, b) => a.localeCompare(b, 'ru'));
 
             categories.forEach(catName => {
                 const shouldOpenCat = (openCatName && catName === openCatName);
@@ -1292,7 +1328,7 @@
                 });
 
                 // Subcategories
-                const subs = Object.keys(tree[catName].subcats).sort((a,b)=>a.localeCompare(b,'ru'));
+                const subs = Object.keys(tree[catName].subcats).sort((a, b) => a.localeCompare(b, 'ru'));
                 subs.forEach(subName => {
                     const shouldOpenSub = (shouldOpenCat && openSubName && subName === openSubName);
 
@@ -1333,15 +1369,15 @@
                         });
                         if (id === currentNodeId) locBtn.classList.add('active-location');
                         locBtn.addEventListener('click', () => {
-                        if (node._isJumpPoint && targetWorld) {
-                            // Это прыжковая точка - используем performJump
-                            performJump(id, targetWorld);
-                        } else {
-                            // Обычная локация
-                            closeMap();
-                            showNode(id);
-                        }
-                    });
+                            if (node._isJumpPoint && targetWorld) {
+                                // Это прыжковая точка - используем performJump
+                                performJump(id, targetWorld);
+                            } else {
+                                // Обычная локация
+                                closeMap();
+                                showNode(id);
+                            }
+                        });
                         subChildren.appendChild(locBtn);
                     });
 
@@ -1646,7 +1682,7 @@
             `;
 
             // При клике закрываем окно и переходим
-            keyAnimScreen.onclick = function() {
+            keyAnimScreen.onclick = function () {
                 keyAnimScreen.style.display = 'none';
                 keyAnimScreen.onclick = null;
                 // Переходим к nextNodeId после закрытия окна
@@ -1760,8 +1796,8 @@
                     `;
 
                     // ✅ ИСПРАВЛЕНИЕ: Используем IIFE для правильного замыкания
-                    locationEl.onclick = (function(targetId) {
-                        return function() {
+                    locationEl.onclick = (function (targetId) {
+                        return function () {
                             console.log('🖱️ Клик по локации:', targetId);
                             console.log('📦 story существует:', !!story);
                             console.log('🎯 Узел существует:', !!story[targetId]);
@@ -2078,7 +2114,7 @@
             loadNodeContent(node, nodeId);
         }
 
-        
+
         // ============================================
         // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
         // ============================================
@@ -2120,7 +2156,7 @@
             return node && node.choices && Array.isArray(node.choices) && node.choices.length > 0;
         }
 
-function shuffle(array) {
+        function shuffle(array) {
             const arr = [...array];
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -2129,7 +2165,7 @@ function shuffle(array) {
             return arr;
         }
 
-        
+
         function closeCollectMessage() {
             const overlay = document.getElementById('collect-overlay');
             if (overlay) {
@@ -2137,10 +2173,10 @@ function shuffle(array) {
             }
         }
 
-        
+
         function loadNodeContent(node, nodeId) {
             window.__nodeTransitionLock = false;
-            window.__nodeTransitionLock = false;            currentNodeId = nodeId;
+            window.__nodeTransitionLock = false; currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
             // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
@@ -2186,24 +2222,42 @@ function shuffle(array) {
 
             // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
             if (node.requires && !hasAllKeys(node.requires)) {
-                const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene deadend';
-                    sceneEl.innerHTML = `
-                        <div class="text"><p>Дверь заперта. Похоже, вам нужен особый ключ...</p></div>
-                        <div class="choices">
-                            <button class="choice-btn" onclick="handleChoice('${fallbackChoice.next}')">${fallbackChoice.text}</button>
-                        </div>
-                        <div style="text-align:center; margin-top:20px;">
-                            <button class="choice-btn" style="background:#555;" onclick="showInventory()">Посмотреть инвентарь</button>
-                        </div>
-                    `;
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 320);
+                // Получаем сообщения о недостающих ключах
+                const missingMsgs = getMissingKeyMessages(node.requires, node.missing_messages);
+                const message = missingMsgs.length > 0
+                    ? missingMsgs.join('\n')
+                    : 'Дверь заперта. Похоже, вам нужен особый ключ...';
+
+                // Показываем модальное окно с сообщением
+                showCollectMessage(message, '🔒');
+
+                // После закрытия модального окна показываем выбор
+                const overlay = document.getElementById('collect-overlay');
+                if (overlay) {
+                    overlay.onclick = () => {
+                        closeCollectMessage();
+
+                        const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
+                        sceneEl.classList.remove('active');
+                        setTimeout(() => {
+                            sceneEl.className = 'scene deadend';
+                            sceneEl.innerHTML = `
+                    <div class="text"><p>Дверь заперта...</p></div>
+                    <div class="choices">
+                        <button class="choice-btn" onclick="handleChoice('${fallbackChoice.next}')">${fallbackChoice.text}</button>
+                    </div>
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="choice-btn" style="background:#555;" onclick="showInventory()">🎒 Посмотреть инвентарь</button>
+                    </div>
+                `;
+                            sceneEl.classList.add('active');
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 320);
+                    };
+                }
                 return;
             }
+
 
             const isRestartNode = nodeId === "node_end";
             const hasRestartOption = node.choices?.some(c => c.next === "main_story");
@@ -2254,7 +2308,7 @@ function shuffle(array) {
                 }));
 
                 // ФИЛЬТРАЦИЯ choices по hide_until_unlocked
-                const filteredChoices = choicesWithIndex.filter(({choice: c}) => {
+                const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
                     // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
                     if (c.hide_until_unlocked === true && c.requires) {
                         const hasKeys = hasAllKeys(c.requires);
@@ -2263,7 +2317,7 @@ function shuffle(array) {
                     return true;
                 });
 
-                choicesHtml = filteredChoices.map(({choice: c, originalIndex}) => {
+                choicesHtml = filteredChoices.map(({ choice: c, originalIndex }) => {
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
 
@@ -2459,333 +2513,333 @@ function shuffle(array) {
                 }
             }, 320);
 
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
-        function hideNotificationBanner() {
-            localStorage.setItem('banner_hidden', 'true');
-            const banner = document.querySelector('.notification-banner');
-            if (banner) banner.style.display = 'none';
-        }
-        // END NOTIFICATION SYSTEM
+            // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
+            function hideNotificationBanner() {
+                localStorage.setItem('banner_hidden', 'true');
+                const banner = document.querySelector('.notification-banner');
+                if (banner) banner.style.display = 'none';
+            }
+            // END NOTIFICATION SYSTEM
 
-        // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
-        function isIOS() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform) ||
-                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-        }
+            // === ОПРЕДЕЛЕНИЕ iOS ДЛЯ АДАПТИВНОСТИ ===
+            function isIOS() {
+                return [
+                    'iPad Simulator',
+                    'iPhone Simulator',
+                    'iPod Simulator',
+                    'iPad',
+                    'iPhone',
+                    'iPod'
+                ].includes(navigator.platform) ||
+                    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+            }
 
-        function isTelegramIOS() {
-            const tg = window.Telegram?.WebApp;
-            return isIOS() && tg?.platform === 'ios';
-        }
-        // END ОПРЕДЕЛЕНИЕ iOS
+            function isTelegramIOS() {
+                const tg = window.Telegram?.WebApp;
+                return isIOS() && tg?.platform === 'ios';
+            }
+            // END ОПРЕДЕЛЕНИЕ iOS
 
-        window.handleChoice = function(nextNodeId, choiceIndex = 0) {
-            const node = story[currentNodeId];
-            if (!node || !node.choices) return;
+            window.handleChoice = function (nextNodeId, choiceIndex = 0) {
+                const node = story[currentNodeId];
+                if (!node || !node.choices) return;
 
-            const choice = node.choices[choiceIndex];
-            if (!choice) return;
+                const choice = node.choices[choiceIndex];
+                if (!choice) return;
 
-            // ОБРАБОТКА COLLECT
-            if (choice.collect) {
-                // 1. Проверяем был ли уже собран
-                if (collectedKeys[choice.collect.id]) {
-                    const repeatMsg = choice.collect.already_collected_message ||
-                                     choice.already_collected_message ||
-                                     "Здесь больше ничего нет.";
-                    showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
+                // ОБРАБОТКА COLLECT
+                if (choice.collect) {
+                    // 1. Проверяем был ли уже собран
+                    if (collectedKeys[choice.collect.id]) {
+                        const repeatMsg = choice.collect.already_collected_message ||
+                            choice.already_collected_message ||
+                            "Здесь больше ничего нет.";
+                        showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
+                        return;
+                    }
+
+                    // 2. Если есть requires и НЕТ ключа - блокируем переход
+                    if (choice.requires) {
+                        const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
+                        if (missingMsgs.length > 0) {
+                            // Сохраняем collect СРАЗУ (без анимации)
+                            collectedKeys[choice.collect.id] = {
+                                label: choice.collect.label,
+                                type: choice.collect.type || 'regular'
+                            };
+                            saveKeys();
+
+                            // Показываем ОДНО окно с missing_message
+                            showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
+                            return;
+                        }
+                    }
+
+                    // 3. Обычный collect - показываем анимацию и переходим
+                    showKeyAnimation(choice.collect, nextNodeId);
                     return;
                 }
 
-                // 2. Если есть requires и НЕТ ключа - блокируем переход
+                // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
                 if (choice.requires) {
                     const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
                     if (missingMsgs.length > 0) {
-                        // Сохраняем collect СРАЗУ (без анимации)
-                        collectedKeys[choice.collect.id] = {
-                            label: choice.collect.label,
-                            type: choice.collect.type || 'regular'
-                        };
-                        saveKeys();
-
-                        // Показываем ОДНО окно с missing_message
-                        showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
+                        showCollectMessage(missingMsgs.join('\n'), '🔒');
                         return;
                     }
                 }
 
-                // 3. Обычный collect - показываем анимацию и переходим
-                showKeyAnimation(choice.collect, nextNodeId);
-                return;
-            }
+                // ПЕРЕХОД к следующему узлу (если нет collect)
+                goToNode(nextNodeId);
+            };
 
-            // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
-            if (choice.requires) {
-                const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
-                if (missingMsgs.length > 0) {
-                    showCollectMessage(missingMsgs.join('\n'), '🔒');
-                    return;
+            function toggleAudio() {
+                if (isAudioPlaying) {
+                    audioEl.pause();
+                    audioBtn.textContent = '🔇';
+                    isAudioPlaying = false;
+                } else {
+                    audioEl.play().then(() => {
+                        audioBtn.textContent = '🔊';
+                        isAudioPlaying = true;
+                    }).catch(e => {
+                        alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
+                    });
                 }
             }
 
-            // ПЕРЕХОД к следующему узлу (если нет collect)
-            goToNode(nextNodeId);
-        };
+            function showCodeScreen(node) {
+                // Скрываем основную сцену
+                sceneEl.style.display = 'none';
+                diceScreen.style.display = 'none';
+                inventoryScreen.style.display = 'none';
+                keyAnimScreen.style.display = 'none';
+                mapScreen.style.display = 'none';
 
-        function toggleAudio() {
-            if (isAudioPlaying) {
-                audioEl.pause();
-                audioBtn.textContent = '🔇';
-                isAudioPlaying = false;
-            } else {
-                audioEl.play().then(() => {
-                    audioBtn.textContent = '🔊';
-                    isAudioPlaying = true;
-                }).catch(e => {
-                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-                });
-            }
-        }
+                // Показываем экран ввода кода
+                codeScreen.style.display = 'block';
+                currentCodeNode = node;
 
-        function showCodeScreen(node) {
-            // Скрываем основную сцену
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
+                // Устанавливаем тексты и подсказки
+                codeTitleEl.textContent = node.code_title || "Введите секретный код";
+                codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
+                codeInput.value = '';
+                codeErrorEl.textContent = '';
 
-            // Показываем экран ввода кода
-            codeScreen.style.display = 'block';
-            currentCodeNode = node;
+                // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
+                const codeTextEl = document.getElementById('code-text');
+                if (codeTextEl && node.text) {
+                    codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+                } else if (codeTextEl) {
+                    codeTextEl.innerHTML = '';
+                }
 
-            // Устанавливаем тексты и подсказки
-            codeTitleEl.textContent = node.code_title || "Введите секретный код";
-            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
-            codeInput.value = '';
-            codeErrorEl.textContent = '';
+                // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
+                const codeChoicesEl = document.getElementById('code-choices');
+                if (codeChoicesEl && node.choices && node.choices.length > 0) {
+                    // Очищаем контейнер
+                    codeChoicesEl.innerHTML = '';
 
-            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
-            const codeTextEl = document.getElementById('code-text');
-            if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
-            } else if (codeTextEl) {
-                codeTextEl.innerHTML = '';
-            }
+                    // Создаём кнопки через DOM (не через innerHTML)
+                    node.choices.forEach((choice, index) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'choice-btn';
+                        btn.textContent = choice.text || `Вариант ${index + 1}`;
+                        btn.dataset.next = choice.next; // Используем data-атрибут
 
-            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
-            const codeChoicesEl = document.getElementById('code-choices');
-            if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                // Очищаем контейнер
-                codeChoicesEl.innerHTML = '';
+                        // Добавляем обработчик клика
+                        btn.addEventListener('click', function () {
+                            handleCodeChoice(this.dataset.next);
+                        });
 
-                // Создаём кнопки через DOM (не через innerHTML)
-                node.choices.forEach((choice, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${index + 1}`;
-                    btn.dataset.next = choice.next; // Используем data-атрибут
-
-                    // Добавляем обработчик клика
-                    btn.addEventListener('click', function() {
-                        handleCodeChoice(this.dataset.next);
+                        codeChoicesEl.appendChild(btn);
                     });
+                } else if (codeChoicesEl) {
+                    codeChoicesEl.innerHTML = '';
+                }
 
-                    codeChoicesEl.appendChild(btn);
-                });
-            } else if (codeChoicesEl) {
-                codeChoicesEl.innerHTML = '';
+                // Фокус на поле ввода
+                setTimeout(() => codeInput.focus(), 300);
+
+                // Прокручиваем наверх
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // Фокус на поле ввода
-            setTimeout(() => codeInput.focus(), 300);
+            function checkCode() {
+                if (!currentCodeNode) return;
 
-            // Прокручиваем наверх
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+                const inputCode = codeInput.value.trim();
+                const correctCode = currentCodeNode.correct_code;
+                const caseSensitive = currentCodeNode.case_sensitive !== false;
 
-        function checkCode() {
-            if (!currentCodeNode) return;
+                // Проверяем код с учетом регистра
+                const isCorrect = caseSensitive
+                    ? inputCode === correctCode
+                    : inputCode.toLowerCase() === correctCode.toLowerCase();
 
-            const inputCode = codeInput.value.trim();
-            const correctCode = currentCodeNode.correct_code;
-            const caseSensitive = currentCodeNode.case_sensitive !== false;
+                if (isCorrect) {
+                    // Код верный - переходим к следующей ноде
+                    codeScreen.style.display = 'none';
+                    showNode(currentCodeNode.success_next);
+                    currentCodeNode = null;
+                } else {
+                    // Код неверный - показываем ошибку
+                    codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
 
-            // Проверяем код с учетом регистра
-            const isCorrect = caseSensitive
-                ? inputCode === correctCode
-                : inputCode.toLowerCase() === correctCode.toLowerCase();
-
-            if (isCorrect) {
-                // Код верный - переходим к следующей ноде
+                    // Эффект тряски для поля ввода
+                    codeInput.style.animation = "shake 0.5s";
+                    codeInput.addEventListener('animationend', () => {
+                        codeInput.style.animation = "";
+                    });
+                }
+            }
+            // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
+            function handleCodeChoice(nextNodeId) {
                 codeScreen.style.display = 'none';
-                showNode(currentCodeNode.success_next);
                 currentCodeNode = null;
-            } else {
-                // Код неверный - показываем ошибку
-                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-
-                // Эффект тряски для поля ввода
-                codeInput.style.animation = "shake 0.5s";
-                codeInput.addEventListener('animationend', () => {
-                    codeInput.style.animation = "";
-                });
+                showNode(nextNodeId);
             }
-        }
-        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
-        function handleCodeChoice(nextNodeId) {
-            codeScreen.style.display = 'none';
-            currentCodeNode = null;
-            showNode(nextNodeId);
-        }
 
-        // Обработчик кнопки подтверждения
-        submitCodeBtn.addEventListener('click', checkCode);
+            // Обработчик кнопки подтверждения
+            submitCodeBtn.addEventListener('click', checkCode);
 
-        // Обработчик нажатия Enter в поле ввода
-        codeInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkCode();
-            }
-        });
+            // Обработчик нажатия Enter в поле ввода
+            codeInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    checkCode();
+                }
+            });
 
-        const style = document.createElement('style');
-        style.textContent = `
+            const style = document.createElement('style');
+            style.textContent = `
             @keyframes shake {
                 0%, 100% { transform: translateX(0); }
                 10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
                 20%, 40%, 60%, 80% { transform: translateX(6px); }
             }
         `;
-        document.head.appendChild(style);
+            document.head.appendChild(style);
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadShipWorld(); // Загрузка системы корабля
+            document.addEventListener('DOMContentLoaded', () => {
+                loadShipWorld(); // Загрузка системы корабля
 
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+                // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.MainButton.setText('Начать заново');
-                Telegram.WebApp.MainButton.show();
-                Telegram.WebApp.MainButton.onClick(() => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
+                if (window.Telegram?.WebApp) {
+                    Telegram.WebApp.ready();
+                    Telegram.WebApp.expand();
+                    Telegram.WebApp.MainButton.setText('Начать заново');
+                    Telegram.WebApp.MainButton.show();
+                    Telegram.WebApp.MainButton.onClick(() => {
+                        localStorage.removeItem('lingame_lastNode');
+                        // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                        collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                        showNode("0");
+                    });
+                } else {
+                    const restartBtn = document.createElement('button');
+                    restartBtn.className = 'choice-btn restart-btn';
+                    restartBtn.textContent = 'Начать заново';
+                    restartBtn.style.marginTop = '20px';
+                    restartBtn.style.width = '100%';
+                    restartBtn.onclick = () => {
+                        localStorage.removeItem('lingame_lastNode');
+                        // localStorage.removeItem('lingame_keys'); // ← закомментировано
+                        collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
+                        showNode("0");
+                    };
+                    document.getElementById('app').appendChild(restartBtn);
+                }
+
+                // 🔔 NOTIFICATION SYSTEM:  конфигурации
+                loadNotificationConfig().then(() => {
+                    console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
+                    loadStory();
+                }).catch(e => {
+                    console.error('🔔 Ошибка загрузки конфигурации:', e);
+                    loadStory();
                 });
-            } else {
-                const restartBtn = document.createElement('button');
-                restartBtn.className = 'choice-btn restart-btn';
-                restartBtn.textContent = 'Начать заново';
-                restartBtn.style.marginTop = '20px';
-                restartBtn.style.width = '100%';
-                restartBtn.onclick = () => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                };
-                document.getElementById('app').appendChild(restartBtn);
-            }
+                // END NOTIFICATION SYSTEM
+            });
 
             // 🔔 NOTIFICATION SYSTEM:  конфигурации
-            loadNotificationConfig().then(() => {
-                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
-                loadStory();
-            }).catch(e => {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                loadStory();
-            });
-            // END NOTIFICATION SYSTEM
-        });
+            async function loadNotificationConfig() {
+                try {
+                    // Сначала пытаемся загрузить config.js
+                    const configScript = document.createElement('script');
+                    configScript.src = 'config.js?v=' + Date.now();
+                    configScript.async = false;
+                    document.head.appendChild(configScript);
 
-        // 🔔 NOTIFICATION SYSTEM:  конфигурации
-        async function loadNotificationConfig() {
-            try {
-                // Сначала пытаемся загрузить config.js
-                const configScript = document.createElement('script');
-                configScript.src = 'config.js?v=' + Date.now();
-                configScript.async = false;
-                document.head.appendChild(configScript);
+                    // Ждем загрузки скрипта
+                    await new Promise((resolve) => {
+                        configScript.onload = resolve;
+                        configScript.onerror = () => {
+                            console.log('🔔 config.js не найден, используем настройки по умолчанию');
+                            resolve();
+                        };
+                    });
 
-                // Ждем загрузки скрипта
-                await new Promise((resolve) => {
-                    configScript.onload = resolve;
-                    configScript.onerror = () => {
-                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
-                        resolve();
-                    };
-                });
-
-                // Проверяем глобальные переменные
-                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
-                    console.log('🔔 Конфигурация загружена из config.js');
-                } else {
-                    // Пытаемся получить из URL параметров (для тестирования)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const botToken = urlParams.get('bot_token');
-                    const chatId = urlParams.get('chat_id');
-
-                    if (botToken && chatId) {
+                    // Проверяем глобальные переменные
+                    if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
                         NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
+                            BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
+                            PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
                             isEnabled: true
                         };
-                        console.log('🔔 Конфигурация загружена из URL параметров');
+                        console.log('🔔 Конфигурация загружена из config.js');
                     } else {
-                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
-                        NOTIFICATION_CONFIG.isEnabled = false;
+                        // Пытаемся получить из URL параметров (для тестирования)
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const botToken = urlParams.get('bot_token');
+                        const chatId = urlParams.get('chat_id');
+
+                        if (botToken && chatId) {
+                            NOTIFICATION_CONFIG = {
+                                BOT_TOKEN: botToken,
+                                PUBLIC_CHAT_ID: chatId,
+                                isEnabled: true
+                            };
+                            console.log('🔔 Конфигурация загружена из URL параметров');
+                        } else {
+                            console.log('🔔 Конфигурация не найдена, уведомления отключены');
+                            NOTIFICATION_CONFIG.isEnabled = false;
+                        }
                     }
+                } catch (e) {
+                    console.error('🔔 Ошибка загрузки конфигурации:', e);
+                    NOTIFICATION_CONFIG.isEnabled = false;
                 }
-            } catch (e) {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                NOTIFICATION_CONFIG.isEnabled = false;
             }
-        }
-        // END NOTIFICATION SYSTEM
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
-                return;
+            // END NOTIFICATION SYSTEM
+            // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
+            function resetProgress() {
+                if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\n\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\n\nВы уверены?')) {
+                    return;
+                }
+
+                console.log('🔄 Сброс прогресса игры...');
+
+                // Очищаем localStorage
+                localStorage.removeItem('lingame_lastNode');
+                localStorage.removeItem('lingame_keys');
+                localStorage.removeItem('lingame_locations');
+                localStorage.removeItem('banner_hidden');
+                localStorage.removeItem('hide_map_tutorial');
+
+                // Очищаем глобальные переменные
+                collectedKeys = {};
+                visitedLocations = [];
+                choices = {};
+
+                console.log('✅ Прогресс сброшен!');
+                console.log('🔄 Перезагрузка страницы...');
+
+                // Перезагружаем страницу
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             }
-
-            console.log('🔄 Сброс прогресса игры...');
-
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            choices = {};
-
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-
-            // Перезагружаем страницу
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
 
             sceneEl.classList.remove('active');
             setTimeout(() => {
@@ -2895,7 +2949,7 @@ function shuffle(array) {
                     btn.dataset.next = choice.next; // Используем data-атрибут
 
                     // Добавляем обработчик клика
-                    btn.addEventListener('click', function() {
+                    btn.addEventListener('click', function () {
                         handleCodeChoice(this.dataset.next);
                     });
 
@@ -2951,7 +3005,7 @@ function shuffle(array) {
             }
         });
 
-        
+
 
         document.addEventListener('DOMContentLoaded', () => {
             // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
@@ -3072,7 +3126,7 @@ function shuffle(array) {
             }, 500);
         }
 
-</script>
+    </script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
     <div id="resetButton" style="
@@ -3094,8 +3148,8 @@ function shuffle(array) {
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
             transition: all 0.3s;
-        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(211, 47, 47, 0.6)'" 
-           onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211, 47, 47, 0.4)'">
+        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(211, 47, 47, 0.6)'"
+            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211, 47, 47, 0.4)'">
             🔄 СБРОСИТЬ ВСЁ (отладка)
         </button>
     </div>
@@ -3108,6 +3162,6 @@ function shuffle(array) {
             <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
         </div>
     </div>
-    </body>
+</body>
 
 </html>
