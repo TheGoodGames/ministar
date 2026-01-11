@@ -3050,22 +3050,6 @@
             }, 500);
         }
 
-
-
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            // Обработчик клика на фон overlay для закрытия
-            const overlay = document.getElementById('collect-overlay');
-            if (overlay) {
-                overlay.addEventListener('click', function(e) {
-                    if (e.target === overlay) {
-                        closeCollectMessage();
-                    }
-                });
-                console.log('✅ Обработчик клика на overlay установлен');
-            }
-        });
-
 </script>
 
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
