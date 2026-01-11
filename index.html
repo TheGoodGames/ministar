@@ -996,6 +996,16 @@
         <source src="audio/ambient-loop.mp3" type="audio/mpeg">
     </audio>
 
+    
+    <!-- Всплывающее окно для сообщений -->
+    <div id="collect-overlay">
+        <div id="collect-message">
+            <div class="collect-icon"></div>
+            <div class="collect-text"></div>
+            <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С DOM
@@ -3300,14 +3310,6 @@
         </button>
     </div>
 
-    <!-- Всплывающее окно для сообщений -->
-    <div id="collect-overlay">
-        <div id="collect-message">
-            <div class="collect-icon"></div>
-            <div class="collect-text"></div>
-            <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
-        </div>
-    </div>
-</body>
+    </body>
 
 </html>
