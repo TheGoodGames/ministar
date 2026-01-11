@@ -1,0 +1,37 @@
+/* css/main.css */
+
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+            font-size: 19px;
+            padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+#app {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+#scene {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            text-align: left;
+        }
+
+#scene.active {
+            opacity: 1;
+            transform: translateY(0);
+        }

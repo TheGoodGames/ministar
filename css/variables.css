@@ -1,0 +1,9 @@
+/* css/variables.css */
+
+:root {
+            --bg: #0c0b14;
+            --fg: #e8e6f6;
+            --accent: #6a5acd;
+            --success: #4caf50;
+            --deadend: #f44336;
+        }
