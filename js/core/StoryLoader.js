@@ -5,11 +5,12 @@ export class StoryLoader {
     constructor() {
         this.storyData = null;
     }
-    
+
     async load() {
         try {
             const response = await fetch(CONFIG.STORY_FILE);
             if (!response.ok) throw new Error('Failed to load story');
+
             this.storyData = await response.json();
             this.validate();
             return this.storyData;
@@ -18,18 +19,21 @@ export class StoryLoader {
             throw e;
         }
     }
-    
+
     validate() {
         if (!this.storyData) throw new Error('No story data');
-        if (!this.storyData.start) throw new Error('No start node');
-        if (!this.storyData.nodes) throw new Error('No nodes');
+
+        // Проверяем что есть узел "0" (стартовый)
+        if (!this.storyData['0']) throw new Error('No start node (node "0")');
+
+        console.log('✅ Story validated, nodes count:', Object.keys(this.storyData).length);
     }
-    
+
     getNode(nodeId) {
-        return this.storyData.nodes[nodeId] || null;
+        return this.storyData[nodeId] || null;
     }
-    
+
     getAllNodes() {
-        return this.storyData.nodes;
+        return this.storyData;
     }
 }
