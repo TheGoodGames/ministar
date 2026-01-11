@@ -1042,18 +1042,16 @@
             while (element.firstChild) {
                 element.removeChild(element.firstChild);
             }
+            
+        }
 
-        function setHTMLContent(element, htmlString) {
-            const temp = document.createElement('div');
+
             temp.innerHTML = htmlString;
             while (temp.firstChild) {
                 element.appendChild(temp.firstChild);
             }
-        }
-
-        }
-
-
+        
+        
         // === Фильтр карты: показывать только когда map_view: true
         function hasMapView(node) {
             return node && node.map_view === true;
