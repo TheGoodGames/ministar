@@ -7,6 +7,9 @@
     <title>Lin: Drake Clipper</title>
 
     <!-- Telegram WebApp SDK -->
+    }
+        }
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <!-- Google Fonts: Merriweather -->
@@ -2835,7 +2838,6 @@
                 10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
                 20%, 40%, 60%, 80% { transform: translateX(6px); }
             }
-        `;
             document.head.appendChild(style);
 
             document.addEventListener('DOMContentLoaded', () => {
@@ -2994,7 +2996,7 @@
                     const buttonsDiv = createElement('div', { className: 'choices' });
                     setHTMLContent(buttonsDiv, (inventoryButtonHtml || '') + (mapButtonHtml || ''));
                     sceneEl.appendChild(buttonsDiv);
-                    ` : ''}`;
+                }
                 sceneEl.classList.add('active');
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
