@@ -2182,7 +2182,23 @@
             return arr;
         }
 
-        function loadNodeContent(node, nodeId) {
+        
+        // Функции-заглушки для совместимости
+        function updateCurrentWorld(node) {
+            // Обновление мира/локации (опционально)
+            if (node.world) {
+                currentWorld = node.world;
+            }
+        }
+
+        function updateButtons() {
+            // Обновление кнопок навигации (опционально)
+            const inventoryBtn = document.querySelector('[onclick*="showInventory"]');
+            const mapBtn = document.querySelector('[onclick*="showMap"]');
+            // Можно добавить логику показа/скрытия кнопок
+        }
+
+function loadNodeContent(node, nodeId) {
             currentNode = nodeId;
             currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
