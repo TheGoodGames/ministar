@@ -1800,11 +1800,11 @@ transition: all 0.3s;
                 .replace(/_{2,}/g, '_');
         }
 
+        // ✅ ИСПРАВЛЕНО: регулярное выражение заменено на правильное
         function formatText(text) {
-            let normalized = text.replace(/\
-                / g, '
-');
-return normalized
+            // Заменяем все экранированные переносы строк на реальные переносы
+            let normalized = text.replace(/\\n/g, '\n');
+            return normalized
                 .replace(/`([^`]*)`/g, '<em>$1</em>')
                 .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>');
         }
