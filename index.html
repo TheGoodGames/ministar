@@ -1604,6 +1604,9 @@
                 overlay.style.display = 'none';
             }
         }
+
+
+        // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
         function goToNode(nodeId) {
             showNode(nodeId);
         }
@@ -2267,9 +2270,9 @@ function shuffle(array) {
                     if (isLocked) btnClass += ' choice-btn-locked';
 
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
-                    const disabled = isLocked ? 'disabled' : '';
+                    // НЕ используем disabled - handleChoice сам проверит requires и покажет сообщение
 
-                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${originalIndex})" ${disabled}>${btnText}</button>`;
+                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${originalIndex})">${btnText}</button>`;
                 }).join('');
             }
 
@@ -2306,7 +2309,20 @@ function shuffle(array) {
                 70% { transform: scale(1.2); opacity: 1; }
                 100% { transform: scale(1); opacity: 1; }
             }
-        </style>
+        
+        /* Заблокированные кнопки (визуально, но кликабельны) */
+        .choice-btn-locked {
+            opacity: 0.7;
+            cursor: pointer !important;
+            background: #555 !important;
+        }
+
+        .choice-btn-locked:hover {
+            opacity: 0.85;
+            background: #666 !important;
+        }
+
+    </style>
     `;
             }
 
