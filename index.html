@@ -2184,25 +2184,29 @@
 
         function loadNodeContent(node, nodeId) {
             currentNode = nodeId;
+            currentNodeId = nodeId;
+            localStorage.setItem('lingame_lastNode', nodeId);
 
-            // Обновляем текст узла
-            storyText.innerHTML = node.text.replace(/\n/g, '<br>');
-
-            // ============================================
-            // СОЗДАНИЕ КНОПОК ВЫБОРА (DOM API)
-            // ============================================
-            const choicesDiv = document.getElementById('choices');
-            if (!choicesDiv) {
-                console.error('❌ Элемент #choices не найден!');
+            // Проверка на код-экран
+            if (node.input_type === "code") {
+                showCodeScreen(node);
                 return;
             }
 
-            choicesDiv.innerHTML = ''; // Очищаем контейнер
+            // Получаем scene элемент
+            const sceneEl = document.getElementById('scene');
+            if (!sceneEl) {
+                console.error('❌ #scene не найден!');
+                return;
+            }
+
+            // Формируем HTML для узла
+            let choicesHTML = '';
 
             if (node.choices && node.choices.length > 0) {
                 let choices = [...node.choices];
 
-                // Сохраняем originalIndex перед shuffle
+                // Shuffle если нужно
                 if (node.shuffle_choices) {
                     choices = choices.map((c, i) => ({ ...c, originalIndex: i }));
                     choices = shuffle(choices);
@@ -2221,39 +2225,29 @@
                     return true;
                 });
 
-                // СОЗДАЁМ КНОПКИ ЧЕРЕЗ DOM API (как в HOSPITAL)
+                // Создаём HTML кнопок
                 choices.forEach((choice, displayIndex) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${displayIndex + 1}`;
-
-                    // Сохраняем данные в dataset
-                    btn.dataset.next = choice.next;
-                    btn.dataset.choiceIndex = displayIndex;
-                    btn.dataset.originalIndex = choice.originalIndex !== undefined
-                        ? choice.originalIndex
+                    const originalIndex = choice.originalIndex !== undefined 
+                        ? choice.originalIndex 
                         : displayIndex;
 
-                    // Привязываем обработчик клика
-                    btn.addEventListener('click', function() {
-                        const nextNodeId = this.dataset.next;
-                        const choiceIndex = parseInt(this.dataset.choiceIndex);
-                        const originalIndex = parseInt(this.dataset.originalIndex);
-
-                        console.log('🔘 Клик на кнопку:', {
-                            text: choice.text,
-                            nextNodeId,
-                            choiceIndex,
-                            originalIndex
-                        });
-
-                        // Вызываем handleChoice с правильными параметрами
-                        window.handleChoice(nextNodeId, choiceIndex, originalIndex);
-                    });
-
-                    choicesDiv.appendChild(btn);
+                    choicesHTML += `<button class="choice-btn" 
+                        onclick="window.handleChoice('${choice.next}', ${displayIndex}, ${originalIndex})">
+                        ${choice.text}
+                    </button>`;
                 });
             }
+
+            // Устанавливаем контент в scene
+            sceneEl.className = 'scene active';
+            sceneEl.innerHTML = `
+                <div class="text">
+                    <p>${node.text.replace(/\n/g, '<br>')}</p>
+                </div>
+                <div class="choices">
+                    ${choicesHTML}
+                </div>
+            `;
 
             // Обновляем интерфейс
             updateCurrentWorld(node);
@@ -2261,6 +2255,8 @@
             updateButtons();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+
 
 
         function hideNotificationBanner() {
