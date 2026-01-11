@@ -1499,38 +1499,7 @@
         function showNotifications(){sceneEl.style.display='none';diceScreen.style.display='none';inventoryScreen.style.display='none';keyAnimScreen.style.display='none';mapScreen.style.display='none';document.getElementById('notifications-screen').style.display='block';updateNotificationsList();}
         function closeNotifications(){document.getElementById('notifications-screen').style.display='none';sceneEl.style.display='block';}
         function updateNotificationsList(){const l=document.getElementById('notifications-list');if(notifications.length===0){l.innerHTML='<div style="color:#777;padding:40px;text-align:center">Нет новых уведомлений</div>';return;}l.innerHTML=notifications.map(n=>'<div class="notification-item"><div class="notification-icon">'+n.icon+'</div><div><div class="notification-text">'+n.message+'</div><div class="notification-time">'+new Date(n.timestamp).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>').reverse().join('');}
-        function updateNotificationButton() {
-            let btn = document.getElementById('notifications-button');
-
-            if (notifications.length > 0) {
-                // Есть уведомления - показываем кнопку
-                if (!btn) {
-                    // Создаём кнопку один раз
-                    const choicesDiv = document.getElementById('choices');
-                    if (choicesDiv) {
-                        btn = document.createElement('button');
-                        btn.id = 'notifications-button';
-                        btn.className = 'choice-btn';
-                        btn.style.background = '#ff9800';
-                        btn.style.position = 'relative';
-                        btn.onclick = showNotifications;
-
-                        // Вставляем в начало choices (будет всегда видна)
-                        choicesDiv.insertBefore(btn, choicesDiv.firstChild);
-                    }
-                }
-
-                if (btn) {
-                    btn.innerHTML = '🔔 Уведомления <span class="notification-badge">' + notifications.length + '</span>';
-                    btn.style.display = 'block';
-                }
-            } else {
-                // Нет уведомлений - скрываем кнопку
-                if (btn) {
-                    btn.style.display = 'none';
-                }
-            }
-        }}if(b){b.innerHTML='🔔 Уведомления <span class="notification-badge">'+notifications.length+'</span>';b.style.display='block';}}else if(b){b.style.display='none';}}
+        function updateNotificationButton(){let b=document.getElementById('notifications-button');if(notifications.length>0){if(!b){const inv=document.querySelector('button[onclick="showInventory()"]');if(inv&&inv.parentElement){b=document.createElement('button');b.id='notifications-button';b.className='choice-btn';b.style.background='#ff9800';b.style.position='relative';b.onclick=showNotifications;inv.parentElement.insertBefore(b,inv.nextSibling);}}if(b){b.innerHTML='🔔 Уведомления <span class="notification-badge">'+notifications.length+'</span>';b.style.display='block';}}else if(b){b.style.display='none';}}
 
         function saveKeys() {
             localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
@@ -1618,25 +1587,7 @@
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 
-        function showCollectMessage(message, icon, eventId) {
-            // Генерируем ID на основе сообщения или используем переданный eventId
-            const notifId = eventId || 'notif_' + message.substring(0, 20).replace(/\s/g, '_');
-
-            // Проверяем, есть ли уже такое уведомление
-            if (notifications.some(n => n.id === notifId)) {
-                // Уведомление уже есть - трясём кнопку и открываем окно
-                const btn = document.getElementById('notifications-button');
-                if (btn) {
-                    btn.classList.add('shake');
-                    setTimeout(() => btn.classList.remove('shake'), 500);
-                }
-                showNotifications();
-                return;
-            }
-
-            // Добавляем новое уведомление
-            addNotification(message, icon || '🔔', notifId);
-        }
+        function showCollectMessage(message,icon,eventId){const notifId=eventId||"notif_"+message.substring(0,20).replace(/\s/g,"_");if(notifications.some(n=>n.id===notifId)){const btn=document.getElementById("notifications-button");if(btn){btn.classList.add("shake");setTimeout(function(){btn.classList.remove("shake");},500);}showNotifications();return;}addNotification(message,icon||"🔔",notifId);}
 
         function closeCollectMessage(){}
 
@@ -2174,7 +2125,6 @@ function shuffle(array) {
         function loadNodeContent(node, nodeId) {
             window.__nodeTransitionLock = false;
             window.__nodeTransitionLock = false;            currentNodeId = nodeId;
-            updateNotificationButton();
             localStorage.setItem('lingame_lastNode', nodeId);
             // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
@@ -2515,9 +2465,7 @@ function shuffle(array) {
             font-weight: bold;
         }
 
-    
-        #collect-overlay { display: none !important; visibility: hidden !important; }
-</style>
+    </style>
     `;
             }
 
