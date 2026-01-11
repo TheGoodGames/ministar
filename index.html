@@ -1595,7 +1595,17 @@
             overlay.onclick = closeCollectMessage;
         }
 
-        
+        function closeCollectMessage() {
+            console.log('closeCollectMessage вызвана');
+            const overlay = document.getElementById('collect-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                overlay.onclick = null; // Убираем обработчик
+            }
+        }
+
+
+        // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
         function goToNode(nodeId) {
             showNode(nodeId);
         }
@@ -2118,13 +2128,10 @@ function shuffle(array) {
 
         
         function closeCollectMessage() {
-            console.log('closeCollectMessage вызвана');
             const overlay = document.getElementById('collect-overlay');
             if (overlay) {
                 overlay.style.display = 'none';
-                overlay.onclick = null; // Убираем обработчик
             }
-        }
         }
 
         
@@ -3084,7 +3091,6 @@ function shuffle(array) {
             <div class="collect-text"></div>
             <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
         </div>
-    </div>
     </body>
 
 </html>
