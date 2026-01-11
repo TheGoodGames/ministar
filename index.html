@@ -935,6 +935,14 @@
         <div class="keys-grid" id="keys-container">
             <!-- Ключи будут добавлены сюда -->
         </div>
+
+    <!-- УВЕДОМЛЕНИЯ -->
+    <div id="notifications-screen" style="display: none;">
+        <h2>🔔 Уведомления</h2>
+        <div id="notifications-list" class="notifications-list"></div>
+        <button class="inventory-close" onclick="closeNotifications()">Закрыть</button>
+    </div>
+
         <button class="inventory-close" onclick="closeInventory()">← Назад к игре</button>
     </div>
 
@@ -1484,6 +1492,15 @@
         // === СИСТЕМА КЛЮЧЕЙ ===
         let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
 
+        let notifications=JSON.parse(localStorage.getItem('lingame:notifications'))||[];
+        function saveNotifications(){localStorage.setItem('lingame:notifications',JSON.stringify(notifications));updateNotificationButton();}
+        function addNotification(m,i,id){if(id&&notifications.some(n=>n.id===id))return;notifications.push({id:id||'notif_'+Date.now(),message:m,icon:i||'🔔',timestamp:Date.now()});saveNotifications();}
+        function removeNotification(id){notifications=notifications.filter(n=>n.id!==id);saveNotifications();}
+        function showNotifications(){sceneEl.style.display='none';diceScreen.style.display='none';inventoryScreen.style.display='none';keyAnimScreen.style.display='none';mapScreen.style.display='none';document.getElementById('notifications-screen').style.display='block';updateNotificationsList();}
+        function closeNotifications(){document.getElementById('notifications-screen').style.display='none';sceneEl.style.display='block';}
+        function updateNotificationsList(){const l=document.getElementById('notifications-list');if(notifications.length===0){l.innerHTML='<div style="color:#777;padding:40px;text-align:center">Нет новых уведомлений</div>';return;}l.innerHTML=notifications.map(n=>'<div class="notification-item"><div class="notification-icon">'+n.icon+'</div><div><div class="notification-text">'+n.message+'</div><div class="notification-time">'+new Date(n.timestamp).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'</div></div></div>').reverse().join('');}
+        function updateNotificationButton(){let b=document.getElementById('notifications-button');if(notifications.length>0){if(!b){const inv=document.querySelector('button[onclick="showInventory()"]');if(inv&&inv.parentElement){b=document.createElement('button');b.id='notifications-button';b.className='choice-btn';b.style.background='#ff9800';b.style.position='relative';b.onclick=showNotifications;inv.parentElement.insertBefore(b,inv.nextSibling);}}if(b){b.innerHTML='🔔 Уведомления <span class="notification-badge">'+notifications.length+'</span>';b.style.display='block';}}else if(b){b.style.display='none';}}
+
         function saveKeys() {
             localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
         }
@@ -1570,26 +1587,9 @@
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 
-        function showCollectMessage(message, icon) {
-            addNotification(message, icon || '🔔', 'notif_' + Date.now());
-        }
+        function showCollectMessage(message,icon){addNotification(message,icon||"🔔","notif_"+Date.now());}
 
-            const iconEl = overlay.querySelector('.collect-icon');
-            const textEl = overlay.querySelector('.collect-text');
-
-            if (iconEl) iconEl.textContent = icon || '🔒';
-            if (textEl) textEl.textContent = message;
-
-            // Используем класс для показа вместо inline style
-            overlay.classList.add('active');
-            overlay.style.display = 'flex';
-
-            // Закрытие по клику
-            overlay.onclick = closeCollectMessage;
-        }
-
-        function closeCollectMessage() { /* overlay больше не используется */ }
-        }
+        function closeCollectMessage(){}
 
 
         // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
@@ -2402,7 +2402,7 @@ function shuffle(array) {
         }
 
     
-        /* === СИСТЕМА УВЕДОМЛЕНИЙ === */
+        /* УВЕДОМЛЕНИЯ */
         #notifications-screen {
             display: none;
             position: fixed;
@@ -2415,11 +2415,6 @@ function shuffle(array) {
             overflow-y: auto;
             padding: 30px 20px;
             text-align: center;
-        }
-
-        #notifications-screen h2 {
-            margin-bottom: 24px;
-            font-size: 28px;
         }
 
         .notifications-list {
@@ -2440,7 +2435,6 @@ function shuffle(array) {
 
         .notification-icon {
             font-size: 24px;
-            flex-shrink: 0;
         }
 
         .notification-text {
