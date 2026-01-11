@@ -1,20 +1,893 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Приключения Лин Кроу</title>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lin: Drake Clipper</title>
 
-    <!-- CSS Modules -->
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/screens.css">
-    <link rel="stylesheet" href="css/animations.css">
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Google Fonts: Merriweather -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0c0b14;
+            --fg: #e8e6f6;
+            --accent: #6a5acd;
+            --success: #4caf50;
+            --deadend: #f44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+            font-size: 19px;
+            padding: 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        #app {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #scene {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            text-align: left;
+        }
+
+        #scene.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .illustration {
+            width: 100%;
+            border-radius: 14px;
+            margin: 24px 0;
+            overflow: hidden;
+            background: #141224;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .illustration img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .illustration .fallback {
+            color: #777;
+            font-style: italic;
+            text-align: center;
+            padding: 24px;
+            font-family: system-ui, sans-serif;
+        }
+
+        .text {
+            line-height: 1.78;
+            margin: 26px 0;
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        .text p {
+            margin-bottom: 22px;
+            text-indent: 24px;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 30px 0 24px;
+        }
+
+        .choice-btn {
+            padding: 16px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Merriweather', system-ui, sans-serif;
+            font-size: 17px;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.12s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .choice-btn:hover {
+            background: #5a4ab0;
+        }
+
+        .choice-btn:active {
+            transform: scale(0.992);
+        }
+
+        .deadend .choice-btn {
+            background: var(--deadend);
+        }
+
+        .deadend .choice-btn:hover {
+            background: #d32f2f;
+        }
+
+        .ending-success {
+            border-left: 4px solid var(--success);
+            padding-left: 16px;
+        }
+
+        .loading {
+            padding: 40px;
+            color: #777;
+            text-align: center;
+            font-family: system-ui, sans-serif;
+        }
+
+        .restart-btn {
+            background: #ff9800;
+        }
+
+        .restart-btn:hover {
+            background: #f57c00;
+        }
+
+        #audio-control {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(106, 90, 205, 0.25);
+            backdrop-filter: blur(4px);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Стиль для экрана броска кубиков */
+        #dice-screen {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        #dice-screen .dice {
+            font-size: 100px;
+            margin-bottom: 30px;
+        }
+
+        #dice-screen .result {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        #dice-screen button {
+            width: 200px;
+            margin: 0 auto;
+        }
+
+        /* === ИНВЕНТАРЬ === */
+        #inventory-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        #inventory-screen h2 {
+            margin-bottom: 24px;
+            font-size: 28px;
+        }
+
+        #code-screen {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        #code-screen h2 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .code-input-container {
+            background: white;
+            color: black;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            margin: 20px 0;
+        }
+
+        #code-input {
+            width: 100%;
+            padding: 18px;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            border: 3px solid #333;
+            border-radius: 12px;
+            margin: 20px 0;
+            background: #f8f8f8;
+            box-sizing: border-box;
+            letter-spacing: 4px;
+        }
+
+        #code-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.3);
+        }
+
+        #submit-code {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        #submit-code:hover {
+            background: #5a4ab0;
+            transform: translateY(-2px);
+        }
+
+        #code-error {
+            color: var(--deadend);
+            min-height: 24px;
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .code-hint {
+            color: #666;
+            margin-top: 15px;
+            font-style: italic;
+            font-size: 18px;
+        }
+
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 24px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .key-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .key-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+        }
+
+        .key-label {
+            background: white;
+            color: black;
+            font-size: 14px;
+            font-family: 'Merriweather', sans-serif;
+            padding: 6px 8px;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .inventory-close {
+            margin-top: 28px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .inventory-close:hover {
+            background: #5a4ab0;
+        }
+
+        /* === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА === */
+        #key-animation {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        #key-animation .icon {
+            font-size: 120px;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: keyPop 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        #key-animation .label {
+            font-size: 22px;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.4s forwards;
+        }
+
+        @keyframes keyPop {
+            0% {
+                transform: scale(0.2) rotate(-30deg);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 🔔 NOTIFICATION SYSTEM */
+        .notification-banner {
+            background: rgba(106, 90, 205, 0.15);
+            border-left: 3px solid var(--accent);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .notification-banner a {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        .notification-banner .close-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* === КАРТА МИРА === */
+        #map-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .locations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+
+        .location-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(106, 90, 205, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: rgba(106, 90, 205, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .location-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            background: rgba(106, 90, 205, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .location-item:active {
+            transform: translateY(1px);
+        }
+
+        .location-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .location-name {
+            font-family: 'Merriweather', sans-serif;
+            font-size: 16px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .location-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .current-location {
+            border-color: var(--success);
+            background: rgba(76, 175, 80, 0.2);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .location-unvisited {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        .location-unvisited:hover {
+            opacity: 1;
+            filter: grayscale(0);
+        }
+
+        .map-info {
+            color: #aaa;
+            font-size: 15px;
+            margin-top: 15px;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .map-title {
+            text-align: center;
+            margin: 12px 0 10px;
+            font-size: 28px;
+            letter-spacing: 0.2px;
+        }
+
+        .category-title {
+            margin: 30px 0 15px;
+            color: #aaa;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 480px) {
+            .notification-banner {
+                margin: 15px 10px !important;
+                border-radius: 12px !important;
+                border-left: none !important;
+                border-top: 3px solid var(--accent) !important;
+                padding: 18px 15px !important;
+                font-size: 17px !important;
+                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
+            }
+
+            .notification-banner a {
+                display: block;
+                margin-top: 8px;
+                font-weight: 600;
+            }
+
+            .locations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+
+            .location-item {
+                padding: 12px;
+            }
+
+            .location-icon {
+                font-size: 40px;
+            }
+
+            .location-name {
+                font-size: 15px;
+            }
+        }
+
+        /* iOS-specific fixes */
+        .notification-banner-ios {
+            position: sticky;
+            top: 70px;
+            background: rgba(40, 35, 70, 0.85) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(106, 90, 205, 0.3);
+            z-index: 10000 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            width: 100% !important;
+            left: 0 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .ios-only-warning {
+            background: rgba(255, 235, 59, 0.15);
+            border-left: 3px solid #ffc107;
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0 18px 15px;
+            font-size: 15px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .ios-only-warning {
+                display: block;
+                margin: 12px 10px !important;
+                border-radius: 12px !important;
+                border-left: none !important;
+                border-top: 3px solid #ffc107 !important;
+            }
+        }
+
+        /* END NOTIFICATION SYSTEM */
+    
+
+        /* ============================================
+           ПОЛНОЭКРАННЫЙ ПОКАЗ NPC (тап для продолжения)
+           ============================================ */
+
+        #npc-screen {
+            pointer-events: none;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #npc-screen.active {
+            pointer-events: auto;
+            display: flex;
+            animation: npcFadeIn 0.25s ease-out;
+        }
+
+        @keyframes npcFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #npc-screen.fade-out {
+            animation: npcFadeOut 0.25s ease-out forwards;
+        }
+
+        @keyframes npcFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        #npc-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        /* UI поверх картинки */
+        #npc-overlay-ui {
+            position: absolute;
+            inset: 0;
+            pointer-events: none; /* кликается весь экран */
+        }
+
+        /* Облачко текста (комикс) */
+        #npc-speech {
+            position: absolute;
+            left: 50%;
+            top: 56%;
+            transform: translate(-50%, -50%);
+            width: min(860px, 92vw);
+            background: rgba(255, 255, 255, 0.95);
+            color: #0b0f14;
+            border: 3px solid rgba(15, 23, 36, 0.95);
+            border-radius: 28px;
+            padding: 18px 20px;
+            font-size: 22px;
+            line-height: 1.25;
+            text-align: left;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+            white-space: pre-wrap;
+        }
+
+        #npc-speech:empty {
+            display: none;
+        }
+
+        #npc-speech::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -18px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-top: 18px solid rgba(255, 255, 255, 0.95);
+        }
+
+        #npc-speech::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -24px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 19px solid transparent;
+            border-right: 19px solid transparent;
+            border-top: 22px solid rgba(15, 23, 36, 0.95);
+        }
+
+        /* Подсказка "Продолжить" */
+        #npc-continue {
+            position: absolute;
+            left: 50%;
+            bottom: 52px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.92);
+            text-shadow: 0 8px 18px rgba(0,0,0,0.55);
+            font-size: 28px;
+            letter-spacing: 0.2px;
+        }
+
+        /* Пока картинка грузится — прячем подсказку продолжения */
+        #npc-screen:not(.ready) #npc-continue {
+            opacity: 0;
+        }
+
+        .npc-continue-arrow {
+            font-size: 34px;
+            line-height: 1;
+            animation: npcArrowBlink 1.05s ease-in-out infinite;
+        }
+
+        @keyframes npcArrowBlink {
+            0%   { opacity: 0.25; transform: translateY(6px); }
+            50%  { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0.25; transform: translateY(6px); }
+        }
+
+        /* Для телефонов - картинка на весь экран */
+        @media (max-width: 768px) {
+            #npc-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            #npc-speech {
+                top: 60%;
+                font-size: 21px;
+                width: 92vw;
+            }
+
+            #npc-continue {
+                bottom: 64px;
+                font-size: 30px;
+            }
+        }
+
+
+        /* ============================================
+           КАРТА МИРА (аккордеон)
+           category_name -> раскрывающиеся секции
+           subcategory_name -> под-секции
+           location -> кликабельные элементы
+           ============================================ */
+
+        .map-title {
+            text-align: center;
+            margin: 16px 0 12px;
+            font-size: 34px;
+            letter-spacing: 0.3px;
+        }
+
+        .map-accordion {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 10px 14px;
+            box-sizing: border-box;
+        }
+
+        .map-item {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin: 6px 0;
+            text-align: left;
+            background: rgba(86, 78, 132, 0.55);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .map-item:hover {
+            filter: brightness(1.05);
+        }
+
+        .map-item.level-0 { 
+            padding-left: 14px; 
+            background: rgba(86, 78, 132, 0.55);
+        }
+        .map-item.level-1 { 
+            padding-left: 28px; 
+            background: rgba(70, 95, 145, 0.48);
+            font-size: 17px;
+        }
+        .map-item.level-2 { 
+            padding-left: 44px; 
+            background: rgba(60, 105, 155, 0.42);
+            font-size: 16px;
+        }
+
+        .map-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .map-icon { width: 24px; text-align: center; }
+
+        .map-label {
+            flex: 1;
+            line-height: 1.15;
+        }
+
+        .map-arrow {
+            width: 22px;
+            text-align: right;
+            opacity: 0.95;
+            font-size: 20px;
+        }
+
+        .map-desc {
+            margin-top: 4px;
+            opacity: 0.88;
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .map-group { margin: 0; }
+        .map-children { display: none; margin: 0; }
+        .map-group.open > .map-children { display: block; }
+
+
+
+        /* Активная локация на карте */
+        .map-item.active-location {
+            background: rgba(40, 170, 90, 0.65) !important;
+            border: 2px solid rgba(140, 255, 190, 0.75);
+        }
+
+        /* Красивая кнопка "Назад к игре" */
+        .back-button {
+            display: block;
+            width: calc(100% - 24px);
+            max-width: 540px;
+            margin: 20px auto;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: scale(1.02);
+        }
+
+
+        /* Jump Points - специальное оформление */
+        .map-group.jump-points {
+            border-left: 3px solid rgba(100, 200, 255, 0.6);
+        }
+
+        .map-item.jump-point {
+            background: rgba(100, 150, 255, 0.35) !important;
+        }
+</style>
 </head>
-<body>
 
+<body>
 
     
     <!-- Полноэкранный показ NPC -->
@@ -2235,11 +3108,6 @@ function shuffle(array) {
             <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
         </div>
     </div>
-    
-    <!-- Telegram SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    </body>
 
-    <!-- Game Logic -->
-    <script src="js/main.js"></script>
-</body>
 </html>
