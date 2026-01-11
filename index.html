@@ -1570,25 +1570,40 @@
 
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 
-        function showCollectMessage(message, icon = '💬') {
-            keyAnimScreen.style.display = 'block';
-            keyAnimScreen.innerHTML = `
-                <div class="key-anim-content" style="cursor: pointer;">
-                    <div class="key-icon-big">${icon}</div>
-                    <div class="key-label-big">${message}</div>
-                    <p style="margin-top: 20px; color: #888; font-size: 14px;">Нажмите для продолжения</p>
-                </div>
-            `;
+        function showCollectMessage(message, icon) {
+            console.log('showCollectMessage вызвана');
+            console.log('message:', message);
+            console.log('icon:', icon);
 
-            // Закрытие по клику
-            keyAnimScreen.onclick = function() {
-                keyAnimScreen.style.display = 'none';
-                keyAnimScreen.onclick = null;
-            };
+            const overlay = document.getElementById('collect-overlay');
+            const messageDiv = document.getElementById('collect-message');
+
+            if (!overlay || !messageDiv) {
+                console.error('collect-overlay или collect-message не найдены!');
+                alert(icon + ' ' + message);
+                return;
+            }
+
+            const iconEl = messageDiv.querySelector('.icon');
+            const textEl = messageDiv.querySelector('.text');
+            const buttonEl = messageDiv.querySelector('button');
+
+            if (iconEl) iconEl.textContent = icon || '🔒';
+            if (textEl) textEl.textContent = message;
+            if (buttonEl) {
+                buttonEl.onclick = closeCollectMessage;
+            }
+
+            overlay.style.display = 'flex';
         }
 
-
-        // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
+        function closeCollectMessage() {
+            console.log('closeCollectMessage вызвана');
+            const overlay = document.getElementById('collect-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
         function goToNode(nodeId) {
             showNode(nodeId);
         }
