@@ -1,118 +1,3 @@
-
-        // === СИСТЕМА УВЕДОМЛЕНИЙ ===
-        let notifications = JSON.parse(localStorage.getItem('lingame:notifications')) || [];
-
-        function saveNotifications() {
-            localStorage.setItem('lingame:notifications', JSON.stringify(notifications));
-            updateNotificationButton();
-        }
-
-        function addNotification(message, icon, id) {
-            // Проверяем, нет ли уже такого уведомления
-            if (id && notifications.some(n => n.id === id)) {
-                return; // Уже есть
-            }
-
-            const notification = {
-                id: id || 'notif_' + Date.now(),
-                message: message,
-                icon: icon || '🔔',
-                timestamp: Date.now()
-            };
-
-            notifications.push(notification);
-            saveNotifications();
-        }
-
-        function removeNotification(id) {
-            notifications = notifications.filter(n => n.id !== id);
-            saveNotifications();
-        }
-
-        function clearNotifications() {
-            notifications = [];
-            saveNotifications();
-        }
-
-        function showNotifications() {
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-
-            const notifScreen = document.getElementById('notifications-screen');
-            notifScreen.style.display = 'block';
-
-            updateNotificationsList();
-        }
-
-        function closeNotifications() {
-            const notifScreen = document.getElementById('notifications-screen');
-            notifScreen.style.display = 'none';
-            sceneEl.style.display = 'block';
-        }
-
-        function updateNotificationsList() {
-            const list = document.getElementById('notifications-list');
-
-            if (notifications.length === 0) {
-                list.innerHTML = '<div class="notifications-empty">Нет новых уведомлений</div>';
-                return;
-            }
-
-            list.innerHTML = notifications.map(n => {
-                const time = new Date(n.timestamp).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                return `
-                    <div class="notification-item">
-                        <div class="notification-icon">${n.icon}</div>
-                        <div>
-                            <div class="notification-text">${n.message}</div>
-                            <div class="notification-time">${time}</div>
-                        </div>
-                    </div>
-                `;
-            }).reverse().join(''); // Новые сверху
-        }
-
-        function updateNotificationButton() {
-            let notifBtn = document.getElementById('notifications-button');
-
-            if (notifications.length > 0) {
-                // Показываем кнопку
-                if (!notifBtn) {
-                    // Создаём кнопку если её нет
-                    const inventoryBtn = document.querySelector('button[onclick="showInventory()"]');
-                    if (inventoryBtn && inventoryBtn.parentElement) {
-                        notifBtn = document.createElement('button');
-                        notifBtn.id = 'notifications-button';
-                        notifBtn.className = 'choice-btn';
-                        notifBtn.style.background = '#ff9800';
-                        notifBtn.style.fontSize = '16px';
-                        notifBtn.style.position = 'relative';
-                        notifBtn.onclick = showNotifications;
-
-                        // Вставляем после кнопки инвентаря
-                        inventoryBtn.parentElement.insertBefore(notifBtn, inventoryBtn.nextSibling);
-                    }
-                }
-
-                if (notifBtn) {
-                    notifBtn.innerHTML = `🔔 Уведомления <span class="notification-badge">${notifications.length}</span>`;
-                    notifBtn.style.display = 'block';
-                }
-            } else {
-                // Скрываем кнопку
-                if (notifBtn) {
-                    notifBtn.style.display = 'none';
-                }
-            }
-        }
-
 <!DOCTYPE html>
 <html lang="ru">
 
@@ -1686,13 +1571,12 @@
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 
         function showCollectMessage(message, icon) {
-            // Добавляем уведомление вместо модального окна
             const notifId = 'notif_' + Date.now();
             addNotification(message, icon || '🔔', notifId);
         }
 
         function closeCollectMessage() {
-            // Больше не используется, но оставляем для совместимости
+            // Оставляем для совместимости
         }
 
 
@@ -2230,8 +2114,6 @@ function shuffle(array) {
             window.__nodeTransitionLock = false;
             window.__nodeTransitionLock = false;            currentNodeId = nodeId;
             localStorage.setItem('lingame_lastNode', nodeId);
-            updateNotificationButton();
-
             // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
 
             // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
@@ -3303,15 +3185,4 @@ function shuffle(array) {
     </div>
     </body>
 
-</html
-
-    <!-- УВЕДОМЛЕНИЯ -->
-    <div id="notifications-screen" style="display: none;">
-        <h2>🔔 Уведомления</h2>
-        <div id="notifications-list" class="notifications-list">
-            <!-- Уведомления будут добавляться сюда -->
-        </div>
-        <button class="inventory-close" onclick="closeNotifications()">Закрыть</button>
-    </div>
-
-    >
+</html>
