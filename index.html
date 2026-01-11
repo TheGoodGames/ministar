@@ -2172,224 +2172,97 @@
             loadNodeContent(node, nodeId);
         }
 
+                // Функция перемешивания массива (Fisher-Yates shuffle)
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
         function loadNodeContent(node, nodeId) {
-            window.__nodeTransitionLock = false;
-            window.__nodeTransitionLock = false;            currentNodeId = nodeId;
-            localStorage.setItem('lingame_lastNode', nodeId);
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
+            currentNode = nodeId;
 
-            // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
-            if (node.notify) {
-                sendGlobalNotification(nodeId, node.notify);
-            }
-            // END NOTIFICATION SYSTEM
+            // Обновляем текст узла
+            storyText.innerHTML = node.text.replace(/\n/g, '<br>');
 
-            // === СИСТЕМА КАРТЫ МИРА: Отметка посещенных локаций ===
-            if (node.is_location && !isLocationVisited(nodeId)) {
-                addLocation(nodeId);
-
-                // Показываем анимацию открытия новой локации (опционально)
-                if (!localStorage.getItem('hide_map_tutorial')) {
-                    setTimeout(() => {
-                        sceneEl.innerHTML += `
-                            <div style="background: rgba(76, 175, 80, 0.2); border-left: 3px solid var(--success); padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px; position: relative;">
-                                <button style="position: absolute; right: 8px; top: 8px; background: rgba(255,255,255,0.1); border: none; width: 20px; height: 20px; border-radius: 50%; color: white; font-size: 12px; cursor: pointer;" onclick="localStorage.setItem('hide_map_tutorial', 'true'); this.parentElement.style.display='none'">×</button>
-                                <p>🗺️ <strong>Новая локация открыта!</strong> Нажмите иконку карты 🗺️, чтобы вернуться сюда позже.</p>
-                            </div>
-                        `;
-                    }, 500);
-                }
-            }
-            // === СИСТЕМА БОЛЬНИЦЫ: Очистка инвентаря ===
-            if (node.is_hospital) {
-                // Полная очистка инвентаря при попадании в больницу
-                inventory = [];
-                localStorage.setItem('inventory', JSON.stringify(inventory));
-                console.log('🏥 Вы в больнице. Инвентарь полностью очищен.');
-            }
-            // END СИСТЕМА БОЛЬНИЦЫ
-
-            // END СИСТЕМА КАРТЫ МИРА
-
-            // 🔑 Сбор ключа удалён
-            // Проверка на ноду с вводом кода
-            if (node.input_type === "code") {
-                showCodeScreen(node);
+            // ============================================
+            // СОЗДАНИЕ КНОПОК ВЫБОРА (DOM API)
+            // ============================================
+            const choicesDiv = document.getElementById('choices');
+            if (!choicesDiv) {
+                console.error('❌ Элемент #choices не найден!');
                 return;
             }
 
-            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
-            if (node.requires && !hasAllKeys(node.requires)) {
-                const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene deadend';
-                    sceneEl.innerHTML = `
-                        <div class="text"><p>Дверь заперта. Похоже, вам нужен особый ключ...</p></div>
-                        <div class="choices">
-                            <button class="choice-btn" onclick="handleChoice('${fallbackChoice.next}')">${fallbackChoice.text}</button>
-                        </div>
-                        <div style="text-align:center; margin-top:20px;">
-                            <button class="choice-btn" style="background:#555;" onclick="showInventory()">Посмотреть инвентарь</button>
-                        </div>
-                    `;
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 320);
-                return;
-            }
+            choicesDiv.innerHTML = ''; // Очищаем контейнер
 
-            const isRestartNode = nodeId === "node_end";
-            const hasRestartOption = node.choices?.some(c => c.next === "main_story");
-
-            const illustration = getIllustrationHtml(nodeId);
-            const formattedText = formatText(node.text);
-
-            const hasChoices = node.choices && node.choices.length > 0;
-            let showAnimation = false;
-            let nextAfterCollect = null;
-
-            // 🎬 Проверка: один выбор + есть collect → анимация!
-            if (node.collect && node.choices && node.choices.length === 1) {
-                showAnimation = true;
-                nextAfterCollect = node.choices[0].next;
-            }
-
-            if (showAnimation) {
-                // Показываем анимацию вместо кнопки
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene';
-                    sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>`;
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                    // Запуск анимации ключа
-                    setTimeout(() => {
-                        showKeyAnimation(node.collect, nextAfterCollect);
-                    }, 600);
-                }, 320);
-                return;
-            }
-
-            // Обычное отображение
-            let choicesHtml = '';
-            if (hasChoices && !isRestartNode) {
+            if (node.choices && node.choices.length > 0) {
                 let choices = [...node.choices];
-                if (!hasRestartOption) {
-                    // Сохраняем originalIndex перед shuffle
+
+                // Сохраняем originalIndex перед shuffle
+                if (node.shuffle_choices) {
                     choices = choices.map((c, i) => ({ ...c, originalIndex: i }));
-                    choices = shuffleArray(choices);
+                    choices = shuffle(choices);
+                } else {
+                    choices = choices.map((c, i) => ({ ...c, originalIndex: i }));
                 }
 
-                // Создаём mapping для сохранения оригинальных индексов
-                const choicesWithIndex = choices.map((c, idx) => ({
-                    choice: c,
-                    shuffledIndex: idx,
-                    originalIndex: c.originalIndex !== undefined ? c.originalIndex : node.choices.indexOf(c)
-                }));
-
-                // ФИЛЬТРАЦИЯ choices по hide_until_unlocked
-                const filteredChoices = choicesWithIndex.filter(({choice: c}) => {
-                    // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
-                    if (c.hide_until_unlocked === true && c.requires) {
-                        const hasKeys = hasAllKeys(c.requires);
-                        if (!hasKeys) return false;
+                // Фильтруем hide_until_unlocked
+                choices = choices.filter(choice => {
+                    if (choice.hide_until_unlocked) {
+                        const keys = Array.isArray(choice.hide_until_unlocked)
+                            ? choice.hide_until_unlocked
+                            : [choice.hide_until_unlocked];
+                        return keys.every(key => collectedKeys[key]);
                     }
                     return true;
                 });
 
-                choicesHtml = filteredChoices.map(({choice: c, originalIndex}) => {
-                    const isRestart = c.next === "main_story" || c.next === "node_end";
-                    let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
+                // СОЗДАЁМ КНОПКИ ЧЕРЕЗ DOM API (как в HOSPITAL)
+                choices.forEach((choice, displayIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text || `Вариант ${displayIndex + 1}`;
 
-                    // Блокировка для hide_until_unlocked: false или не указано
-                    const isLocked = c.requires && !hasAllKeys(c.requires);
-                    if (isLocked) btnClass += ' choice-btn-locked';
+                    // Сохраняем данные в dataset
+                    btn.dataset.next = choice.next;
+                    btn.dataset.choiceIndex = displayIndex;
+                    btn.dataset.originalIndex = choice.originalIndex !== undefined
+                        ? choice.originalIndex
+                        : displayIndex;
 
-                    const btnText = isLocked ? `${c.text} 🔒` : c.text;
-                    const disabled = isLocked ? 'disabled' : '';
+                    // Привязываем обработчик клика
+                    btn.addEventListener('click', function() {
+                        const nextNodeId = this.dataset.next;
+                        const choiceIndex = parseInt(this.dataset.choiceIndex);
+                        const originalIndex = parseInt(this.dataset.originalIndex);
 
-                    return `<button class="${btnClass}" onclick="handleChoice('${c.next}', ${originalIndex})" ${disabled}>${btnText}</button>`;
-                }).join('');
+                        console.log('🔘 Клик на кнопку:', {
+                            text: choice.text,
+                            nextNodeId,
+                            choiceIndex,
+                            originalIndex
+                        });
+
+                        // Вызываем handleChoice с правильными параметрами
+                        window.handleChoice(nextNodeId, choiceIndex, originalIndex);
+                    });
+
+                    choicesDiv.appendChild(btn);
+                });
             }
 
-            let inventoryButtonHtml = '';
-            if (Object.keys(collectedKeys).length > 0 || hasChoices) {
-                inventoryButtonHtml = `
-        <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
-    `;
-            }
+            // Обновляем интерфейс
+            updateCurrentWorld(node);
+            updateLocation(node);
+            updateButtons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-            // === КАРТА МИРА: Кнопка карты (только если map_view === true) ===
-            let mapButtonHtml = '';
-            if (hasMapView(node)) {
-                mapButtonHtml = `
-        <button id="map-button" class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
-    `;
-            }
-            // END КАРТА МИРА
-            // END КАРТА МИРА
 
-            let endMarkerHtml = '';
-            if (!hasChoices || isRestartNode) {
-                endMarkerHtml = `
-        <div style="
-            text-align: center;
-            margin: 40px 0 20px;
-            font-size: 80px;
-            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            opacity: 0;
-        ">❌</div>
-        <style>
-            @keyframes popIn {
-                0% { transform: scale(0.3); opacity: 0; }
-                70% { transform: scale(1.2); opacity: 1; }
-                100% { transform: scale(1); opacity: 1; }
-            }
-        </style>
-    `;
-            }
-
-            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
-            let notificationBanner = '';
-            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-                <div class="notification-banner">
-                    <button class="close-btn" onclick="hideNotificationBanner()">×</button>
-                    <p>🔔 Следите за прогрессом всех игроков в нашем канале:
-                    <a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
-                </div>
-                `;
-            }
-            // END NOTIFICATION SYSTEM
-
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
-
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
         function hideNotificationBanner() {
             localStorage.setItem('banner_hidden', 'true');
             const banner = document.querySelector('.notification-banner');
