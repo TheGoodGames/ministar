@@ -1571,10 +1571,17 @@
         // === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА ===
 
         function showCollectMessage(message, icon) {
-            alert((icon || '🔒') + '
+            console.log('showCollectMessage вызвана');
+            console.log('message:', message);
+            console.log('icon:', icon);
 
-' + message);
-        }
+            const overlay = document.getElementById('collect-overlay');
+
+            if (!overlay) {
+                console.error('collect-overlay не найден!');
+                alert((icon || '🔒') + ' ' + message);
+                return;
+            }
 
             const iconEl = overlay.querySelector('.collect-icon');
             const textEl = overlay.querySelector('.collect-text');
@@ -2410,10 +2417,6 @@ function shuffle(array) {
             }
         }
 
-    
-        /* Скрываем старый overlay, если вдруг остался */
-        #collect-overlay { display: none !important; visibility: hidden !important; }
-
     </style>
     `;
             }
@@ -3098,7 +3101,10 @@ function shuffle(array) {
     </div>
 
     <!-- Всплывающее окно для сообщений -->
-    
+    <div id="collect-overlay">
+        <div id="collect-message">
+            <div class="collect-icon"></div>
+            <div class="collect-text"></div>
             <div class="collect-hint"></div>
         </div>
     </div>
