@@ -1573,59 +1573,42 @@ transition: all 0.3s;
             showNode(nodeId);
         }
 
-        function showKeyAnimation(keyData, nextNodeId) {
-            if (!keyData || !keyData.id || !keyData.label) return;
-            // Сохраняем ключ
-            collectedKeys[keyData.id] = {
-                label: keyData.label,
-                type: keyData.type || 'regular'
-            };
-            saveKeys();
-            // Берём иконку из JSON или используем дефолтную по типу
-            let icon = keyData.icon;
-            if (!icon) {
-                const iconMap = {
-                    'card': '🃏',
-                    'old': '🔑',
-                    'digital': '💾',
-                    'regular': '🗝️',
-                    'quest': '📋'
-                };
-                icon = iconMap[keyData.type] || '🔑';
+        // ✅ ИСПРАВЛЕНО: Единая функция для показа сообщений с поддержкой callback
+        function showCollectMessage(message, icon, callback = null) {
+            console.log('showCollectMessage вызвана');
+            console.log('message:', message);
+            console.log('icon:', icon);
+            const overlay = document.getElementById('collect-overlay');
+            if (!overlay) {
+                console.error('collect-overlay не найден!');
+                alert((icon || '🔒') + ' ' + message);
+                if (callback) callback();
+                return;
             }
-            keyAnimScreen.style.display = 'block';
-            clearElement(keyAnimScreen);
-            const keyAnimContent = createElement('div', {
-                className: 'key-anim-content',
-                style: { cursor: 'pointer' }
-            });
-            const keyIconBig = createElement('div', {
-                className: 'key-icon-big',
-                textContent: icon,
-                style: { fontSize: '120px', marginBottom: '20px' }
-            });
-            const keyLabelBig = createElement('div', {
-                className: 'key-label-big',
-                textContent: keyData.label,
-                style: { fontSize: '22px', marginBottom: '30px' }
-            });
-            const keyHint = createElement('p', {
-                textContent: 'Нажмите в любое место, чтобы продолжить',
-                style: { marginTop: '20px', color: '#888', fontSize: '14px' }
-            });
-            keyAnimContent.appendChild(keyIconBig);
-            keyAnimContent.appendChild(keyLabelBig);
-            keyAnimContent.appendChild(keyHint);
-            keyAnimScreen.appendChild(keyAnimContent);
-            // При клике закрываем окно и переходим
-            keyAnimScreen.onclick = function () {
-                keyAnimScreen.style.display = 'none';
-                keyAnimScreen.onclick = null;
-                // Переходим к nextNodeId после закрытия окна
-                if (nextNodeId) {
-                    goToNode(nextNodeId);
-                }
+            const iconEl = overlay.querySelector('.collect-icon');
+            const textEl = overlay.querySelector('.collect-text');
+            if (iconEl) iconEl.textContent = icon || '🔒';
+            if (textEl) textEl.textContent = message;
+            // Удаляем предыдущий обработчик
+            overlay.onclick = null;
+            // Закрытие по клику с возможностью callback
+            overlay.onclick = function () {
+                closeCollectMessage();
+                if (callback) callback();
             };
+            // Используем класс для показа вместо inline style
+            overlay.classList.add('active');
+            overlay.style.display = 'flex';
+        }
+
+        function closeCollectMessage() {
+            console.log('closeCollectMessage вызвана');
+            const overlay = document.getElementById('collect-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.style.display = 'none';
+                overlay.onclick = null;
+            }
         }
 
         // === СИСТЕМА КАРТЫ МИРА ===
@@ -1800,7 +1783,6 @@ transition: all 0.3s;
                 .replace(/_{2,}/g, '_');
         }
 
-        // ✅ ИСПРАВЛЕНО: регулярное выражение заменено на правильное
         function formatText(text) {
             // Заменяем все экранированные переносы строк на реальные переносы
             let normalized = text.replace(/\\n/g, '\n');
@@ -2028,8 +2010,6 @@ transition: all 0.3s;
                 return;
             }
             const node = story[nodeId];
-            currentNodeId = nodeId;
-
             // ============================================
             // ПРОВЕРКА NPC ТЕГА
             // ============================================
@@ -2143,9 +2123,18 @@ transition: all 0.3s;
                     sceneEl.appendChild(textDiv);
                     sceneEl.classList.add('active');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                    // Запуск анимации ключа
+                    // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
                     setTimeout(() => {
-                        showKeyAnimation(node.collect, nextAfterCollect);
+                        // Формируем сообщение о получении ключа
+                        const collectMessage = node.collect.collect_message ||
+                            `Вы получили: ${node.collect.label}`;
+                        const collectIcon = node.collect.icon || '🔑';
+                        // Показываем сообщение с переходом к следующему узлу после закрытия
+                        showCollectMessage(collectMessage, collectIcon, () => {
+                            if (nextAfterCollect) {
+                                showNode(nextAfterCollect);
+                            }
+                        });
                     }, 600);
                 }, 320);
                 return;
@@ -2189,7 +2178,7 @@ transition: all 0.3s;
 <button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
 `;
             }
-            // === КАРТА МИРУ: Кнопка карты (только если map_view === true) ===
+            // === КАРТА МИРА: Кнопка карты (только если map_view === true) ===
             let mapButtonHtml = '';
             if (hasMapView(node)) {
                 mapButtonHtml = `
@@ -2307,19 +2296,34 @@ opacity: 0;
                             type: choice.collect.type || 'regular'
                         };
                         saveKeys();
-                        // Показываем ОДНО окно с missing_message
+                        // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
                         showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
                         return;
                     }
                 }
-                // 3. Обычный collect - показываем анимацию и переходим
-                showKeyAnimation(choice.collect, nextNodeId);
+                // 3. Обычный collect - показываем сообщение и переходим
+                // Сначала сохраняем ключ
+                collectedKeys[choice.collect.id] = {
+                    label: choice.collect.label,
+                    type: choice.collect.type || 'regular'
+                };
+                saveKeys();
+                // Формируем сообщение о сборе ключа
+                const collectMessage = choice.collect.collect_message ||
+                    `Вы получили: ${choice.collect.label}`;
+                const collectIcon = choice.collect.icon || '🔑';
+                // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
+                showCollectMessage(collectMessage, collectIcon, () => {
+                    // После закрытия сообщения переходим к следующему узлу
+                    goToNode(nextNodeId);
+                });
                 return;
             }
             // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
             if (choice.requires) {
                 const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
                 if (missingMsgs.length > 0) {
+                    // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
                     showCollectMessage(missingMsgs.join('\n'), '🔒');
                     return;
                 }
@@ -2479,38 +2483,6 @@ opacity: 0;
             console.log('✅ Прогресс сброшен!');
             console.log('🔄 Перезагрузка страницы...');
             window.location.reload();
-        }
-
-        // === ФУНКЦИЯ ПОКАЗА СООБЩЕНИЙ СБОРА ===
-        function showCollectMessage(message, icon) {
-            console.log('showCollectMessage вызвана');
-            console.log('message:', message);
-            console.log('icon:', icon);
-            const overlay = document.getElementById('collect-overlay');
-            if (!overlay) {
-                console.error('collect-overlay не найден!');
-                alert((icon || '🔒') + ' ' + message);
-                return;
-            }
-            const iconEl = overlay.querySelector('.collect-icon');
-            const textEl = overlay.querySelector('.collect-text');
-            if (iconEl) iconEl.textContent = icon || '🔒';
-            if (textEl) textEl.textContent = message;
-            // Используем класс для показа вместо inline style
-            overlay.classList.add('active');
-            overlay.style.display = 'flex';
-            // Закрытие по клику
-            overlay.onclick = closeCollectMessage;
-        }
-
-        function closeCollectMessage() {
-            console.log('closeCollectMessage вызвана');
-            const overlay = document.getElementById('collect-overlay');
-            if (overlay) {
-                overlay.classList.remove('active');
-                overlay.style.display = 'none';
-                overlay.onclick = null;
-            }
         }
 
         // === ЗАГРУЗКА КОНФИГУРАЦИИ УВЕДОМЛЕНИЙ ===
