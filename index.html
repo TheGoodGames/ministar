@@ -994,6 +994,43 @@
     </audio>
 
     <script>
+        // ============================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С DOM
+        // ============================================
+
+        function createElement(tag, options = {}) {
+            const element = document.createElement(tag);
+            if (options.className) element.className = options.className;
+            if (options.id) element.id = options.id;
+            if (options.textContent) element.textContent = options.textContent;
+            if (options.style) Object.assign(element.style, options.style);
+            if (options.onclick) element.onclick = options.onclick;
+            if (options.onmouseover) element.onmouseover = options.onmouseover;
+            if (options.onmouseout) element.onmouseout = options.onmouseout;
+            if (options.onerror) element.onerror = options.onerror;
+            if (options.attributes) {
+                Object.entries(options.attributes).forEach(([key, value]) => {
+                    element.setAttribute(key, value);
+                });
+            }
+            if (options.children) {
+                options.children.forEach(child => {
+                    if (typeof child === 'string') {
+                        element.appendChild(document.createTextNode(child));
+                    } else if (child) {
+                        element.appendChild(child);
+                    }
+                });
+            }
+            return element;
+        }
+
+        function clearElement(element) {
+            while (element.firstChild) {
+                element.removeChild(element.firstChild);
+            }
+        }
+
         // === Фильтр карты: показывать только когда map_view: true
         function hasMapView(node) {
             return node && node.map_view === true;
@@ -1264,7 +1301,7 @@
         function renderMapAccordion() {
             const root = document.getElementById('map-accordion');
             if (!root) return;
-            root.innerHTML = '';
+            clearElement(root);
 
             // Определяем текущую категорию и подкатегорию для автооткрытия
             const current = story[currentNodeId];
@@ -1561,7 +1598,7 @@
             keyAnimScreen.style.display = 'none';
             inventoryScreen.style.display = 'block';
 
-            keysContainer.innerHTML = '';
+            clearElement(keysContainer);
 
             // Фильтруем ключи: показываем только item_ и key_
             const allKeys = Object.entries(collectedKeys);
@@ -1570,7 +1607,13 @@
             });
 
             if (visibleKeys.length === 0) {
-                keysContainer.innerHTML = '<p style="text-align:center; color:#aaa;">Инвентарь пуст</p>';
+                // ЗАМЕНИТЬ НА:
+                clearElement(keysContainer);
+                const emptyMsg = createElement('p', {
+                    textContent: 'Инвентарь пуст',
+                    style: { textAlign: 'center', color: '#aaa' }
+                });
+                keysContainer.appendChild(emptyMsg);
             } else {
                 visibleKeys.forEach(([keyId, keyData]) => {
                     const li = document.createElement('li');
@@ -1673,13 +1716,27 @@
             }
 
             keyAnimScreen.style.display = 'block';
-            keyAnimScreen.innerHTML = `
-                <div class="key-anim-content" style="cursor: pointer;">
-                    <div class="key-icon-big">${icon}</div>
-                    <div class="key-label-big">${keyData.label}</div>
-                    <p style="margin-top: 20px; color: #888; font-size: 14px;">Нажмите для продолжения</p>
-                </div>
-            `;
+            clearElement(keyAnimScreen);
+            const keyAnimContent = createElement('div', {
+                className: 'key-anim-content',
+                style: { cursor: 'pointer' }
+            });
+            const keyIconBig = createElement('div', {
+                className: 'key-icon-big',
+                textContent: icon
+            });
+            const keyLabelBig = createElement('div', {
+                className: 'key-label-big',
+                textContent: keyData.label
+            });
+            const keyHint = createElement('p', {
+                textContent: 'Нажмите в любое место, чтобы продолжить',
+                style: { marginTop: '20px', color: '#888', fontSize: '14px' }
+            });
+            keyAnimContent.appendChild(keyIconBig);
+            keyAnimContent.appendChild(keyLabelBig);
+            keyAnimContent.appendChild(keyHint);
+            keyAnimScreen.appendChild(keyAnimContent);
 
             // При клике закрываем окно и переходим
             keyAnimScreen.onclick = function () {
@@ -1731,13 +1788,20 @@
         }
 
         function updateLocationsDisplay() {
-            locationsContainer.innerHTML = '';
+            clearElement(locationsContainer);
 
             if (visitedLocations.length === 0) {
-                locationsContainer.innerHTML = `
-                    <p style="color: #777; margin: 40px 0; font-size: 18px;">Вы еще не открыли ни одной локации</p>
-                    <p class="map-info">Путешествуйте по миру, чтобы открывать новые места на карте</p>
-                `;
+                clearElement(locationsContainer);
+                const emptyLocText = createElement('p', {
+                    textContent: 'Вы еще не открыли ни одной локации',
+                    style: { color: '#777', margin: '40px 0', fontSize: '18px' }
+                });
+                const mapInfoPara = createElement('p', {
+                    className: 'map-info',
+                    textContent: 'Путешествуйте по миру, чтобы открывать новые места...'
+                });
+                locationsContainer.appendChild(emptyLocText);
+                locationsContainer.appendChild(mapInfoPara);
                 return;
             }
 
@@ -1773,7 +1837,11 @@
                     categoryTitle = defaultTitles[category] || categoryTitle;
                 }
 
-                locationsContainer.innerHTML += `<h3 class="category-title">${categoryTitle}</h3>`;
+                const catTitle = createElement('h3', {
+                    className: 'category-title',
+                    textContent: categoryTitle
+                });
+                locationsContainer.appendChild(catTitle);
 
                 for (const nodeId of locationIds) {
                     const node = story[nodeId];
@@ -1789,11 +1857,14 @@
                     const name = node.location_name || nodeId.replace(/_/g, ' ');
                     const description = node.location_description || '';
 
-                    locationEl.innerHTML = `
-                        <div class="location-icon">${icon}</div>
-                        <div class="location-name">${name}</div>
-                        ${description ? `<div class="location-description">${description}</div>` : ''}
-                    `;
+                    const locIconDiv = createElement('div', { className: 'location-icon', textContent: icon });
+                    const locNameDiv = createElement('div', { className: 'location-name', textContent: name });
+                    locationEl.appendChild(locIconDiv);
+                    locationEl.appendChild(locNameDiv);
+                    if (description) {
+                        const locDescDiv = createElement('div', { className: 'location-description', textContent: description });
+                        locationEl.appendChild(locDescDiv);
+                    }
 
                     // ✅ ИСПРАВЛЕНИЕ: Используем IIFE для правильного замыкания
                     locationEl.onclick = (function (targetId) {
@@ -1902,11 +1973,25 @@
 
             sceneEl.style.display = 'none';
             diceScreen.style.display = 'block';
-            diceScreen.innerHTML = `
-                <div class="dice">🎲 🎲</div>
-                <div class="result">Испытать удачу и сделать верный выбор.</div>
-                <button class="choice-btn" id="roll-button">Положиться на судьбу</button>
-            `;
+            clearElement(diceScreen);
+            diceScreen.appendChild(createElement('div', { className: 'dice', textContent: '🎲 🎲' }));
+            diceScreen.appendChild(createElement('div', { className: 'result', textContent: 'Испытать удачу и сделать верный выбор.' }));
+            diceScreen.appendChild(createElement('button', { className: 'choice-btn', id: 'roll-button', textContent: 'Бросить кости' }));
+
+            // Анимация:
+            clearElement(diceScreen);
+            diceScreen.appendChild(createElement('div', { className: 'dice', textContent: `${getDiceEmoji(d1)} ${getDiceEmoji(d2)}` }));
+            diceScreen.appendChild(createElement('div', { className: 'result', textContent: 'Бросок...' }));
+            diceScreen.appendChild(createElement('button', { className: 'choice-btn', textContent: 'Бросаем...', attributes: { disabled: 'true' } }));
+
+            // Результат:
+            clearElement(diceScreen);
+            const resultFinalDiv = createElement('div', { className: 'result' });
+            resultFinalDiv.textContent = 'Выпало: ';
+            resultFinalDiv.appendChild(createElement('strong', { textContent: total.toString() }));
+            diceScreen.appendChild(createElement('div', { className: 'dice', textContent: `${getDiceEmoji(d1)} ${getDiceEmoji(d2)}` }));
+            diceScreen.appendChild(resultFinalDiv);
+            diceScreen.appendChild(createElement('button', { className: 'choice-btn', textContent: 'Продолжить', onclick: () => proceedAfterDice(total) }));
 
             const newRollButton = document.getElementById('roll-button');
             newRollButton.onclick = () => {
@@ -2059,7 +2144,8 @@
                 story = await res.json();
                 initGame();
             } catch (e) {
-                sceneEl.innerHTML = `<div class="text">Ошибка загрузки: ${e.message}</div>`;
+                clearElement(sceneEl);
+                sceneEl.appendChild(createElement('div', { className: 'text', textContent: `Ошибка загрузки: ${e.message}` }));
                 console.error(e);
             }
         }
@@ -2241,15 +2327,25 @@
                         sceneEl.classList.remove('active');
                         setTimeout(() => {
                             sceneEl.className = 'scene deadend';
-                            sceneEl.innerHTML = `
-                    <div class="text"><p>Дверь заперта...</p></div>
-                    <div class="choices">
-                        <button class="choice-btn" onclick="handleChoice('${fallbackChoice.next}')">${fallbackChoice.text}</button>
-                    </div>
-                    <div style="text-align:center; margin-top:20px;">
-                        <button class="choice-btn" style="background:#555;" onclick="showInventory()">🎒 Посмотреть инвентарь</button>
-                    </div>
-                `;
+                            clearElement(sceneEl);
+                            const textDiv = createElement('div', { className: 'text' });
+                            textDiv.appendChild(createElement('p', { textContent: 'Дверь заперта. Похоже, вам нужен особый ключ...' }));
+                            const choicesDiv = createElement('div', { className: 'choices' });
+                            choicesDiv.appendChild(createElement('button', {
+                                className: 'choice-btn',
+                                textContent: fallbackChoice.text,
+                                onclick: () => handleChoice(fallbackChoice.next)
+                            }));
+                            const invContainer = createElement('div', { style: { textAlign: 'center', marginTop: '20px' } });
+                            invContainer.appendChild(createElement('button', {
+                                className: 'choice-btn',
+                                textContent: '🎒 Посмотреть инвентарь',
+                                style: { background: '#555' },
+                                onclick: showInventory
+                            }));
+                            sceneEl.appendChild(textDiv);
+                            sceneEl.appendChild(choicesDiv);
+                            sceneEl.appendChild(invContainer);
                             sceneEl.classList.add('active');
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         }, 320);
@@ -2629,16 +2725,21 @@
                 // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
                 const codeTextEl = document.getElementById('code-text');
                 if (codeTextEl && node.text) {
-                    codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+                    clearElement(codeTextEl);
+                    const lines = node.text.split('\n');
+                    lines.forEach((line, i) => {
+                        if (i > 0) codeTextEl.appendChild(createElement('br'));
+                        codeTextEl.appendChild(document.createTextNode(line));
+                    });
                 } else if (codeTextEl) {
-                    codeTextEl.innerHTML = '';
+                    clearElement(codeTextEl);
                 }
 
                 // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
                 const codeChoicesEl = document.getElementById('code-choices');
                 if (codeChoicesEl && node.choices && node.choices.length > 0) {
                     // Очищаем контейнер
-                    codeChoicesEl.innerHTML = '';
+                    clearElement(codeChoicesEl);
 
                     // Создаём кнопки через DOM (не через innerHTML)
                     node.choices.forEach((choice, index) => {
@@ -2655,7 +2756,7 @@
                         codeChoicesEl.appendChild(btn);
                     });
                 } else if (codeChoicesEl) {
-                    codeChoicesEl.innerHTML = '';
+                    clearElement(codeChoicesEl);
                 }
 
                 // Фокус на поле ввода
@@ -2939,7 +3040,7 @@
             const codeChoicesEl = document.getElementById('code-choices');
             if (codeChoicesEl && node.choices && node.choices.length > 0) {
                 // Очищаем контейнер
-                codeChoicesEl.innerHTML = '';
+                clearElement(codeChoicesEl);
 
                 // Создаём кнопки через DOM (не через innerHTML)
                 node.choices.forEach((choice, index) => {
@@ -2956,7 +3057,7 @@
                     codeChoicesEl.appendChild(btn);
                 });
             } else if (codeChoicesEl) {
-                codeChoicesEl.innerHTML = '';
+                clearElement(codeChoicesEl);
             }
 
             // Фокус на поле ввода
