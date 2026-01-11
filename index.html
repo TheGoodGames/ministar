@@ -2743,8 +2743,7 @@
                 const codeTextEl = document.getElementById('code-text');
                 if (codeTextEl && node.text) {
                     clearElement(codeTextEl);
-                    const textLines = node.text.split('
-');
+                    const textLines = node.text.split('\n');
                 textLines.forEach((line, i) => {
                         if (i > 0) codeTextEl.appendChild(createElement('br'));
                         codeTextEl.appendChild(document.createTextNode(line));
@@ -2995,10 +2994,6 @@
                     const buttonsDiv = createElement('div', { className: 'choices' });
                     setHTMLContent(buttonsDiv, (inventoryButtonHtml || '') + (mapButtonHtml || ''));
                     sceneEl.appendChild(buttonsDiv);
-                }; gap: 12px; margin - top: 16px; justify - content: center; flex - wrap: wrap; ">
-            ${ inventoryButtonHtml }
-            ${ mapButtonHtml }
-        </div >
                     ` : ''}`;
                 sceneEl.classList.add('active');
 
