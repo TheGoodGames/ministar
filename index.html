@@ -2376,7 +2376,17 @@
                 sceneEl.classList.remove('active');
                 setTimeout(() => {
                     sceneEl.className = 'scene';
-                    sceneEl.innerHTML = `${illustration}<div class="text">${formattedText}</div>`;
+                    clearElement(sceneEl);
+                    // Добавляем illustration (это уже HTML строка, используем временный элемент)
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = illustration;
+                    while (tempDiv.firstChild) {
+                        sceneEl.appendChild(tempDiv.firstChild);
+                    }
+                    const textDiv = createElement('div', { className: 'text' });
+                    textDiv.innerHTML = formattedText; // formattedText уже форматирован с <em> и <strong>
+                    sceneEl.appendChild(textDiv);
+
                     sceneEl.classList.add('active');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -2584,30 +2594,6 @@
             }
             // END NOTIFICATION SYSTEM
 
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
-                sceneEl.classList.add('active');
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
 
             // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
             function hideNotificationBanner() {
@@ -2948,12 +2934,37 @@
                 if (!hasChoices || isRestartNode) {
                     sceneEl.className += ' deadend';
                 }
-                sceneEl.innerHTML = `${notificationBanner}${illustration}<div class="text">${formattedText}</div>${endMarkerHtml}${choicesHtml ? `<div class="choices">${choicesHtml}</div>` : ''}${inventoryButtonHtml || mapButtonHtml ? `
-        <div style="display:flex; gap:12px; margin-top:16px; justify-content:center; flex-wrap:wrap;">
-            ${inventoryButtonHtml}
-            ${mapButtonHtml}
-        </div>
-    ` : ''}`;
+                clearElement(sceneEl);
+                // Добавляем элементы по порядку
+                if (notificationBanner) {
+                    const tempNotif = document.createElement('div');
+                    tempNotif.innerHTML = notificationBanner;
+                    while (tempNotif.firstChild) sceneEl.appendChild(tempNotif.firstChild);
+                }
+                if (illustration) {
+                    const tempIllust = document.createElement('div');
+                    tempIllust.innerHTML = illustration;
+                    while (tempIllust.firstChild) sceneEl.appendChild(tempIllust.firstChild);
+                }
+                const textDiv = createElement('div', { className: 'text' });
+                textDiv.innerHTML = formattedText;
+                sceneEl.appendChild(textDiv);
+                if (endMarkerHtml) {
+                    const tempEnd = document.createElement('div');
+                    tempEnd.innerHTML = endMarkerHtml;
+                    while (tempEnd.firstChild) sceneEl.appendChild(tempEnd.firstChild);
+                }
+                if (choicesHtml) {
+                    const choicesDiv = createElement('div', { className: 'choices' });
+                    choicesDiv.innerHTML = choicesHtml;
+                    sceneEl.appendChild(choicesDiv);
+                }
+                if (inventoryButtonHtml || mapButtonHtml) {
+                    const buttonsDiv = createElement('div', { className: 'choices' });
+                    buttonsDiv.innerHTML = (inventoryButtonHtml || '') + (mapButtonHtml || '');
+                    sceneEl.appendChild(buttonsDiv);
+                }
+                ;
                 sceneEl.classList.add('active');
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3031,9 +3042,14 @@
             // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
             const codeTextEl = document.getElementById('code-text');
             if (codeTextEl && node.text) {
-                codeTextEl.innerHTML = node.text.replace(/\n/g, '<br>');
+                clearElement(codeTextEl);
+                const textLines = node.text.split('\n');
+                textLines.forEach((line, i) => {
+                    if (i > 0) codeTextEl.appendChild(createElement('br'));
+                    codeTextEl.appendChild(document.createTextNode(line));
+                });
             } else if (codeTextEl) {
-                codeTextEl.innerHTML = '';
+                clearElement(codeTextEl);
             }
 
             // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
