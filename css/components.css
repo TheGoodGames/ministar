@@ -1,0 +1,117 @@
+/* css/components.css - Компоненты */
+
+/* Кнопки */
+.choice-btn {
+    background: linear-gradient(135deg, var(--color-primary), #8a7acd);
+    color: var(--color-text);
+    border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: var(--font-family);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.choice-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, #8a7acd, var(--color-accent));
+}
+
+.choice-btn:active {
+    transform: translateY(0);
+}
+
+.choice-btn::before {
+    content: '▶';
+    margin-right: var(--spacing-sm);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.choice-btn:hover::before {
+    opacity: 1;
+}
+
+.choice-btn:disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.choice-btn:disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Кнопка закрытия */
+.inventory-close {
+    background: var(--color-danger);
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: var(--font-size-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    margin-top: var(--spacing-lg);
+    width: 100%;
+    transition: all var(--transition-normal);
+    font-family: var(--font-family);
+}
+
+.inventory-close:hover {
+    background: #cc0000;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Badge */
+.notification-badge {
+    background: var(--color-danger);
+    color: white;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: var(--spacing-sm);
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Карточки предметов */
+.key-item {
+    background: rgba(255,255,255,0.1);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.key-item:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateX(4px);
+}
+
+.key-icon {
+    font-size: var(--font-size-xl);
+}
+
+.key-label {
+    flex: 1;
+    font-size: var(--font-size-md);
+}
+
+.keys-empty {
+    text-align: center;
+    color: var(--color-text-dim);
+    padding: var(--spacing-xl);
+    font-style: italic;
+}

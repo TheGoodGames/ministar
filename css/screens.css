@@ -1,0 +1,123 @@
+/* css/screens.css - Стили экранов */
+
+/* Базовые стили экранов */
+.screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen-content {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.screen h2 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-accent);
+    text-align: center;
+}
+
+/* Инвентарь */
+#inventory-screen {
+    display: none;
+}
+
+#keys-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Карта */
+#map-screen {
+    display: none;
+}
+
+#map-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.map-node {
+    background: rgba(255,255,255,0.1);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.map-node:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}
+
+.map-node.visited {
+    background: rgba(106, 90, 205, 0.3);
+}
+
+.map-node.current {
+    background: var(--color-accent);
+    color: var(--color-background);
+    font-weight: bold;
+}
+
+/* Уведомления */
+#notifications-screen {
+    display: none;
+}
+
+#notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.notification-item {
+    background: rgba(255,255,255,0.1);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+}
+
+.notification-icon {
+    font-size: var(--font-size-xl);
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-time {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-dim);
+    margin-top: var(--spacing-xs);
+}
