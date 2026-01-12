@@ -174,16 +174,19 @@
       {
         "text": "Я вчера тут зависла надолго да?",
         "next": "8",
-        "collect": {
-          "id": "key_lin_room",
-          "label": "КЛЮЧ ОТ КОМНАТЫ",
-          "type": "",
-          "icon": "💳"
-        },
         "requires": [
           "state_kc_lin_room"
         ],
-        "hide_until_unlocked": true
+        "hide_until_unlocked": true,
+        "hide_after_collect": true,
+        "dynamic_collect": [
+          {
+            "id": "key_lin_room",
+            "label": "КЛЮЧ ОТ КОМНАТЫ",
+            "type": "",
+            "icon": "💳"
+          }
+        ]
       }
     ],
     "tag": "Бармен NPC",
@@ -348,7 +351,7 @@
       {
         "text": "Взять фотографию",
         "next": "20",
-        "collect": [
+        "dynamic_collect": [
           {
             "id": "item_old_photo",
             "label": "Старое общее фото с отцом Лин и его друзьями",
