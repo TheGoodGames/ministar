@@ -27,12 +27,6 @@
       {
         "text": "Комната",
         "next": "20",
-        "collect": {
-          "id": "state_kc_lin_room",
-          "label": "Найти ключ от своей команты",
-          "type": "key_card",
-          "icon": "💳"
-        },
         "requires": [
           "item_keyma"
         ]
@@ -377,13 +371,6 @@
       {
         "text": "Войти в свою комнату",
         "next": "22",
-        "collect": {
-          "id": "state_kc_lin_room",
-          "label": "Найти ключ от своей команты",
-          "type": "key_card",
-          "icon": "💳",
-          "quantity": 1
-        },
         "requires": [
           "key_lin_room"
         ],
@@ -392,7 +379,15 @@
         }
       }
     ],
-    "world": "nyx"
+    "world": "nyx",
+    "states": [
+      {
+        "id": "state_kc_lin_room",
+        "label": "",
+        "type": "state",
+        "icon": "⚠️"
+      }
+    ]
   },
   "22": {
     "text": "Новый узел 22.",
