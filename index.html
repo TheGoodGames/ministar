@@ -1938,7 +1938,7 @@ transition: all 0.3s;
                 console.log('🔔 Невалидные данные Telegram');
                 return;
             }
-            // Защитا от спама
+            // Защита от спама
             const now = Date.now();
             if (now - lastNotificationTime < NOTIFICATION_COOLDOWN) {
                 console.log('🔔 Уведомление отклонено: кулдаун');
@@ -2258,8 +2258,20 @@ transition: all 0.3s;
                     shuffledIndex: idx,
                     originalIndex: node.choices.indexOf(c)
                 }));
-                // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
+                // ✅ РЕАЛИЗОВАНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
                 const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
+
+                    // ✅ РЕАЛИЗОВАНО: Новая функциональность - dynamic_collect с hide_after_collect
+                    if (c.dynamic_collect && Array.isArray(c.dynamic_collect)) {
+                        // Проверяем, есть ли уже собранные предметы с hide_after_collect
+                        const alreadyCollected = c.dynamic_collect.some(dc =>
+                            dc.item?.id && collectedKeys[dc.item.id] && dc.hide_after_collect
+                        );
+                        if (alreadyCollected) {
+                            return false; // Скрываем выбор, если предмет уже собран и нужно скрыть
+                        }
+                    }
+
                     // Если hide_until_unlocked: true, проверяем условия для показа
                     if (c.hide_until_unlocked === true) {
                         // Сначала проверяем состояния
@@ -2413,7 +2425,7 @@ opacity: 0;
             }, 320);
         }
 
-        // ✅ ИСПРАВЛЕНО: Правильная обработка выбора с учетом текущего узла
+        // ✅ РЕАЛИЗОВАНО: Правильная обработка выбора с учетом текущего узла
         function handleChoice(nextNodeId, choiceIndex = 0) {
             // ✅ КРИТИЧЕСКИ ВАЖНО: Проверяем, что currentNodeId установлен
             if (!currentNodeId || !story[currentNodeId]) {
@@ -2424,6 +2436,71 @@ opacity: 0;
             if (!node || !node.choices) return;
             const choice = node.choices[choiceIndex];
             if (!choice) return;
+
+            // ✅ РЕАЛИЗОВАНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
+            if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
+                // Находим подходящий вариант для сбора на основе состояний
+                let collectData = null;
+
+                // 1. Сначала ищем вариант, который подходит под текущие состояния
+                for (const dc of choice.dynamic_collect) {
+                    if (dc.state && hasState(dc.state)) {
+                        // Проверяем, не был ли уже собран этот предмет
+                        if (dc.item?.id && collectedKeys[dc.item.id] && dc.hide_after_collect) {
+                            // Предмет уже собран и нужно скрыть выбор - показываем сообщение
+                            showCollectMessage(
+                                dc.already_collected_message ||
+                                choice.already_collected_message ||
+                                "Здесь больше ничего нет.",
+                                dc.item.icon || '🔍'
+                            );
+                            return;
+                        }
+                        collectData = dc;
+                        break;
+                    }
+                }
+
+                // 2. Если нет подходящего состояния, используем default вариант
+                if (!collectData) {
+                    collectData = choice.dynamic_collect.find(dc => dc.default);
+                }
+
+                // 3. Если нашли подходящий вариант для сбора
+                if (collectData && collectData.item) {
+                    // Проверяем, есть ли уже такой предмет и нужно ли скрыть после сбора
+                    if (collectData.item.id && collectedKeys[collectData.item.id] && collectData.hide_after_collect) {
+                        // Предмет уже собран и нужно скрыть выбор
+                        showCollectMessage(
+                            collectData.already_collected_message ||
+                            choice.already_collected_message ||
+                            "Здесь больше ничего нет.",
+                            collectData.item.icon || '🔍'
+                        );
+                        return;
+                    }
+
+                    // Собираем предмет и показываем сообщение
+                    showCollectMessage(collectData.message, collectData.item.icon, () => {
+                        // Сохраняем предмет в инвентарь
+                        collectedKeys[collectData.item.id] = {
+                            label: collectData.item.label,
+                            type: collectData.item.type || 'regular'
+                        };
+                        saveKeys();
+                        console.log(`✅ Собран предмет: ${collectData.item.id} - ${collectData.item.label}`);
+
+                        // Если нужно скрыть этот выбор после сбора, сохраняем это состояние
+                        if (collectData.hide_after_collect) {
+                            // Логика скрытия будет обработана при следующем посещении узла
+                        }
+
+                        // Переходим к следующему узлу
+                        goToNode(nextNodeId);
+                    });
+                    return;
+                }
+            }
 
             // === СИСТЕМА СОСТОЯНИЙ: Обработка состояний в выборе ===
             // Очистка состояний при выборе
