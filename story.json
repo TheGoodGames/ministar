@@ -373,8 +373,7 @@
               "label": "Фотография в кармане",
               "type": "state",
               "icon": "⚠️"
-            },
-            "state": "old_photo"
+            }
           }
         ]
       },
