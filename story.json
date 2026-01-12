@@ -381,7 +381,7 @@
     ],
     "tag": "Жилой комплекс",
     "world": "nyx",
-    "states": [
+    "add_states": [
       {
         "id": "state_kc_lin_room",
         "label": "Лин потеряла ключ от своей комнаты",
