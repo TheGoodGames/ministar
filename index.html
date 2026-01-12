@@ -2258,21 +2258,9 @@ transition: all 0.3s;
                     shuffledIndex: idx,
                     originalIndex: node.choices.indexOf(c)
                 }));
-                // ✅ РЕАЛИЗОВАНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
+                // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
                 const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
-
-                    // ✅ РЕАЛИЗОВАНО: Новая функциональность - dynamic_collect с hide_after_collect
-                    if (c.dynamic_collect && Array.isArray(c.dynamic_collect)) {
-                        // Проверяем, есть ли уже собранные предметы с hide_after_collect
-                        const alreadyCollected = c.dynamic_collect.some(dc =>
-                            dc.item?.id && collectedKeys[dc.item.id] && dc.hide_after_collect
-                        );
-                        if (alreadyCollected) {
-                            return false; // Скрываем выбор, если предмет уже собран и нужно скрыть
-                        }
-                    }
-
-                    // Если hide_until_unlocked: true, проверяем условия для показа
+                    // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
                     if (c.hide_until_unlocked === true) {
                         // Сначала проверяем состояния
                         if (c.requires && Array.isArray(c.requires)) {
@@ -2306,15 +2294,9 @@ transition: all 0.3s;
                 choicesHtml = filteredChoices.map(({ choice: c, originalIndex }) => {
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-                    // Проверяем только ключи для блокировки (состояния уже обработаны при фильтрации)
-                    const keyRequirements = c.requires ?
-                        (Array.isArray(c.requires) ?
-                            c.requires.filter(req => typeof req === 'string' && !req.startsWith('state_')) :
-                            (!c.requires.startsWith('state_') ? [c.requires] : [])
-                        ) : [];
-                    const isLocked = keyRequirements.length > 0 && !hasAllKeys(keyRequirements);
+                    // Блокировка для hide_until_unlocked: false или не указано
+                    const isLocked = c.requires && !hasAllKeys(c.requires);
                     if (isLocked) btnClass += ' choice-btn-locked';
-                    // Не показываем замок для состояний - только для ключей
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
                     // НЕ используем disabled - handleChoice проверит requires
                     return `<button class="${btnClass}" data-next="${c.next}" data-index="${originalIndex}">${btnText}</button>`;
@@ -2425,7 +2407,7 @@ opacity: 0;
             }, 320);
         }
 
-        // ✅ РЕАЛИЗОВАНО: Правильная обработка выбора с учетом текущего узла
+        // ✅ ИСПРАВЛЕНО: Правильная обработка выбора с учетом текущего узла
         function handleChoice(nextNodeId, choiceIndex = 0) {
             // ✅ КРИТИЧЕСКИ ВАЖНО: Проверяем, что currentNodeId установлен
             if (!currentNodeId || !story[currentNodeId]) {
@@ -2437,7 +2419,7 @@ opacity: 0;
             const choice = node.choices[choiceIndex];
             if (!choice) return;
 
-            // ✅ РЕАЛИЗОВАНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
+            // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
             if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
                 // Находим подходящий вариант для сбора на основе состояний
                 let collectData = null;
@@ -2489,6 +2471,18 @@ opacity: 0;
                         };
                         saveKeys();
                         console.log(`✅ Собран предмет: ${collectData.item.id} - ${collectData.item.label}`);
+
+                        // Добавляем состояние, если указано
+                        if (collectData.add_state) {
+                            if (typeof collectData.add_state === 'string') {
+                                // Если add_state - это строка (ID состояния)
+                                addState({ id: collectData.add_state });
+                            } else if (typeof collectData.add_state === 'object') {
+                                // Если add_state - это объект с данными состояния
+                                addState(collectData.add_state);
+                            }
+                            console.log(`✅ Активировано состояние: ${collectData.add_state.id || collectData.add_state}`);
+                        }
 
                         // Если нужно скрыть этот выбор после сбора, сохраняем это состояние
                         if (collectData.hide_after_collect) {
