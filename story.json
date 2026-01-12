@@ -365,12 +365,13 @@
           },
           {
             "message": "",
-            "state": {
+            "add_state": {
               "id": "state_old_photo",
-              "label": "Фото в кармане",
+              "label": "Фотография в кармане",
               "type": "state",
               "icon": "⚠️"
-            }
+            },
+            "state": "[object Object]"
           }
         ]
       },
