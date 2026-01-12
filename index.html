@@ -2260,16 +2260,20 @@ transition: all 0.3s;
                 }));
                 // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked ИЛИ состояниям
                 const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
-                    // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
-                    if (c.hide_until_unlocked === true) {
-                        if (c.requires) {
-                            const requiredKeys = Array.isArray(c.requires) ? c.requires : [c.requires];
-                            const missingStates = requiredKeys
-                                .filter(req => typeof req === 'string' && req.startsWith('state_'))
-                                .filter(stateId => !hasState(stateId));
-                            if (missingStates.length > 0) return false; // Скрыть если нет состояния
-                            if (!hasAllKeys(c.requires)) return false; // Скрыть если нет ключа
-                        }
+                    // Если hide_until_unlocked: true и есть требования - проверяем их
+                    if (c.hide_until_unlocked === true && c.requires) {
+                        // Проверяем ключи
+                        const requiredKeys = Array.isArray(c.requires) ? c.requires : [c.requires];
+                        const keyRequirements = requiredKeys.filter(req => !req.startsWith('state_'));
+                        const hasKeys = keyRequirements.length === 0 || hasAllKeys(keyRequirements);
+
+                        // Проверяем состояния
+                        const stateRequirements = requiredKeys.filter(req => req.startsWith('state_'));
+                        const hasStates = stateRequirements.length === 0 ||
+                            stateRequirements.every(stateId => hasState(stateId));
+
+                        // Если нет нужных ключей ИЛИ состояний, скрываем выбор
+                        if (!hasKeys || !hasStates) return false;
                     }
                     return true;
                 });
