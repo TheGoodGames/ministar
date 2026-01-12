@@ -1024,40 +1024,6 @@ location -> кликабельные элементы
                 font-size: 18px !important;
             }
         }
-
-        /* === СТИЛИ ДЛЯ ОТОБРАЖЕНИЯ СОСТОЯНИЙ === */
-        .states-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
-            padding: 12px;
-            background: rgba(106, 90, 205, 0.1);
-            border-radius: 10px;
-        }
-
-        .state-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid rgba(76, 175, 80, 0.5);
-            border-radius: 20px;
-            padding: 4px 12px;
-            font-size: 14px;
-        }
-
-        .state-badge.danger {
-            background: rgba(244, 67, 54, 0.2);
-            border-color: rgba(244, 67, 54, 0.5);
-        }
-
-        .state-icon {
-            font-size: 18px;
-            line-height: 1;
-        }
-
-        /* END СОСТОЯНИЙ */
     </style>
 </head>
 
@@ -1670,25 +1636,6 @@ transition: all 0.3s;
             currentState = [];
             saveStates();
             console.log('🧹 Все состояния очищены');
-        }
-
-        function renderCurrentStates() {
-            const statesContainer = document.createElement('div');
-            statesContainer.className = 'states-container';
-            if (currentState.length === 0) return statesContainer;
-            currentState.forEach(state => {
-                const stateBadge = document.createElement('div');
-                stateBadge.className = `state-badge ${state.type === 'danger' ? 'danger' : ''}`;
-                const iconSpan = document.createElement('span');
-                iconSpan.className = 'state-icon';
-                iconSpan.textContent = state.icon;
-                const labelSpan = document.createElement('span');
-                labelSpan.textContent = state.label || state.id;
-                stateBadge.appendChild(iconSpan);
-                stateBadge.appendChild(labelSpan);
-                statesContainer.appendChild(stateBadge);
-            });
-            return statesContainer;
         }
         // END СИСТЕМА СОСТОЯНИЙ
 
@@ -2311,12 +2258,18 @@ transition: all 0.3s;
                     shuffledIndex: idx,
                     originalIndex: node.choices.indexOf(c)
                 }));
-                // ФИЛЬТРАЦИЯ choices по hide_until_unlocked
+                // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked ИЛИ состояниям
                 const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
                     // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
-                    if (c.hide_until_unlocked === true && c.requires) {
-                        const hasKeys = hasAllKeys(c.requires);
-                        if (!hasKeys) return false;
+                    if (c.hide_until_unlocked === true) {
+                        if (c.requires) {
+                            const requiredKeys = Array.isArray(c.requires) ? c.requires : [c.requires];
+                            const missingStates = requiredKeys
+                                .filter(req => typeof req === 'string' && req.startsWith('state_'))
+                                .filter(stateId => !hasState(stateId));
+                            if (missingStates.length > 0) return false; // Скрыть если нет состояния
+                            if (!hasAllKeys(c.requires)) return false; // Скрыть если нет ключа
+                        }
                     }
                     return true;
                 });
@@ -2377,11 +2330,11 @@ opacity: 0;
                 }
                 clearElement(sceneEl);
 
-                // ✅ ДОБАВЛЕНО: Отображение текущих состояний
-                if (currentState.length > 0) {
-                    const statesDisplay = renderCurrentStates();
-                    sceneEl.insertBefore(statesDisplay, sceneEl.firstChild);
-                }
+                // ✅ ИСПРАВЛЕНО: ЗАКОММЕНТИРОВАНО отображение состояний
+                // if (currentState.length > 0) {
+                //     const statesDisplay = renderCurrentStates();
+                //     sceneEl.insertBefore(statesDisplay, sceneEl.firstChild);
+                // }
 
                 // Добавляем элементы по порядку
                 if (notificationBanner) {
