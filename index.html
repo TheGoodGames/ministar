@@ -1203,17 +1203,6 @@ transition: all 0.3s;
             return node && node.map_view === true;
         }
 
-        function updateMapButtonVisibility() {
-            // Проверка: story и currentNodeId должны существовать
-            if (!story || !currentNodeId || !story[currentNodeId]) {
-                return; // Ещё не готово, выходим без ошибки
-            }
-            const node = story[currentNodeId];
-            const mapBtn = document.getElementById('map-button');
-            if (!mapBtn) return;
-            mapBtn.style.display = hasMapView(node) ? 'inline-block' : 'none';
-        }
-
         // === СОХРАНЕНИЕ/ЗАГРУЗКА СИСТЕМЫ КОРАБЛЯ ===
         // === ОПРЕДЕЛЕНИЕ ТЕКУЩЕГО МИРА ===
         function getCurrentWorld() {
@@ -1458,8 +1447,6 @@ transition: all 0.3s;
         // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
         window.__nodeTransitionLock = false;
 
-        // Сохраняем оригинальную функцию showNode
-        let originalShowNodeCode = null;
         let story = null;
         let currentNodeId = null;
         let currentShipWorld = 'nyx'; // Текущая система, где находится корабль
@@ -1479,7 +1466,6 @@ transition: all 0.3s;
         // === СИСТЕМА КАРТЫ МИРА ===
         let visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
         const mapScreen = document.getElementById('map-screen');
-        const locationsContainer = document.getElementById('locations-container');
         // END СИСТЕМА КАРТЫ МИРА
 
         // Добавляем новые переменные
@@ -2137,9 +2123,14 @@ transition: all 0.3s;
                 clearStates();
             }
 
-            // Добавление состояний из узла
-            if (node.add_states && Array.isArray(node.add_states)) {
-                node.add_states.forEach(stateData => {
+            // Добавление состояний из узла (поддержка обоих форматов: "add_states" и "states")
+            const statesToAdd = node.add_states || node.states;
+            if (statesToAdd && Array.isArray(statesToAdd)) {
+                statesToAdd.forEach(stateData => {
+                    // Если stateData это строка (только ID), преобразуем в объект
+                    if (typeof stateData === 'string') {
+                        stateData = { id: stateData };
+                    }
                     addState(stateData);
                 });
             }
@@ -2152,45 +2143,53 @@ transition: all 0.3s;
             }
 
             // Проверка состояний для доступа к узлу
+            let missingStates = [];
             if (node.requires_states && Array.isArray(node.requires_states)) {
-                const missingStates = node.requires_states.filter(stateId => !hasState(stateId));
-                if (missingStates.length > 0) {
-                    const messages = missingStates.map(stateId => {
-                        const stateInfo = (node.states || []).find(s => s.id === stateId);
-                        return stateInfo?.missing_message || `Необходимо состояние: ${stateId}`;
+                missingStates = node.requires_states.filter(stateId => !hasState(stateId));
+            } else if (node.requires && Array.isArray(node.requires)) {
+                // Проверяем, есть ли среди requires состояния (начинающиеся с 'state_')
+                missingStates = node.requires
+                    .filter(req => typeof req === 'string' && req.startsWith('state_'))
+                    .filter(stateId => !hasState(stateId));
+            }
+
+            if (missingStates.length > 0) {
+                const messages = missingStates.map(stateId => {
+                    const stateInfo = (node.states || []).find(s => s.id === stateId) ||
+                        (node.add_states || []).find(s => s.id === stateId);
+                    return stateInfo?.missing_message || `Необходимо состояние: ${stateId}`;
+                });
+                sceneEl.classList.remove('active');
+                setTimeout(() => {
+                    sceneEl.className = 'scene deadend';
+                    clearElement(sceneEl);
+                    const lockedDiv = createElement('div', { className: 'text' });
+                    lockedDiv.appendChild(createElement('p', {
+                        textContent: messages.join('\n')
+                    }));
+                    const lockedChoices = createElement('div', { className: 'choices' });
+                    const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
+                    lockedChoices.appendChild(createElement('button', {
+                        className: 'choice-btn',
+                        textContent: fallbackChoice.text,
+                        onclick: () => handleChoice(fallbackChoice.next)
+                    }));
+                    const lockedInv = createElement('div', {
+                        style: { textAlign: 'center', marginTop: '20px' }
                     });
-                    sceneEl.classList.remove('active');
-                    setTimeout(() => {
-                        sceneEl.className = 'scene deadend';
-                        clearElement(sceneEl);
-                        const lockedDiv = createElement('div', { className: 'text' });
-                        lockedDiv.appendChild(createElement('p', {
-                            textContent: messages.join('\n')
-                        }));
-                        const lockedChoices = createElement('div', { className: 'choices' });
-                        const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
-                        lockedChoices.appendChild(createElement('button', {
-                            className: 'choice-btn',
-                            textContent: fallbackChoice.text,
-                            onclick: () => handleChoice(fallbackChoice.next)
-                        }));
-                        const lockedInv = createElement('div', {
-                            style: { textAlign: 'center', marginTop: '20px' }
-                        });
-                        lockedInv.appendChild(createElement('button', {
-                            className: 'choice-btn',
-                            textContent: '🎒 Посмотреть инвентарь и состояния',
-                            style: { background: '#555' },
-                            onclick: showInventory
-                        }));
-                        sceneEl.appendChild(lockedDiv);
-                        sceneEl.appendChild(lockedChoices);
-                        sceneEl.appendChild(lockedInv);
-                        sceneEl.classList.add('active');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }, 320);
-                    return;
-                }
+                    lockedInv.appendChild(createElement('button', {
+                        className: 'choice-btn',
+                        textContent: '🎒 Посмотреть инвентарь и состояния',
+                        style: { background: '#555' },
+                        onclick: showInventory
+                    }));
+                    sceneEl.appendChild(lockedDiv);
+                    sceneEl.appendChild(lockedChoices);
+                    sceneEl.appendChild(lockedInv);
+                    sceneEl.classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 320);
+                return;
             }
             // END СИСТЕМА СОСТОЯНИЙ
 
@@ -2455,9 +2454,14 @@ opacity: 0;
                 clearStates();
             }
 
-            // Добавление состояний при выборе
-            if (choice.add_states && Array.isArray(choice.add_states)) {
-                choice.add_states.forEach(stateData => {
+            // Добавление состояний при выборе (поддержка обоих форматов: "add_states" и "states")
+            const statesToAdd = choice.add_states || choice.states;
+            if (statesToAdd && Array.isArray(statesToAdd)) {
+                statesToAdd.forEach(stateData => {
+                    // Если stateData это строка (только ID), преобразуем в объект
+                    if (typeof stateData === 'string') {
+                        stateData = { id: stateData };
+                    }
                     addState(stateData);
                 });
             }
@@ -2470,18 +2474,27 @@ opacity: 0;
             }
 
             // Проверка состояний для перехода
+            let missingStates = [];
             if (choice.requires_states && Array.isArray(choice.requires_states)) {
-                const missingStates = choice.requires_states.filter(stateId => !hasState(stateId));
-                if (missingStates.length > 0) {
-                    const messages = missingStates.map(stateId => {
-                        // Ищем описание состояния в currentNode или в choice
-                        const stateInfo = (node.states || []).find(s => s.id === stateId) ||
-                            (choice.states || []).find(s => s.id === stateId);
-                        return stateInfo?.missing_message || `Необходимо состояние: ${stateId}`;
-                    });
-                    showCollectMessage(messages.join('\n'), '⚡');
-                    return;
-                }
+                missingStates = choice.requires_states.filter(stateId => !hasState(stateId));
+            } else if (choice.requires && Array.isArray(choice.requires)) {
+                // Проверяем, есть ли среди requires состояния (начинающиеся с 'state_')
+                missingStates = choice.requires
+                    .filter(req => typeof req === 'string' && req.startsWith('state_'))
+                    .filter(stateId => !hasState(stateId));
+            }
+
+            if (missingStates.length > 0) {
+                const messages = missingStates.map(stateId => {
+                    // Ищем описание состояния в currentNode или в choice
+                    const stateInfo = (node.states || []).find(s => s.id === stateId) ||
+                        (node.add_states || []).find(s => s.id === stateId) ||
+                        (choice.states || []).find(s => s.id === stateId) ||
+                        (choice.add_states || []).find(s => s.id === stateId);
+                    return stateInfo?.missing_message || `Необходимо состояние: ${stateId}`;
+                });
+                showCollectMessage(messages.join('\n'), '⚡');
+                return;
             }
             // END СИСТЕМА СОСТОЯНИЙ
 
@@ -2749,7 +2762,6 @@ opacity: 0;
             // Загрузка сохраненных состояний
             currentState = JSON.parse(localStorage.getItem('lingame_states') || '[]');
 
-            // updateMapButtonVisibility(); // Не нужно - кнопка создаётся условно
             if (window.Telegram?.WebApp) {
                 Telegram.WebApp.ready();
                 Telegram.WebApp.expand();
