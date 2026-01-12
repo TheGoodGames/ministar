@@ -178,13 +178,16 @@
           "state_kc_lin_room"
         ],
         "hide_until_unlocked": true,
-        "hide_after_collect": true,
         "dynamic_collect": [
           {
-            "id": "key_lin_room",
-            "label": "КЛЮЧ ОТ КОМНАТЫ",
-            "type": "",
-            "icon": "💳"
+            "message": "",
+            "key": {
+              "id": "key_lin_room",
+              "label": "Ключ от комнаты Лин",
+              "type": "key",
+              "icon": ""
+            },
+            "default": true
           }
         ]
       }
