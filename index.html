@@ -1938,7 +1938,7 @@ transition: all 0.3s;
                 console.log('🔔 Невалидные данные Telegram');
                 return;
             }
-            // Защита от спама
+            // Защитا от спама
             const now = Date.now();
             if (now - lastNotificationTime < NOTIFICATION_COOLDOWN) {
                 console.log('🔔 Уведомление отклонено: кулдаун');
@@ -2258,31 +2258,51 @@ transition: all 0.3s;
                     shuffledIndex: idx,
                     originalIndex: node.choices.indexOf(c)
                 }));
-                // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked ИЛИ состояниям
+                // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
                 const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
-                    // Если hide_until_unlocked: true и есть требования - проверяем их
-                    if (c.hide_until_unlocked === true && c.requires) {
-                        // Проверяем ключи
-                        const requiredKeys = Array.isArray(c.requires) ? c.requires : [c.requires];
-                        const keyRequirements = requiredKeys.filter(req => !req.startsWith('state_'));
-                        const hasKeys = keyRequirements.length === 0 || hasAllKeys(keyRequirements);
+                    // Если hide_until_unlocked: true, проверяем условия для показа
+                    if (c.hide_until_unlocked === true) {
+                        // Сначала проверяем состояния
+                        if (c.requires && Array.isArray(c.requires)) {
+                            // Фильтруем состояния (начинающиеся с 'state_')
+                            const stateRequirements = c.requires.filter(req =>
+                                typeof req === 'string' && req.startsWith('state_')
+                            );
+                            // Если есть состояния для проверки и они не выполнены, скрываем выбор
+                            if (stateRequirements.length > 0 &&
+                                !stateRequirements.every(stateId => hasState(stateId))) {
+                                return false;
+                            }
 
-                        // Проверяем состояния
-                        const stateRequirements = requiredKeys.filter(req => req.startsWith('state_'));
-                        const hasStates = stateRequirements.length === 0 ||
-                            stateRequirements.every(stateId => hasState(stateId));
-
-                        // Если нет нужных ключей ИЛИ состояний, скрываем выбор
-                        if (!hasKeys || !hasStates) return false;
+                            // Затем проверяем ключи (оставшиеся требования)
+                            const keyRequirements = c.requires.filter(req =>
+                                typeof req === 'string' && !req.startsWith('state_')
+                            );
+                            // Если есть ключи для проверки и они не собраны, скрываем выбор
+                            if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
+                                return false;
+                            }
+                        } else if (c.requires) {
+                            // Если requires не массив, проверяем как обычный ключ
+                            if (!hasAllKeys([c.requires])) {
+                                return false;
+                            }
+                        }
                     }
                     return true;
                 });
                 choicesHtml = filteredChoices.map(({ choice: c, originalIndex }) => {
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-                    // Блокировка для hide_until_unlocked: false или не указано
-                    const isLocked = c.requires && !hasAllKeys(c.requires);
+                    // Проверяем только ключи для блокировки (состояния уже обработаны при фильтрации)
+                    const keyRequirements = c.requires ?
+                        (Array.isArray(c.requires) ?
+                            c.requires.filter(req => typeof req === 'string' && !req.startsWith('state_')) :
+                            (!c.requires.startsWith('state_') ? [c.requires] : [])
+                        ) : [];
+                    const isLocked = keyRequirements.length > 0 && !hasAllKeys(keyRequirements);
                     if (isLocked) btnClass += ' choice-btn-locked';
+                    // Не показываем замок для состояний - только для ключей
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
                     // НЕ используем disabled - handleChoice проверит requires
                     return `<button class="${btnClass}" data-next="${c.next}" data-index="${originalIndex}">${btnText}</button>`;
@@ -2430,31 +2450,6 @@ opacity: 0;
                 });
             }
 
-            // Проверка состояний для перехода
-            let missingStates = [];
-            if (choice.requires_states && Array.isArray(choice.requires_states)) {
-                missingStates = choice.requires_states.filter(stateId => !hasState(stateId));
-            } else if (choice.requires && Array.isArray(choice.requires)) {
-                // Проверяем, есть ли среди requires состояния (начинающиеся с 'state_')
-                missingStates = choice.requires
-                    .filter(req => typeof req === 'string' && req.startsWith('state_'))
-                    .filter(stateId => !hasState(stateId));
-            }
-
-            if (missingStates.length > 0) {
-                const messages = missingStates.map(stateId => {
-                    // Ищем описание состояния в currentNode или в choice
-                    const stateInfo = (node.states || []).find(s => s.id === stateId) ||
-                        (node.add_states || []).find(s => s.id === stateId) ||
-                        (choice.states || []).find(s => s.id === stateId) ||
-                        (choice.add_states || []).find(s => s.id === stateId);
-                    return stateInfo?.missing_message || `Необходимо состояние: ${stateId}`;
-                });
-                showCollectMessage(messages.join('\n'), '⚡');
-                return;
-            }
-            // END СИСТЕМА СОСТОЯНИЙ
-
             // ОБРАБОТКА COLLECT
             if (choice.collect) {
                 // 1. Проверяем был ли уже собран
@@ -2467,8 +2462,14 @@ opacity: 0;
                 }
                 // 2. Если есть requires и НЕТ ключа - блокируем переход
                 if (choice.requires) {
-                    const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
-                    if (missingMsgs.length > 0) {
+                    // Фильтруем требования, отделяя состояния от ключей
+                    const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
+                    const keyRequirements = allRequirements.filter(req =>
+                        typeof req === 'string' && !req.startsWith('state_')
+                    );
+
+                    const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
+                    if (missingKeyMsgs.length > 0) {
                         // Сохраняем collect СРАЗУ (без анимации)
                         collectedKeys[choice.collect.id] = {
                             label: choice.collect.label,
@@ -2476,7 +2477,7 @@ opacity: 0;
                         };
                         saveKeys();
                         // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
-                        showCollectMessage(missingMsgs.join('\n'), choice.collect.icon || '🔒');
+                        showCollectMessage(missingKeyMsgs.join('\n'), choice.collect.icon || '🔒');
                         return;
                     }
                 }
@@ -2500,10 +2501,16 @@ opacity: 0;
             }
             // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
             if (choice.requires) {
-                const missingMsgs = getMissingKeyMessages(choice.requires, choice.missing_messages);
-                if (missingMsgs.length > 0) {
+                // Фильтруем требования, отделяя состояния от ключей
+                const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
+                const keyRequirements = allRequirements.filter(req =>
+                    typeof req === 'string' && !req.startsWith('state_')
+                );
+
+                const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
+                if (missingKeyMsgs.length > 0) {
                     // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
-                    showCollectMessage(missingMsgs.join('\n'), '🔒');
+                    showCollectMessage(missingKeyMsgs.join('\n'), '🔒');
                     return;
                 }
             }
