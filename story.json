@@ -356,7 +356,6 @@
         "next": "20",
         "dynamic_collect": [
           {
-            "default": true,
             "item": {
               "id": "item_old_photo",
               "label": "Старое общее фото с отцом Лин и его друзьями",
