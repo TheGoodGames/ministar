@@ -420,7 +420,8 @@
               "type": "state"
             }
           }
-        ]
+        ],
+        "hide_until_unlocked": true
       }
     ],
     "tag": "Жилой комплекс",
