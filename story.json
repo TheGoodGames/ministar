@@ -183,19 +183,24 @@
         "text": "Я вчера тут зависла надолго да?",
         "next": "8",
         "requires": [
-          "state_kc_lin_room"
+          {
+            "state": {
+              "id": "state_kc_lin_room",
+              "label": "Найти ключ",
+              "type": "state"
+            }
+          }
         ],
         "hide_until_unlocked": true,
         "dynamic_collect": [
           {
-            "message": "",
+            "default": true,
             "key": {
               "id": "key_lin_room",
               "label": "Ключ от комнаты Лин",
               "type": "key",
               "icon": ""
-            },
-            "default": true
+            }
           }
         ]
       }
