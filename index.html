@@ -2421,38 +2421,27 @@ opacity: 0;
 
             // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
             if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
-                // Находим подходящий вариант для сбора на основе состояний
+                console.log('🔍 Обработка dynamic_collect:', choice.dynamic_collect);
+                // Находим подходящий вариант для сбора
                 let collectData = null;
 
-                // 1. Сначала ищем вариант, который подходит под текущие состояния
-                for (const dc of choice.dynamic_collect) {
-                    if (dc.state && hasState(dc.state)) {
-                        // Проверяем, не был ли уже собран этот предмет
-                        if (dc.item?.id && collectedKeys[dc.item.id] && dc.hide_after_collect) {
-                            // Предмет уже собран и нужно скрыть выбор - показываем сообщение
-                            showCollectMessage(
-                                dc.already_collected_message ||
-                                choice.already_collected_message ||
-                                "Здесь больше ничего нет.",
-                                dc.item.icon || '🔍'
-                            );
-                            return;
-                        }
-                        collectData = dc;
-                        break;
-                    }
-                }
-
-                // 2. Если нет подходящего состояния, используем default вариант
-                if (!collectData) {
-                    collectData = choice.dynamic_collect.find(dc => dc.default);
+                // 1. Сначала ищем вариант с default: true
+                collectData = choice.dynamic_collect.find(dc => dc.default === true);
+                console.log('🔍 Вариант с default:', collectData);
+                
+                // 2. Если нет default, используем первый вариант
+                if (!collectData && choice.dynamic_collect.length > 0) {
+                    collectData = choice.dynamic_collect[0];
+                    console.log('🔍 Используем первый вариант:', collectData);
                 }
 
                 // 3. Если нашли подходящий вариант для сбора
                 if (collectData && collectData.item) {
+                    console.log('✅ Найден вариант для сбора:', collectData);
                     // Проверяем, есть ли уже такой предмет и нужно ли скрыть после сбора
                     if (collectData.item.id && collectedKeys[collectData.item.id] && collectData.hide_after_collect) {
                         // Предмет уже собран и нужно скрыть выбор
+                        console.log('⚠️ Предмет уже собран, показываем сообщение');
                         showCollectMessage(
                             collectData.already_collected_message ||
                             choice.already_collected_message ||
@@ -2462,8 +2451,15 @@ opacity: 0;
                         return;
                     }
 
+                    // Определяем иконку для сообщения
+                    const messageIcon = collectData.item.icon || collectData.item.id?.startsWith('item_') ? '🖼️' : '🔑';
+                    const messageText = collectData.message || `Вы получили: ${collectData.item.label}`;
+                    
+                    console.log('📦 Показываем сообщение о сборе:', messageText, messageIcon);
+                    
                     // Собираем предмет и показываем сообщение
-                    showCollectMessage(collectData.message, collectData.item.icon, () => {
+                    showCollectMessage(messageText, messageIcon, () => {
+                        console.log('💾 Сохраняем предмет в инвентарь:', collectData.item);
                         // Сохраняем предмет в инвентарь
                         collectedKeys[collectData.item.id] = {
                             label: collectData.item.label,
@@ -2477,22 +2473,27 @@ opacity: 0;
                             if (typeof collectData.add_state === 'string') {
                                 // Если add_state - это строка (ID состояния)
                                 addState({ id: collectData.add_state });
+                                console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
                             } else if (typeof collectData.add_state === 'object') {
                                 // Если add_state - это объект с данными состояния
                                 addState(collectData.add_state);
+                                console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
                             }
-                            console.log(`✅ Активировано состояние: ${collectData.add_state.id || collectData.add_state}`);
                         }
 
                         // Если нужно скрыть этот выбор после сбора, сохраняем это состояние
                         if (collectData.hide_after_collect) {
+                            console.log('🔒 Выбор будет скрыт после сбора');
                             // Логика скрытия будет обработана при следующем посещении узла
                         }
 
                         // Переходим к следующему узлу
+                        console.log('➡️ Переход к узлу:', nextNodeId);
                         goToNode(nextNodeId);
                     });
                     return;
+                } else {
+                    console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect');
                 }
             }
 
