@@ -203,13 +203,95 @@
             background: var(--bg);
             z-index: 1000;
             overflow-y: auto;
-            padding: 30px 20px;
+            padding: 20px 15px;
             text-align: center;
         }
 
         #inventory-screen h2 {
-            margin-bottom: 24px;
-            font-size: 28px;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+
+        /* Аккордеон для инвентаря */
+        .inventory-accordion {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .inventory-group {
+            margin: 0;
+        }
+
+        .inventory-item {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            text-align: left;
+            background: rgba(86, 78, 132, 0.55);
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .inventory-item:hover {
+            filter: brightness(1.05);
+        }
+
+        .inventory-item.level-0 {
+            padding-left: 12px;
+            background: rgba(86, 78, 132, 0.55);
+            font-weight: 600;
+        }
+
+        .inventory-item.level-1 {
+            padding-left: 24px;
+            background: rgba(70, 95, 145, 0.48);
+            font-size: 15px;
+        }
+
+        .inventory-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .inventory-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .inventory-label {
+            flex: 1;
+            line-height: 1.2;
+        }
+
+        .inventory-arrow {
+            width: 18px;
+            text-align: right;
+            opacity: 0.95;
+            font-size: 16px;
+        }
+
+        .inventory-children {
+            display: none;
+            margin: 0;
+        }
+
+        .inventory-group.open > .inventory-children {
+            display: block;
+        }
+
+        .inventory-empty {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+            font-size: 15px;
         }
 
         #code-screen {
@@ -291,9 +373,9 @@
 
         .keys-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 24px;
-            max-width: 500px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 16px;
+            max-width: 450px;
             margin: 0 auto;
         }
 
@@ -304,21 +386,22 @@
         }
 
         .key-icon {
-            font-size: 64px;
-            margin-bottom: 10px;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+            font-size: 48px;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
         .key-label {
             background: white;
             color: black;
-            font-size: 14px;
+            font-size: 12px;
             font-family: 'Merriweather', sans-serif;
-            padding: 6px 8px;
-            border-radius: 6px;
+            padding: 4px 6px;
+            border-radius: 4px;
             width: 100%;
             box-sizing: border-box;
             text-align: center;
+            line-height: 1.2;
         }
 
         .inventory-close {
@@ -1064,10 +1147,8 @@ location -> кликабельные элементы
     </div>
     <!-- Экран инвентаря -->
     <div id="inventory-screen">
-        <h2>Ваши ключи</h2>
-        <div class="keys-grid" id="keys-container">
-            <!-- Ключи будут добавлены сюда -->
-        </div>
+        <h2>🎒 Инвентарь</h2>
+        <div id="inventory-accordion" class="inventory-accordion"></div>
         <button class="inventory-close" onclick="closeInventory()">← Назад к игре</button>
     </div>
     <!-- Экран карты мира -->
@@ -1464,7 +1545,8 @@ transition: all 0.3s;
             if (keyData && keyData.id) {
                 collectedKeys[keyData.id] = {
                     label: keyData.label || keyData.id,
-                    type: keyData.type || 'regular'
+                    type: keyData.type || 'regular',
+                    icon: keyData.icon
                 };
                 saveKeys();
                 console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')');
@@ -1475,20 +1557,135 @@ transition: all 0.3s;
             if (!requiredKeys) return true;
             if (typeof requiredKeys === 'string') {
                 // Поддержка старого формата: "requires": "single_key"
+                // Если это state, не проверяем как ключ
+                if (requiredKeys.startsWith('state_')) {
+                    return true; // State проверяется отдельно
+                }
                 requiredKeys = [requiredKeys];
             }
             if (!Array.isArray(requiredKeys)) {
                 return false;
             }
-            return requiredKeys.every(keyId => !!collectedKeys[keyId]);
+            return requiredKeys.every(req => {
+                // Если это строка
+                if (typeof req === 'string') {
+                    // State не проверяем как ключ
+                    if (req.startsWith('state_')) {
+                        return true; // State проверяется отдельно
+                    }
+                    return !!collectedKeys[req];
+                }
+                // Если это объект
+                if (typeof req === 'object' && req !== null) {
+                    // Проверяем только item и key, не state
+                    if (req.item && req.item.id) {
+                        return !!collectedKeys[req.item.id];
+                    }
+                    if (req.key && req.key.id) {
+                        return !!collectedKeys[req.key.id];
+                    }
+                    // Если есть state, не блокируем (state проверяется отдельно)
+                    if (req.state) {
+                        return true;
+                    }
+                }
+                return false;
+            });
         }
 
         function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
             if (!requiredKeys) return [];
             const keys = Array.isArray(requiredKeys) ? requiredKeys : [requiredKeys];
             return keys
-                .filter(keyId => !collectedKeys[keyId])
-                .map(keyId => missingMessages[keyId] || `Требуется предмет: ${keyId}`);
+                .filter(req => {
+                    // Пропускаем state
+                    if (typeof req === 'string' && req.startsWith('state_')) {
+                        return false;
+                    }
+                    if (typeof req === 'object' && req !== null && req.state) {
+                        return false;
+                    }
+                    // Проверяем только item/key
+                    if (typeof req === 'string') {
+                        return !collectedKeys[req];
+                    }
+                    if (typeof req === 'object' && req !== null) {
+                        if (req.item && req.item.id) {
+                            return !collectedKeys[req.item.id];
+                        }
+                        if (req.key && req.key.id) {
+                            return !collectedKeys[req.key.id];
+                        }
+                    }
+                    return false;
+                })
+                .map(req => {
+                    let keyId = '';
+                    let label = '';
+                    if (typeof req === 'string') {
+                        keyId = req;
+                    } else if (typeof req === 'object' && req !== null) {
+                        if (req.item && req.item.id) {
+                            keyId = req.item.id;
+                            label = req.item.label || '';
+                        } else if (req.key && req.key.id) {
+                            keyId = req.key.id;
+                            label = req.key.label || '';
+                        }
+                    }
+                    return missingMessages[keyId] || (label ? `Требуется: ${label}` : `Требуется предмет: ${keyId}`);
+                });
+        }
+
+        // === СОХРАНЕНИЕ/ЗАГРУЗКА СОСТОЯНИЯ ВКЛАДОК ИНВЕНТАРЯ ===
+        function saveInventoryTabsState() {
+            const state = {};
+            document.querySelectorAll('.inventory-group').forEach(group => {
+                const header = group.querySelector('.inventory-item.level-0');
+                if (header) {
+                    const category = header.textContent.trim();
+                    state[category] = group.classList.contains('open');
+                }
+            });
+            localStorage.setItem('lingame_inventory_tabs', JSON.stringify(state));
+        }
+
+        function loadInventoryTabsState() {
+            const saved = localStorage.getItem('lingame_inventory_tabs');
+            if (!saved) return {};
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                return {};
+            }
+        }
+
+        // === ФУНКЦИЯ ПОЛУЧЕНИЯ ИКОНКИ ИЗ JSON ===
+        function getItemIcon(keyId, keyData) {
+            // Сначала проверяем, есть ли иконка в данных
+            if (keyData.icon) {
+                return keyData.icon;
+            }
+            // Если есть тип, используем иконку по типу
+            if (keyData.type) {
+                const iconMap = {
+                    'card': '🃏',
+                    'old': '🔑',
+                    'digital': '💾',
+                    'regular': '🗝️',
+                    'photo': '🖼️'
+                };
+                if (iconMap[keyData.type]) {
+                    return iconMap[keyData.type];
+                }
+            }
+            // По умолчанию по префиксу
+            if (keyId.startsWith('item_')) {
+                return '🔑';
+            } else if (keyId.startsWith('key_')) {
+                return '🗝️';
+            }
+            return '🔑';
         }
 
         function showInventory() {
@@ -1496,56 +1693,135 @@ transition: all 0.3s;
             diceScreen.style.display = 'none';
             keyAnimScreen.style.display = 'none';
             inventoryScreen.style.display = 'block';
-            clearElement(keysContainer);
+            
+            const accordion = document.getElementById('inventory-accordion');
+            if (!accordion) return;
+            clearElement(accordion);
+            
+            // Загружаем состояние вкладок
+            const tabsState = loadInventoryTabsState();
+            
             // Фильтруем ключи: показываем только item_ и key_
             const allKeys = Object.entries(collectedKeys);
             const visibleKeys = allKeys.filter(([keyId]) => {
                 return keyId.startsWith('item_') || keyId.startsWith('key_');
             });
+            
             if (visibleKeys.length === 0) {
-                clearElement(keysContainer);
-                const emptyMsg = createElement('p', {
-                    textContent: 'Инвентарь пуст',
-                    style: { textAlign: 'center', color: '#aaa' }
+                const emptyMsg = createElement('div', {
+                    className: 'inventory-empty',
+                    textContent: 'Инвентарь пуст'
                 });
-                keysContainer.appendChild(emptyMsg);
-            } else {
-                visibleKeys.forEach(([keyId, keyData]) => {
-                    const li = document.createElement('div');
-                    li.className = 'key-item';
-
-                    // Определяем иконку по префиксу ID
-                    let icon = '🔑'; // По умолчанию
-                    if (keyId.startsWith('item_')) {
-                        icon = '🔑';
-                    } else if (keyId.startsWith('key_')) {
-                        icon = '🗝️';
-                    }
-                    // Если у ключа есть тип, используем его (приоритет типу)
-                    if (keyData.type) {
-                        const iconMap = {
-                            'card': '🃏',
-                            'old': '🔑',
-                            'digital': '💾',
-                            'regular': '🗝️'
-                        };
-                        icon = iconMap[keyData.type] || icon;
-                    }
-
-                    const keyIconDiv = createElement('div', {
-                        className: 'key-icon',
-                        textContent: icon
-                    });
-
-                    const keyLabelDiv = createElement('div', {
-                        className: 'key-label',
-                        textContent: keyData.label || keyId
-                    });
-
-                    li.appendChild(keyIconDiv);
-                    li.appendChild(keyLabelDiv);
-                    keysContainer.appendChild(li);
+                accordion.appendChild(emptyMsg);
+                return;
+            }
+            
+            // Разделяем на категории
+            const items = [];
+            const keys = [];
+            
+            visibleKeys.forEach(([keyId, keyData]) => {
+                if (keyId.startsWith('item_')) {
+                    items.push({ id: keyId, data: keyData });
+                } else if (keyId.startsWith('key_')) {
+                    keys.push({ id: keyId, data: keyData });
+                }
+            });
+            
+            // Создаем категорию "Предметы"
+            if (items.length > 0) {
+                const itemsGroup = document.createElement('div');
+                itemsGroup.className = 'inventory-group';
+                const shouldOpenItems = tabsState['📦 Предметы'] !== false; // По умолчанию открыто
+                
+                const itemsHeader = createElement('button', {
+                    className: 'inventory-item level-0',
+                    children: [
+                        createElement('div', {
+                            className: 'inventory-row',
+                            children: [
+                                createElement('div', { className: 'inventory-icon', textContent: '📦' }),
+                                createElement('div', { className: 'inventory-label', textContent: '📦 Предметы' }),
+                                createElement('div', { className: 'inventory-arrow', textContent: shouldOpenItems ? '^' : 'v' })
+                            ]
+                        })
+                    ]
                 });
+                
+                const itemsChildren = createElement('div', { className: 'inventory-children' });
+                const itemsGrid = createElement('div', { className: 'keys-grid' });
+                
+                items.forEach(({ id, data }) => {
+                    const icon = getItemIcon(id, data);
+                    const itemDiv = createElement('div', { className: 'key-item' });
+                    itemDiv.appendChild(createElement('div', { className: 'key-icon', textContent: icon }));
+                    itemDiv.appendChild(createElement('div', { className: 'key-label', textContent: data.label || id }));
+                    itemsGrid.appendChild(itemDiv);
+                });
+                
+                itemsChildren.appendChild(itemsGrid);
+                itemsGroup.appendChild(itemsHeader);
+                itemsGroup.appendChild(itemsChildren);
+                
+                if (shouldOpenItems) {
+                    itemsGroup.classList.add('open');
+                }
+                
+                itemsHeader.addEventListener('click', () => {
+                    const open = itemsGroup.classList.toggle('open');
+                    itemsHeader.querySelector('.inventory-arrow').textContent = open ? '^' : 'v';
+                    saveInventoryTabsState();
+                });
+                
+                accordion.appendChild(itemsGroup);
+            }
+            
+            // Создаем категорию "Ключи"
+            if (keys.length > 0) {
+                const keysGroup = document.createElement('div');
+                keysGroup.className = 'inventory-group';
+                const shouldOpenKeys = tabsState['🗝️ Ключи'] !== false; // По умолчанию открыто
+                
+                const keysHeader = createElement('button', {
+                    className: 'inventory-item level-0',
+                    children: [
+                        createElement('div', {
+                            className: 'inventory-row',
+                            children: [
+                                createElement('div', { className: 'inventory-icon', textContent: '🗝️' }),
+                                createElement('div', { className: 'inventory-label', textContent: '🗝️ Ключи' }),
+                                createElement('div', { className: 'inventory-arrow', textContent: shouldOpenKeys ? '^' : 'v' })
+                            ]
+                        })
+                    ]
+                });
+                
+                const keysChildren = createElement('div', { className: 'inventory-children' });
+                const keysGrid = createElement('div', { className: 'keys-grid' });
+                
+                keys.forEach(({ id, data }) => {
+                    const icon = getItemIcon(id, data);
+                    const keyDiv = createElement('div', { className: 'key-item' });
+                    keyDiv.appendChild(createElement('div', { className: 'key-icon', textContent: icon }));
+                    keyDiv.appendChild(createElement('div', { className: 'key-label', textContent: data.label || id }));
+                    keysGrid.appendChild(keyDiv);
+                });
+                
+                keysChildren.appendChild(keysGrid);
+                keysGroup.appendChild(keysHeader);
+                keysGroup.appendChild(keysChildren);
+                
+                if (shouldOpenKeys) {
+                    keysGroup.classList.add('open');
+                }
+                
+                keysHeader.addEventListener('click', () => {
+                    const open = keysGroup.classList.toggle('open');
+                    keysHeader.querySelector('.inventory-arrow').textContent = open ? '^' : 'v';
+                    saveInventoryTabsState();
+                });
+                
+                accordion.appendChild(keysGroup);
             }
         }
 
@@ -2264,28 +2540,61 @@ transition: all 0.3s;
                     if (c.hide_until_unlocked === true) {
                         // Сначала проверяем состояния
                         if (c.requires && Array.isArray(c.requires)) {
-                            // Фильтруем состояния (начинающиеся с 'state_')
-                            const stateRequirements = c.requires.filter(req =>
-                                typeof req === 'string' && req.startsWith('state_')
-                            );
-                            // Если есть состояния для проверки и они не выполнены, скрываем выбор
-                            if (stateRequirements.length > 0 &&
-                                !stateRequirements.every(stateId => hasState(stateId))) {
+                            // Фильтруем состояния (начинающиеся с 'state_' или объекты с state)
+                            const stateRequirements = c.requires.filter(req => {
+                                if (typeof req === 'string' && req.startsWith('state_')) {
+                                    return true;
+                                }
+                                if (typeof req === 'object' && req !== null && req.state) {
+                                    return true;
+                                }
                                 return false;
+                            });
+                            // Если есть состояния для проверки и они не выполнены, скрываем выбор
+                            if (stateRequirements.length > 0) {
+                                const allStatesMet = stateRequirements.every(req => {
+                                    if (typeof req === 'string') {
+                                        return hasState(req);
+                                    }
+                                    if (typeof req === 'object' && req !== null && req.state) {
+                                        const stateId = typeof req.state === 'string' ? req.state : req.state.id;
+                                        return hasState(stateId);
+                                    }
+                                    return false;
+                                });
+                                if (!allStatesMet) {
+                                    return false;
+                                }
                             }
 
-                            // Затем проверяем ключи (оставшиеся требования)
-                            const keyRequirements = c.requires.filter(req =>
-                                typeof req === 'string' && !req.startsWith('state_')
-                            );
+                            // Затем проверяем ключи (item/key, не state)
+                            const keyRequirements = c.requires.filter(req => {
+                                // Пропускаем state
+                                if (typeof req === 'string' && req.startsWith('state_')) {
+                                    return false;
+                                }
+                                // Если это объект, проверяем наличие item или key
+                                if (typeof req === 'object' && req !== null) {
+                                    return !!(req.item || req.key);
+                                }
+                                return true;
+                            });
                             // Если есть ключи для проверки и они не собраны, скрываем выбор
                             if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
                                 return false;
                             }
                         } else if (c.requires) {
-                            // Если requires не массив, проверяем как обычный ключ
-                            if (!hasAllKeys([c.requires])) {
-                                return false;
+                            // Если requires не массив, проверяем
+                            if (typeof c.requires === 'string' && c.requires.startsWith('state_')) {
+                                // Это состояние - проверяем отдельно
+                                if (!hasState(c.requires)) {
+                                    return false;
+                                }
+                            } else {
+                                // Это ключ - проверяем через hasAllKeys
+                                if (!hasAllKeys([c.requires])) {
+                                    return false;
+                                }
                             }
                         }
                     }
@@ -2294,8 +2603,24 @@ transition: all 0.3s;
                 choicesHtml = filteredChoices.map(({ choice: c, originalIndex }) => {
                     const isRestart = c.next === "main_story" || c.next === "node_end";
                     let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-                    // Блокировка для hide_until_unlocked: false или не указано
-                    const isLocked = c.requires && !hasAllKeys(c.requires);
+                    // Блокировка только для item/key, не для state
+                    let isLocked = false;
+                    if (c.requires) {
+                        // Фильтруем требования, отделяя состояния от ключей
+                        const allRequirements = Array.isArray(c.requires) ? c.requires : [c.requires];
+                        const keyRequirements = allRequirements.filter(req => {
+                            if (typeof req === 'string') {
+                                return !req.startsWith('state_');
+                            }
+                            // Если это объект, проверяем наличие item или key
+                            if (typeof req === 'object' && req !== null) {
+                                return !!(req.item || req.key);
+                            }
+                            return true;
+                        });
+                        // Блокируем только если есть требования item/key и они не выполнены
+                        isLocked = keyRequirements.length > 0 && !hasAllKeys(keyRequirements);
+                    }
                     if (isLocked) btnClass += ' choice-btn-locked';
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
                     // НЕ используем disabled - handleChoice проверит requires
@@ -2463,7 +2788,8 @@ opacity: 0;
                         // Сохраняем предмет в инвентарь
                         collectedKeys[collectData.item.id] = {
                             label: collectData.item.label,
-                            type: collectData.item.type || 'regular'
+                            type: collectData.item.type || 'regular',
+                            icon: collectData.item.icon
                         };
                         saveKeys();
                         console.log(`✅ Собран предмет: ${collectData.item.id} - ${collectData.item.label}`);
@@ -2536,16 +2862,25 @@ opacity: 0;
                 if (choice.requires) {
                     // Фильтруем требования, отделяя состояния от ключей
                     const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
-                    const keyRequirements = allRequirements.filter(req =>
-                        typeof req === 'string' && !req.startsWith('state_')
-                    );
+                    const keyRequirements = allRequirements.filter(req => {
+                        // Пропускаем state
+                        if (typeof req === 'string' && req.startsWith('state_')) {
+                            return false;
+                        }
+                        // Если это объект, проверяем наличие item или key
+                        if (typeof req === 'object' && req !== null) {
+                            return !!(req.item || req.key);
+                        }
+                        return true;
+                    });
 
                     const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
                     if (missingKeyMsgs.length > 0) {
                         // Сохраняем collect СРАЗУ (без анимации)
                         collectedKeys[choice.collect.id] = {
                             label: choice.collect.label,
-                            type: choice.collect.type || 'regular'
+                            type: choice.collect.type || 'regular',
+                            icon: choice.collect.icon
                         };
                         saveKeys();
                         // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
@@ -2557,7 +2892,8 @@ opacity: 0;
                 // Сначала сохраняем ключ
                 collectedKeys[choice.collect.id] = {
                     label: choice.collect.label,
-                    type: choice.collect.type || 'regular'
+                    type: choice.collect.type || 'regular',
+                    icon: choice.collect.icon
                 };
                 saveKeys();
                 // Формируем сообщение о сборе ключа
@@ -2575,9 +2911,17 @@ opacity: 0;
             if (choice.requires) {
                 // Фильтруем требования, отделяя состояния от ключей
                 const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
-                const keyRequirements = allRequirements.filter(req =>
-                    typeof req === 'string' && !req.startsWith('state_')
-                );
+                const keyRequirements = allRequirements.filter(req => {
+                    // Пропускаем state
+                    if (typeof req === 'string' && req.startsWith('state_')) {
+                        return false;
+                    }
+                    // Если это объект, проверяем наличие item или key
+                    if (typeof req === 'object' && req !== null) {
+                        return !!(req.item || req.key);
+                    }
+                    return true;
+                });
 
                 const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
                 if (missingKeyMsgs.length > 0) {
