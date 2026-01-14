@@ -490,7 +490,8 @@
             "state": {
               "id": "state_krou_photo",
               "label": "Требуется фото Кроу",
-              "type": "state"
+              "type": "state",
+              "icon": "🖼"
             }
           }
         ],
