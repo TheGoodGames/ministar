@@ -195,13 +195,14 @@
         "hide_until_unlocked": true,
         "dynamic_collect": [
           {
-            "default": true,
             "key": {
               "id": "key_lin_room",
               "label": "Ключ от комнаты Лин",
               "type": "key",
               "icon": ""
-            }
+            },
+            "message": "Вы получили ключ от своей комнаты",
+            "hide_after_collect": true
           }
         ]
       }
