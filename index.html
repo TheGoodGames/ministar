@@ -2824,38 +2824,66 @@ opacity: 0;
                 }
 
                 // 3. Если нашли подходящий вариант для сбора
-                if (collectData && collectData.item) {
-                    console.log('✅ Найден вариант для сбора:', collectData);
+                // Определяем тип предмета (item, key, quest)
+                let collectItem = null;
+                let itemType = null;
+                
+                if (collectData) {
+                    if (collectData.item) {
+                        collectItem = collectData.item;
+                        itemType = 'item';
+                    } else if (collectData.key) {
+                        collectItem = collectData.key;
+                        itemType = 'key';
+                    } else if (collectData.quest) {
+                        collectItem = collectData.quest;
+                        itemType = 'quest';
+                    }
+                }
+                
+                if (collectData && collectItem) {
+                    console.log('✅ Найден вариант для сбора:', collectData, 'Тип:', itemType);
                     // Проверяем, есть ли уже такой предмет и нужно ли скрыть после сбора
-                    if (collectData.item.id && collectedKeys[collectData.item.id] && collectData.hide_after_collect) {
+                    if (collectItem.id && collectedKeys[collectItem.id] && collectData.hide_after_collect) {
                         // Предмет уже собран и нужно скрыть выбор
                         console.log('⚠️ Предмет уже собран, показываем сообщение');
                         showCollectMessage(
                             collectData.already_collected_message ||
                             choice.already_collected_message ||
                             "Здесь больше ничего нет.",
-                            collectData.item.icon || '🔍'
+                            collectItem.icon || '🔍'
                         );
                         return;
                     }
 
                     // Определяем иконку для сообщения
-                    const messageIcon = collectData.item.icon || collectData.item.id?.startsWith('item_') ? '🖼️' : '🔑';
-                    const messageText = collectData.message || `Вы получили: ${collectData.item.label}`;
+                    let messageIcon = collectItem.icon;
+                    if (!messageIcon) {
+                        if (itemType === 'item') {
+                            messageIcon = collectItem.id?.startsWith('item_') ? '🖼️' : '🔑';
+                        } else if (itemType === 'key') {
+                            messageIcon = '🗝️';
+                        } else if (itemType === 'quest') {
+                            messageIcon = '📜';
+                        } else {
+                            messageIcon = '🔑';
+                        }
+                    }
+                    const messageText = collectData.message || `Вы получили: ${collectItem.label}`;
                     
                     console.log('📦 Показываем сообщение о сборе:', messageText, messageIcon);
                     
                     // Собираем предмет и показываем сообщение
                     showCollectMessage(messageText, messageIcon, () => {
-                        console.log('💾 Сохраняем предмет в инвентарь:', collectData.item);
+                        console.log('💾 Сохраняем предмет в инвентарь:', collectItem);
                         // Сохраняем предмет в инвентарь
-                        collectedKeys[collectData.item.id] = {
-                            label: collectData.item.label,
-                            type: collectData.item.type || 'regular',
-                            icon: collectData.item.icon
+                        collectedKeys[collectItem.id] = {
+                            label: collectItem.label,
+                            type: collectItem.type || (itemType === 'key' ? 'regular' : 'regular'),
+                            icon: collectItem.icon
                         };
                         saveKeys();
-                        console.log(`✅ Собран предмет: ${collectData.item.id} - ${collectData.item.label}`);
+                        console.log(`✅ Собран предмет: ${collectItem.id} - ${collectItem.label}`);
 
                         // Добавляем состояние, если указано
                         if (collectData.add_state) {
@@ -2882,7 +2910,7 @@ opacity: 0;
                     });
                     return;
                 } else {
-                    console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect');
+                    console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect', collectData);
                 }
             }
 
