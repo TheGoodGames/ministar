@@ -2909,20 +2909,130 @@ opacity: 0;
             // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
             if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
                 console.log('🔍 Обработка dynamic_collect:', choice.dynamic_collect);
+                
+                // Функция для проверки requires варианта
+                function checkRequires(requiresData) {
+                    if (!requiresData) return true; // Нет требований - доступно
+                    
+                    const allRequirements = Array.isArray(requiresData) ? requiresData : [requiresData];
+                    
+                    // Проверяем item/key требования
+                    const keyRequirements = allRequirements.filter(req => {
+                        if (typeof req === 'string' && req.startsWith('state_')) {
+                            return false;
+                        }
+                        if (typeof req === 'object' && req !== null) {
+                            return !!(req.item || req.key);
+                        }
+                        return true;
+                    });
+                    
+                    // Проверяем state требования
+                    const stateRequirements = allRequirements.filter(req => {
+                        if (typeof req === 'string' && req.startsWith('state_')) {
+                            return true;
+                        }
+                        if (typeof req === 'object' && req !== null && req.state) {
+                            return true;
+                        }
+                        return false;
+                    });
+                    
+                    // Проверяем item/key
+                    if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
+                        return false;
+                    }
+                    
+                    // Проверяем state
+                    if (stateRequirements.length > 0) {
+                        const allStatesMet = stateRequirements.every(req => {
+                            if (typeof req === 'string') {
+                                return hasState(req);
+                            }
+                            if (typeof req === 'object' && req !== null && req.state) {
+                                const stateId = typeof req.state === 'string' ? req.state : req.state.id;
+                                return hasState(stateId);
+                            }
+                            return false;
+                        });
+                        if (!allStatesMet) {
+                            return false;
+                        }
+                    }
+                    
+                    return true; // Все требования выполнены
+                }
+                
                 // Находим подходящий вариант для сбора
                 let collectData = null;
-
-                // 1. Сначала ищем вариант с default: true
-                collectData = choice.dynamic_collect.find(dc => dc.default === true);
-                console.log('🔍 Вариант с default:', collectData);
                 
-                // 2. Если нет default, используем первый вариант
-                if (!collectData && choice.dynamic_collect.length > 0) {
-                    collectData = choice.dynamic_collect[0];
-                    console.log('🔍 Используем первый вариант:', collectData);
+                // Перебираем все варианты и ищем первый подходящий:
+                // 1. Сначала варианты с default: true (если requirements выполнены)
+                // 2. Потом остальные варианты (если requirements выполнены)
+                // 3. Вариант не должен быть уже собран (если hide_after_collect)
+                
+                // Сначала ищем вариант с default: true
+                const defaultVariant = choice.dynamic_collect.find(dc => dc.default === true);
+                if (defaultVariant) {
+                    // Определяем предмет из варианта
+                    let item = defaultVariant.item || defaultVariant.key || defaultVariant.quest;
+                    const itemId = item?.id;
+                    
+                    // Проверяем requires
+                    const hasRequired = checkRequires(defaultVariant.requires);
+                    
+                    // Проверяем, собран ли уже предмет
+                    const isAlreadyCollected = itemId && collectedKeys[itemId] && defaultVariant.hide_after_collect;
+                    
+                    if (hasRequired && !isAlreadyCollected) {
+                        collectData = defaultVariant;
+                        console.log('🔍 Найден вариант с default:', collectData);
+                    }
+                }
+                
+                // Если не нашли default, ищем среди остальных вариантов
+                if (!collectData) {
+                    for (const variant of choice.dynamic_collect) {
+                        // Пропускаем вариант с default, если он уже обработан
+                        if (variant.default === true) continue;
+                        
+                        // Определяем предмет из варианта
+                        let item = variant.item || variant.key || variant.quest;
+                        const itemId = item?.id;
+                        
+                        // Проверяем requires
+                        const hasRequired = checkRequires(variant.requires);
+                        
+                        // Проверяем, собран ли уже предмет
+                        const isAlreadyCollected = itemId && collectedKeys[itemId] && variant.hide_after_collect;
+                        
+                        if (hasRequired && !isAlreadyCollected) {
+                            collectData = variant;
+                            console.log('🔍 Найден подходящий вариант:', collectData);
+                            break;
+                        }
+                    }
+                }
+                
+                // Если не нашли подходящий вариант, проверяем, есть ли уже собранные варианты
+                if (!collectData) {
+                    // Ищем первый вариант с already_collected_message
+                    const collectedVariant = choice.dynamic_collect.find(variant => {
+                        let item = variant.item || variant.key || variant.quest;
+                        const itemId = item?.id;
+                        return itemId && collectedKeys[itemId] && variant.hide_after_collect;
+                    });
+                    
+                    if (collectedVariant) {
+                        const message = collectedVariant.already_collected_message ||
+                            choice.already_collected_message ||
+                            "Здесь больше ничего нет.";
+                        const icon = (collectedVariant.item || collectedVariant.key || collectedVariant.quest)?.icon || '🔍';
+                        showCollectMessage(message, icon);
+                        return;
+                    }
                 }
 
-                // 3. Если нашли подходящий вариант для сбора
                 // Определяем тип предмета (item, key, quest)
                 let collectItem = null;
                 let itemType = null;
@@ -2942,18 +3052,6 @@ opacity: 0;
                 
                 if (collectData && collectItem) {
                     console.log('✅ Найден вариант для сбора:', collectData, 'Тип:', itemType);
-                    // Проверяем, есть ли уже такой предмет и нужно ли скрыть после сбора
-                    if (collectItem.id && collectedKeys[collectItem.id] && collectData.hide_after_collect) {
-                        // Предмет уже собран и нужно скрыть выбор
-                        console.log('⚠️ Предмет уже собран, показываем сообщение');
-                        showCollectMessage(
-                            collectData.already_collected_message ||
-                            choice.already_collected_message ||
-                            "Здесь больше ничего нет.",
-                            collectItem.icon || '🔍'
-                        );
-                        return;
-                    }
 
                     // Определяем иконку для сообщения
                     let messageIcon = collectItem.icon;
