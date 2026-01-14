@@ -1125,14 +1125,15 @@ location -> кликабельные элементы
             background: linear-gradient(90deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%) !important;
             background-size: 200% 100% !important;
             border-radius: 10px !important;
-            width: 0% !important;
-            min-width: 0% !important;
-            max-width: 100% !important;
+            width: 100% !important;
+            transform: scaleX(0);
+            transform-origin: left center !important;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
             animation: progressShine 2s linear infinite !important;
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+            will-change: transform !important;
         }
 
         @keyframes progressShine {
@@ -2064,7 +2065,7 @@ transition: all 0.3s;
 
                 overlay.classList.add('active');
                 // Сбрасываем прогресс в начало и принудительно показываем
-                progressBar.style.width = '0%';
+                progressBar.style.transform = 'scaleX(0)';
                 progressBar.style.display = 'block';
                 progressBar.style.visibility = 'visible';
                 progressBar.style.opacity = '1';
@@ -2072,32 +2073,36 @@ transition: all 0.3s;
                 // Небольшая задержка для гарантии отрисовки
                 setTimeout(() => {
                     const totalTime = texts.length * 2000; // 2 секунды на каждый текст
-                    const progressUpdateInterval = 16; // ~60 FPS для плавной анимации
                     let startTime = Date.now();
                     let currentIndex = 0;
 
                     // Показываем первый текст сразу
                     textEl.textContent = texts[0];
 
-                    // Плавное обновление прогресса
-                    const progressTimer = setInterval(() => {
+                    // Плавное обновление прогресса с использованием requestAnimationFrame для лучшей производительности
+                    function updateProgress() {
                         const elapsed = Date.now() - startTime;
-                        const progress = Math.min((elapsed / totalTime) * 100, 100);
-                        progressBar.style.width = progress + '%';
-                        console.log('Прогресс:', progress + '%'); // Для отладки
+                        const progress = Math.min(elapsed / totalTime, 1); // от 0 до 1
+                        progressBar.style.transform = `scaleX(${progress})`;
+                        // console.log('Прогресс:', (progress * 100).toFixed(1) + '%'); // Закомментировано
                         
-                        // Если время истекло, завершаем
-                        if (elapsed >= totalTime) {
-                            clearInterval(progressTimer);
-                            progressBar.style.width = '100%';
+                        // Если время не истекло, продолжаем обновление
+                        if (elapsed < totalTime) {
+                            requestAnimationFrame(updateProgress);
+                        } else {
+                            // Завершаем
+                            progressBar.style.transform = 'scaleX(1)';
                             setTimeout(() => {
                                 overlay.classList.remove('active');
-                                progressBar.style.width = '0%';
+                                progressBar.style.transform = 'scaleX(0)';
                                 if (callback) callback();
                                 resolve();
                             }, 300);
                         }
-                    }, progressUpdateInterval);
+                    }
+
+                    // Запускаем обновление прогресса
+                    requestAnimationFrame(updateProgress);
 
                     // Смена текстов каждые 2 секунды
                     function showNextText() {
