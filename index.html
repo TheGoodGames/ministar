@@ -560,6 +560,57 @@
             font-weight: 600;
         }
 
+        /* Стили для форматированного текста */
+        .text strong,
+        .text b {
+            font-weight: bold;
+        }
+
+        .text em,
+        .text i {
+            font-style: italic;
+        }
+
+        .text code {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .text a {
+            color: #4cc9f0;
+            text-decoration: underline;
+        }
+
+        .text a:hover {
+            color: #6dd5fa;
+        }
+
+        .map-desc strong,
+        .map-desc b {
+            font-weight: bold;
+        }
+
+        .map-desc em,
+        .map-desc i {
+            font-style: italic;
+        }
+
+        .map-desc code {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .map-desc a {
+            color: #4cc9f0;
+            text-decoration: underline;
+        }
+
         .location-description {
             font-size: 12px;
             color: #aaa;
@@ -1358,7 +1409,7 @@ transition: all 0.3s;
             if (description) {
                 const desc = document.createElement('div');
                 desc.className = 'map-desc';
-                desc.textContent = description;
+                desc.innerHTML = formatText(description);
                 btn.appendChild(desc);
             }
             return btn;
@@ -2088,11 +2139,21 @@ transition: all 0.3s;
         }
 
         function formatText(text) {
+            if (!text) return '';
             // Заменяем все экранированные переносы строк на реальные переносы
             let normalized = text.replace(/\\n/g, '\n');
-            return normalized
-                .replace(/`([^`]*)`/g, '<em>$1</em>')
-                .replace(/\*\*([^*]*)\*\*/g, '<strong>$1</strong>');
+            // Экранируем HTML для безопасности
+            normalized = normalized.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            // Обрабатываем ссылки [текст](url) - сначала, чтобы не конфликтовать с другими форматами
+            normalized = normalized.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            // Обрабатываем моноширинный `текст`
+            normalized = normalized.replace(/`([^`]+)`/g, '<code>$1</code>');
+            // Обрабатываем жирный **текст** - сначала, чтобы не конфликтовать с курсивом
+            normalized = normalized.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            // Обрабатываем курсив *текст* (но не **текст** или уже обработанный жирный)
+            // Используем более точное регулярное выражение
+            normalized = normalized.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+            return normalized;
         }
 
         function getIllustrationHtml(nodeId) {
@@ -2495,13 +2556,14 @@ transition: all 0.3s;
                         sceneEl.appendChild(tempIllust.firstChild);
                     }
                     const textDiv = createElement('div', { className: 'text' });
-                    const paragraphs = formattedText.split('\n').filter(p => p.trim());
-                    paragraphs.forEach(p => {
-                        if (p.trim()) {
-                            const pEl = createElement('p', { textContent: p.trim() });
-                            textDiv.appendChild(pEl);
-                        }
-                    });
+                const paragraphs = formattedText.split('\n').filter(p => p.trim());
+                paragraphs.forEach(p => {
+                    if (p.trim()) {
+                        const pEl = createElement('p');
+                        pEl.innerHTML = p.trim();
+                        textDiv.appendChild(pEl);
+                    }
+                });
                     sceneEl.appendChild(textDiv);
                     sceneEl.classList.add('active');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2694,7 +2756,8 @@ opacity: 0;
                 const paragraphs = formattedText.split('\n').filter(p => p.trim());
                 paragraphs.forEach(p => {
                     if (p.trim()) {
-                        const pEl = createElement('p', { textContent: p.trim() });
+                        const pEl = createElement('p');
+                        pEl.innerHTML = p.trim();
                         mainTextDiv.appendChild(pEl);
                     }
                 });
