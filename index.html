@@ -1112,20 +1112,31 @@ location -> кликабельные элементы
 
         #loading-progress-container {
             width: 100% !important;
-            height: 8px !important;
-            background: rgba(255, 255, 255, 0.1) !important;
+            height: 12px !important;
+            background: rgba(0, 0, 0, 0.3) !important;
             border-radius: 10px !important;
             overflow: hidden !important;
             margin-top: 20px !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
         }
 
         #loading-progress-bar {
             height: 100% !important;
-            background: linear-gradient(90deg, #6a5acd 0%, #8b7ae8 100%) !important;
+            background: linear-gradient(90deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%) !important;
+            background-size: 200% 100% !important;
             border-radius: 10px !important;
             width: 0% !important;
-            transition: width 0.1s linear !important;
-            box-shadow: 0 0 10px rgba(106, 90, 205, 0.5) !important;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
+            animation: progressShine 2s linear infinite !important;
+        }
+
+        @keyframes progressShine {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         #collect-message {
@@ -2047,6 +2058,9 @@ transition: all 0.3s;
                 }
 
                 overlay.classList.add('active');
+                // Сбрасываем прогресс в начало
+                progressBar.style.width = '0%';
+                
                 const totalTime = texts.length * 2000; // 2 секунды на каждый текст
                 const progressUpdateInterval = 16; // ~60 FPS для плавной анимации
                 let startTime = Date.now();
