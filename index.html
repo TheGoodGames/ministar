@@ -2838,74 +2838,7 @@ opacity: 0;
             const choice = node.choices[choiceIndex];
             if (!choice) return;
 
-            // ✅ ПРОВЕРКА REQUIRES ПЕРЕД ПЕРЕХОДОМ
-            if (choice.requires) {
-                // Фильтруем требования, отделяя состояния от ключей
-                const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
-                
-                // Проверяем item/key требования
-                const keyRequirements = allRequirements.filter(req => {
-                    // Пропускаем state
-                    if (typeof req === 'string' && req.startsWith('state_')) {
-                        return false;
-                    }
-                    // Если это объект, проверяем наличие item или key
-                    if (typeof req === 'object' && req !== null) {
-                        return !!(req.item || req.key);
-                    }
-                    return true;
-                });
-
-                // Проверяем state требования
-                const stateRequirements = allRequirements.filter(req => {
-                    if (typeof req === 'string' && req.startsWith('state_')) {
-                        return true;
-                    }
-                    if (typeof req === 'object' && req !== null && req.state) {
-                        return true;
-                    }
-                    return false;
-                });
-
-                // Проверяем item/key требования
-                if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
-                    const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
-                    if (missingKeyMsgs.length > 0) {
-                        showCollectMessage(missingKeyMsgs.join('\n'), '🔒');
-                        return; // Блокируем переход
-                    }
-                }
-
-                // Проверяем state требования
-                if (stateRequirements.length > 0) {
-                    const missingStates = stateRequirements.filter(req => {
-                        if (typeof req === 'string') {
-                            return !hasState(req);
-                        }
-                        if (typeof req === 'object' && req !== null && req.state) {
-                            const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                            return !hasState(stateId);
-                        }
-                        return false;
-                    });
-                    if (missingStates.length > 0) {
-                        // Показываем сообщение о недостающих состояниях
-                        const stateMessages = missingStates.map(req => {
-                            if (typeof req === 'string') {
-                                return `Требуется состояние: ${req}`;
-                            }
-                            if (typeof req === 'object' && req !== null && req.state) {
-                                const stateLabel = typeof req.state === 'object' ? req.state.label : req.state;
-                                return stateLabel || `Требуется состояние: ${typeof req.state === 'object' ? req.state.id : req.state}`;
-                            }
-                            return 'Требуется состояние';
-                        });
-                        showCollectMessage(stateMessages.join('\n'), '⚠️');
-                        return; // Блокируем переход
-                    }
-                }
-            }
-
+            // ✅ ИСПРАВЛЕНО: Сначала обрабатываем dynamic_collect (чтобы добавить состояния даже если requires не выполнены)
             // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
             if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
                 console.log('🔍 Обработка dynamic_collect:', choice.dynamic_collect);
@@ -3079,7 +3012,7 @@ opacity: 0;
                 // Обрабатываем случай, когда есть только add_state без предмета
                 if (collectData && !collectItem && collectData.add_state) {
                     console.log('✅ Найден вариант только с add_state:', collectData);
-                    // Добавляем состояние
+                    // Добавляем состояние (но НЕ переходим сразу - сначала проверим requires)
                     if (typeof collectData.add_state === 'string') {
                         addState({ id: collectData.add_state });
                         console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
@@ -3087,10 +3020,9 @@ opacity: 0;
                         addState(collectData.add_state);
                         console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
                     }
-                    // Переходим к следующему узлу
-                    console.log('➡️ Переход к узлу:', nextNodeId);
-                    goToNode(nextNodeId);
-                    return;
+                    // НЕ переходим сразу - продолжим проверку requires ниже
+                    // Если requires не выполнены, покажем сообщение и заблокируем переход
+                    // Если выполнены - перейдём к следующему узлу
                 }
                 
                 if (collectData && collectItem) {
@@ -3152,6 +3084,92 @@ opacity: 0;
                     return;
                 } else {
                     console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect', collectData);
+                }
+            }
+
+            // ✅ ПРОВЕРКА REQUIRES ПОСЛЕ ОБРАБОТКИ dynamic_collect
+            // (чтобы состояния из dynamic_collect успели добавиться перед проверкой requires)
+            if (choice.requires) {
+                // Фильтруем требования, отделяя состояния от ключей
+                const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
+                
+                // Проверяем item/key требования
+                const keyRequirements = allRequirements.filter(req => {
+                    // Пропускаем state
+                    if (typeof req === 'string' && req.startsWith('state_')) {
+                        return false;
+                    }
+                    // Если это объект, проверяем наличие item или key
+                    if (typeof req === 'object' && req !== null) {
+                        return !!(req.item || req.key);
+                    }
+                    return true;
+                });
+
+                // Проверяем state требования
+                const stateRequirements = allRequirements.filter(req => {
+                    if (typeof req === 'string' && req.startsWith('state_')) {
+                        return true;
+                    }
+                    if (typeof req === 'object' && req !== null && req.state) {
+                        return true;
+                    }
+                    return false;
+                });
+
+                // Проверяем item/key требования
+                if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
+                    const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
+                    if (missingKeyMsgs.length > 0) {
+                        showCollectMessage(missingKeyMsgs.join('\n'), '🔒');
+                        return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
+                    }
+                }
+
+                // Проверяем state требования
+                if (stateRequirements.length > 0) {
+                    const missingStates = stateRequirements.filter(req => {
+                        if (typeof req === 'string') {
+                            return !hasState(req);
+                        }
+                        if (typeof req === 'object' && req !== null && req.state) {
+                            const stateId = typeof req.state === 'string' ? req.state : req.state.id;
+                            return !hasState(stateId);
+                        }
+                        return false;
+                    });
+                    if (missingStates.length > 0) {
+                        // Показываем сообщение о недостающих состояниях
+                        const stateMessages = missingStates.map(req => {
+                            if (typeof req === 'string') {
+                                return `Требуется состояние: ${req}`;
+                            }
+                            if (typeof req === 'object' && req !== null && req.state) {
+                                const stateLabel = typeof req.state === 'object' ? req.state.label : req.state;
+                                return stateLabel || `Требуется состояние: ${typeof req.state === 'object' ? req.state.id : req.state}`;
+                            }
+                            return 'Требуется состояние';
+                        });
+                        showCollectMessage(stateMessages.join('\n'), '⚠️');
+                        return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
+                    }
+                }
+            }
+
+            // Если dynamic_collect добавил только состояние (без предмета) и requires выполнены - переходим
+            if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
+                const stateOnlyVariant = choice.dynamic_collect.find(dc => {
+                    const hasItem = !!(dc.item || dc.key || dc.quest);
+                    const hasState = !!dc.add_state;
+                    return !hasItem && hasState;
+                });
+                
+                if (stateOnlyVariant) {
+                    // Если requires были, они уже проверены выше
+                    // Если requires не были или были выполнены - переходим
+                    console.log('➡️ Переход к узлу (после добавления состояния):', nextNodeId);
+                    goToNode(nextNodeId);
+                    return;
                 }
             }
 
