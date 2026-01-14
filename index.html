@@ -2048,50 +2048,45 @@ transition: all 0.3s;
 
                 overlay.classList.add('active');
                 const totalTime = texts.length * 2000; // 2 секунды на каждый текст
-                let currentTime = 0;
+                const progressUpdateInterval = 16; // ~60 FPS для плавной анимации
+                let startTime = Date.now();
                 let currentIndex = 0;
-                const progressInterval = 50; // Обновляем прогресс каждые 50мс для плавности
 
-                function updateProgress() {
-                    const progress = Math.min((currentTime / totalTime) * 100, 100);
-                    progressBar.style.width = progress + '%';
-                }
+                // Показываем первый текст сразу
+                textEl.textContent = texts[0];
 
                 // Плавное обновление прогресса
                 const progressTimer = setInterval(() => {
-                    if (currentTime < totalTime) {
-                        currentTime += progressInterval;
-                        updateProgress();
-                    } else {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min((elapsed / totalTime) * 100, 100);
+                    progressBar.style.width = progress + '%';
+                    
+                    // Если время истекло, завершаем
+                    if (elapsed >= totalTime) {
                         clearInterval(progressTimer);
-                    }
-                }, progressInterval);
-
-                function showNextText() {
-                    if (currentIndex >= texts.length) {
-                        // Загрузка завершена
-                        currentTime = totalTime;
-                        updateProgress();
-                        clearInterval(progressTimer);
+                        progressBar.style.width = '100%';
                         setTimeout(() => {
                             overlay.classList.remove('active');
                             progressBar.style.width = '0%';
                             if (callback) callback();
                             resolve();
                         }, 300);
-                        return;
                     }
+                }, progressUpdateInterval);
 
-                    // Показываем текущий текст
-                    textEl.textContent = texts[currentIndex];
-
-                    // Переходим к следующему тексту через 2 секунды
+                // Смена текстов каждые 2 секунды
+                function showNextText() {
                     currentIndex++;
-                    setTimeout(showNextText, 2000);
+                    if (currentIndex < texts.length) {
+                        textEl.textContent = texts[currentIndex];
+                        setTimeout(showNextText, 2000);
+                    }
                 }
 
-                // Начинаем показ
-                showNextText();
+                // Начинаем смену текстов через 2 секунды
+                if (texts.length > 1) {
+                    setTimeout(showNextText, 2000);
+                }
             });
         }
 
