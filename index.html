@@ -1125,12 +1125,24 @@ location -> кликабельные элементы
             }
         }
 
-        #collect-message .collect-text {
+        #collect-message .collect-label {
             color: #fff !important;
-            font-size: 22px !important;
+            font-size: 32px !important;
+            margin-bottom: 15px !important;
+            line-height: 1.4 !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+            white-space: pre-line !important;
+            max-width: 100% !important;
+        }
+
+        #collect-message .collect-text {
+            color: #e0e0e0 !important;
+            font-size: 18px !important;
             margin-bottom: 30px !important;
-            line-height: 1.8 !important;
-            font-weight: 500 !important;
+            line-height: 1.6 !important;
+            font-weight: 400 !important;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
             white-space: pre-line !important;
             max-width: 100% !important;
@@ -1220,6 +1232,7 @@ location -> кликабельные элементы
     <div id="collect-overlay">
         <div id="collect-message">
             <div class="collect-icon"></div>
+            <div class="collect-label"></div>
             <div class="collect-text"></div>
             <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
         </div>
@@ -2588,15 +2601,15 @@ transition: all 0.3s;
                     // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
                     setTimeout(() => {
                         // Формируем сообщение о получении ключа
-                        const collectMessage = node.collect.collect_message ||
-                            `Вы получили: ${node.collect.label}`;
+                        const collectMessage = node.collect.collect_message || '';
                         const collectIcon = node.collect.icon || '🔑';
+                        const collectLabel = node.collect.label || '';
                         // Показываем сообщение с переходом к следующему узлу после закрытия
                         showCollectMessage(collectMessage, collectIcon, () => {
                             if (nextAfterCollect) {
                                 showNode(nextAfterCollect);
                             }
-                        });
+                        }, collectLabel);
                     }, 600);
                 }, 320);
                 return;
@@ -3007,14 +3020,14 @@ opacity: 0;
                 };
                 saveKeys();
                 // Формируем сообщение о сборе ключа
-                const collectMessage = choice.collect.collect_message ||
-                    `Вы получили: ${choice.collect.label}`;
+                const collectMessage = choice.collect.collect_message || '';
                 const collectIcon = choice.collect.icon || '🔑';
+                const collectLabel = choice.collect.label || '';
                 // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
                 showCollectMessage(collectMessage, collectIcon, () => {
                     // После закрытия сообщения переходим к следующему узлу
                     goToNode(nextNodeId);
-                });
+                }, collectLabel);
                 return;
             }
             // ПРОВЕРКА REQUIRES для обычных переходов (без collect)
