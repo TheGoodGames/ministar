@@ -1126,8 +1126,13 @@ location -> кликабельные элементы
             background-size: 200% 100% !important;
             border-radius: 10px !important;
             width: 0% !important;
+            min-width: 0% !important;
+            max-width: 100% !important;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
             animation: progressShine 2s linear infinite !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         @keyframes progressShine {
@@ -2058,49 +2063,56 @@ transition: all 0.3s;
                 }
 
                 overlay.classList.add('active');
-                // Сбрасываем прогресс в начало
+                // Сбрасываем прогресс в начало и принудительно показываем
                 progressBar.style.width = '0%';
+                progressBar.style.display = 'block';
+                progressBar.style.visibility = 'visible';
+                progressBar.style.opacity = '1';
                 
-                const totalTime = texts.length * 2000; // 2 секунды на каждый текст
-                const progressUpdateInterval = 16; // ~60 FPS для плавной анимации
-                let startTime = Date.now();
-                let currentIndex = 0;
+                // Небольшая задержка для гарантии отрисовки
+                setTimeout(() => {
+                    const totalTime = texts.length * 2000; // 2 секунды на каждый текст
+                    const progressUpdateInterval = 16; // ~60 FPS для плавной анимации
+                    let startTime = Date.now();
+                    let currentIndex = 0;
 
-                // Показываем первый текст сразу
-                textEl.textContent = texts[0];
+                    // Показываем первый текст сразу
+                    textEl.textContent = texts[0];
 
-                // Плавное обновление прогресса
-                const progressTimer = setInterval(() => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min((elapsed / totalTime) * 100, 100);
-                    progressBar.style.width = progress + '%';
-                    
-                    // Если время истекло, завершаем
-                    if (elapsed >= totalTime) {
-                        clearInterval(progressTimer);
-                        progressBar.style.width = '100%';
-                        setTimeout(() => {
-                            overlay.classList.remove('active');
-                            progressBar.style.width = '0%';
-                            if (callback) callback();
-                            resolve();
-                        }, 300);
+                    // Плавное обновление прогресса
+                    const progressTimer = setInterval(() => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min((elapsed / totalTime) * 100, 100);
+                        progressBar.style.width = progress + '%';
+                        console.log('Прогресс:', progress + '%'); // Для отладки
+                        
+                        // Если время истекло, завершаем
+                        if (elapsed >= totalTime) {
+                            clearInterval(progressTimer);
+                            progressBar.style.width = '100%';
+                            setTimeout(() => {
+                                overlay.classList.remove('active');
+                                progressBar.style.width = '0%';
+                                if (callback) callback();
+                                resolve();
+                            }, 300);
+                        }
+                    }, progressUpdateInterval);
+
+                    // Смена текстов каждые 2 секунды
+                    function showNextText() {
+                        currentIndex++;
+                        if (currentIndex < texts.length) {
+                            textEl.textContent = texts[currentIndex];
+                            setTimeout(showNextText, 2000);
+                        }
                     }
-                }, progressUpdateInterval);
 
-                // Смена текстов каждые 2 секунды
-                function showNextText() {
-                    currentIndex++;
-                    if (currentIndex < texts.length) {
-                        textEl.textContent = texts[currentIndex];
+                    // Начинаем смену текстов через 2 секунды
+                    if (texts.length > 1) {
                         setTimeout(showNextText, 2000);
                     }
-                }
-
-                // Начинаем смену текстов через 2 секунды
-                if (texts.length > 1) {
-                    setTimeout(showNextText, 2000);
-                }
+                }, 50);
             });
         }
 
