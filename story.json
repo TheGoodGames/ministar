@@ -60,12 +60,17 @@
               "label": "Старый декодер",
               "type": "item"
             },
-            "state": {
-              "id": "state_decoder_need",
-              "label": "чтобы был декодер",
-              "type": "state"
-            },
             "message": "Вроде бы у отца был шифровальщик, надо поискать в ящике."
+          }
+        ],
+        "dynamic_collect": [
+          {
+            "add_state": {
+              "id": "state_decoder_need",
+              "label": "нужен декодер",
+              "type": "state",
+              "icon": ""
+            }
           }
         ]
       },
@@ -421,14 +426,21 @@
               "icon": ""
             },
             "add_state": {
-              "id": "state_decoder_need",
+              "id": "state_decoder_done",
               "label": "Нужен декодер",
               "type": "state",
               "icon": ""
             },
             "message": "Вы взяли старый декодер",
             "hide_after_collect": true,
-            "already_collected_message": "Ничего важного тут нет"
+            "already_collected_message": "Ничего важного тут нет",
+            "requires": {
+              "state": {
+                "id": "state_decoder_need",
+                "label": "требуется декодер",
+                "type": "state"
+              }
+            }
           }
         ]
       },
