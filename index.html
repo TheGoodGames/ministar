@@ -1186,27 +1186,42 @@ location -> кликабельные элементы
         }
 
         #collect-message .collect-icon {
-            font-size: 80px !important;
+            font-size: 80px !important; /* ⬅️ ИЗМЕНИТЬ РАЗМЕР ИКОНКИ ЗДЕСЬ (строка 1189) */
             margin-bottom: 25px !important;
             animation: pulse 1.5s ease infinite;
             line-height: 1;
         }
 
-        @keyframes pulse {
+        /* Анимация движения для лупы */
+        #collect-message .collect-icon.search-icon {
+            animation: searchMove 2s ease-in-out infinite;
+        }
 
+        @keyframes pulse {
             0%,
             100% {
                 transform: scale(1);
             }
-
             50% {
                 transform: scale(1.15);
             }
         }
 
+        @keyframes searchMove {
+            0%, 100% {
+                transform: translateX(0) rotate(0deg);
+            }
+            25% {
+                transform: translateX(-5px) rotate(-5deg);
+            }
+            75% {
+                transform: translateX(5px) rotate(5deg);
+            }
+        }
+
         #collect-message .collect-label {
             color: #fff !important;
-            font-size: 32px !important;
+            font-size: 24px !important; /* ⬅️ ИЗМЕНИТЬ РАЗМЕР ШРИФТА НАЗВАНИЯ ПРЕДМЕТА ЗДЕСЬ (строка 1209) */
             margin-bottom: 15px !important;
             line-height: 1.4 !important;
             font-weight: 700 !important;
@@ -1218,7 +1233,7 @@ location -> кликабельные элементы
 
         #collect-message .collect-text {
             color: #e0e0e0 !important;
-            font-size: 18px !important;
+            font-size: 18px !important; /* ⬅️ ИЗМЕНИТЬ РАЗМЕР ШРИФТА СООБЩЕНИЯ ЗДЕСЬ (строка 1221) */
             margin-bottom: 30px !important;
             line-height: 1.6 !important;
             font-weight: 400 !important;
@@ -2003,7 +2018,16 @@ transition: all 0.3s;
             const iconEl = overlay.querySelector('.collect-icon');
             const labelEl = overlay.querySelector('.collect-label');
             const textEl = overlay.querySelector('.collect-text');
-            if (iconEl) iconEl.textContent = icon || '🔒';
+            if (iconEl) {
+                const iconToShow = icon || '🔒';
+                iconEl.textContent = iconToShow;
+                // Добавляем класс для анимации лупы
+                if (iconToShow === '🔎') {
+                    iconEl.classList.add('search-icon');
+                } else {
+                    iconEl.classList.remove('search-icon');
+                }
+            }
             if (labelEl) {
                 if (label) {
                     labelEl.textContent = label;
@@ -3151,7 +3175,7 @@ opacity: 0;
                             const message = collectedVariant.already_collected_message ||
                                 choice.already_collected_message ||
                                 "Здесь больше ничего нет.";
-                            const icon = (collectedVariant.item || collectedVariant.key || collectedVariant.quest)?.icon || '🔍';
+                            const icon = (collectedVariant.item || collectedVariant.key || collectedVariant.quest)?.icon || '🔎';
                             showCollectMessage(message, icon);
                             return;
                         }
@@ -3381,7 +3405,7 @@ opacity: 0;
                     const repeatMsg = choice.collect.already_collected_message ||
                         choice.already_collected_message ||
                         "Здесь больше ничего нет.";
-                    showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
+                    showCollectMessage(repeatMsg, choice.collect.icon || '🔎');
                     return;
                 }
                 // 2. Если есть requires и НЕТ ключа - блокируем переход
