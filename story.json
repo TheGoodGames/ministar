@@ -65,6 +65,7 @@
         ],
         "dynamic_collect": [
           {
+            "default": true,
             "add_state": {
               "id": "state_decoder_need",
               "label": "нужен декодер",
