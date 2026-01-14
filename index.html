@@ -2978,11 +2978,6 @@ opacity: 0;
             const choice = node.choices[choiceIndex];
             if (!choice) return;
 
-            // === ЭКРАН ЗАГРУЗКИ (если указан) ===
-            if (choice.loading_screen && Array.isArray(choice.loading_screen) && choice.loading_screen.length > 0) {
-                await showLoadingScreen(choice.loading_screen, null);
-            }
-
             // ✅ ИСПРАВЛЕНО: Сначала обрабатываем dynamic_collect (чтобы добавить состояния даже если requires не выполнены)
             // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
             if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
@@ -3191,41 +3186,51 @@ opacity: 0;
                     
                     console.log('📦 Показываем сообщение о сборе:', itemLabel, messageText, messageIcon);
                     
-                    // Собираем предмет и показываем сообщение (message, icon, callback, label)
-                    showCollectMessage(messageText, messageIcon, () => {
-                        console.log('💾 Сохраняем предмет в инвентарь:', collectItem);
-                        // Сохраняем предмет в инвентарь
-                        collectedKeys[collectItem.id] = {
-                            label: collectItem.label,
-                            type: collectItem.type || (itemType === 'key' ? 'regular' : 'regular'),
-                            icon: collectItem.icon
-                        };
-                        saveKeys();
-                        console.log(`✅ Собран предмет: ${collectItem.id} - ${collectItem.label}`);
+                    // Функция для показа сообщения о сборе (после загрузки, если есть)
+                    const showCollectMessageAfterLoading = () => {
+                        showCollectMessage(messageText, messageIcon, () => {
+                            console.log('💾 Сохраняем предмет в инвентарь:', collectItem);
+                            // Сохраняем предмет в инвентарь
+                            collectedKeys[collectItem.id] = {
+                                label: collectItem.label,
+                                type: collectItem.type || (itemType === 'key' ? 'regular' : 'regular'),
+                                icon: collectItem.icon
+                            };
+                            saveKeys();
+                            console.log(`✅ Собран предмет: ${collectItem.id} - ${collectItem.label}`);
 
-                        // Добавляем состояние, если указано
-                        if (collectData.add_state) {
-                            if (typeof collectData.add_state === 'string') {
-                                // Если add_state - это строка (ID состояния)
-                                addState({ id: collectData.add_state });
-                                console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
-                            } else if (typeof collectData.add_state === 'object') {
-                                // Если add_state - это объект с данными состояния
-                                addState(collectData.add_state);
-                                console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
+                            // Добавляем состояние, если указано
+                            if (collectData.add_state) {
+                                if (typeof collectData.add_state === 'string') {
+                                    // Если add_state - это строка (ID состояния)
+                                    addState({ id: collectData.add_state });
+                                    console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
+                                } else if (typeof collectData.add_state === 'object') {
+                                    // Если add_state - это объект с данными состояния
+                                    addState(collectData.add_state);
+                                    console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
+                                }
                             }
-                        }
 
-                        // Если нужно скрыть этот выбор после сбора, сохраняем это состояние
-                        if (collectData.hide_after_collect) {
-                            console.log('🔒 Выбор будет скрыт после сбора');
-                            // Логика скрытия будет обработана при следующем посещении узла
-                        }
+                            // Если нужно скрыть этот выбор после сбора, сохраняем это состояние
+                            if (collectData.hide_after_collect) {
+                                console.log('🔒 Выбор будет скрыт после сбора');
+                                // Логика скрытия будет обработана при следующем посещении узла
+                            }
 
-                        // Переходим к следующему узлу
-                        console.log('➡️ Переход к узлу:', nextNodeId);
-                        goToNode(nextNodeId);
-                    }, itemLabel);
+                            // Переходим к следующему узлу
+                            console.log('➡️ Переход к узлу:', nextNodeId);
+                            goToNode(nextNodeId);
+                        }, itemLabel);
+                    };
+
+                    // === ЭКРАН ЗАГРУЗКИ (если указан для этого предмета) ===
+                    if (collectData.loading_screen && Array.isArray(collectData.loading_screen) && collectData.loading_screen.length > 0) {
+                        await showLoadingScreen(collectData.loading_screen, showCollectMessageAfterLoading);
+                    } else {
+                        // Если нет загрузки, сразу показываем сообщение
+                        showCollectMessageAfterLoading();
+                    }
                     return;
                 } else {
                     console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect', collectData);
