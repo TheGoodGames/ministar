@@ -1066,6 +1066,68 @@ location -> кликабельные элементы
             display: flex !important;
         }
 
+        /* === ЭКРАН ЗАГРУЗКИ === */
+        #loading-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.7) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            display: none !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 9999 !important;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #loading-overlay.active {
+            display: flex !important;
+        }
+
+        #loading-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+            padding: 40px 50px !important;
+            border-radius: 20px !important;
+            text-align: center !important;
+            max-width: 500px !important;
+            width: 90% !important;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7) !important;
+            border: 2px solid rgba(106, 90, 205, 0.5) !important;
+            animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #loading-text {
+            font-size: 20px !important;
+            color: #e8e6f6 !important;
+            margin-bottom: 30px !important;
+            min-height: 60px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            line-height: 1.5 !important;
+        }
+
+        #loading-progress-container {
+            width: 100% !important;
+            height: 8px !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            overflow: hidden !important;
+            margin-top: 20px !important;
+        }
+
+        #loading-progress-bar {
+            height: 100% !important;
+            background: linear-gradient(90deg, #6a5acd 0%, #8b7ae8 100%) !important;
+            border-radius: 10px !important;
+            width: 0% !important;
+            transition: width 0.1s linear !important;
+            box-shadow: 0 0 10px rgba(106, 90, 205, 0.5) !important;
+        }
+
         #collect-message {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
             padding: 50px 40px !important;
@@ -1235,6 +1297,15 @@ location -> кликабельные элементы
             <div class="collect-label"></div>
             <div class="collect-text"></div>
             <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
+        </div>
+    </div>
+    <!-- === ЭКРАН ЗАГРУЗКИ === -->
+    <div id="loading-overlay">
+        <div id="loading-content">
+            <div id="loading-text"></div>
+            <div id="loading-progress-container">
+                <div id="loading-progress-bar"></div>
+            </div>
         </div>
     </div>
     <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
@@ -1953,6 +2024,75 @@ transition: all 0.3s;
                 overlay.style.display = 'none';
                 overlay.onclick = null;
             }
+        }
+
+        // === ФУНКЦИЯ ПОКАЗА ЭКРАНА ЗАГРУЗКИ ===
+        function showLoadingScreen(texts, callback) {
+            return new Promise((resolve) => {
+                if (!texts || texts.length === 0) {
+                    if (callback) callback();
+                    resolve();
+                    return;
+                }
+
+                const overlay = document.getElementById('loading-overlay');
+                const textEl = document.getElementById('loading-text');
+                const progressBar = document.getElementById('loading-progress-bar');
+                
+                if (!overlay || !textEl || !progressBar) {
+                    console.error('Элементы загрузки не найдены!');
+                    if (callback) callback();
+                    resolve();
+                    return;
+                }
+
+                overlay.classList.add('active');
+                const totalTime = texts.length * 2000; // 2 секунды на каждый текст
+                let currentTime = 0;
+                let currentIndex = 0;
+                const progressInterval = 50; // Обновляем прогресс каждые 50мс для плавности
+
+                function updateProgress() {
+                    const progress = Math.min((currentTime / totalTime) * 100, 100);
+                    progressBar.style.width = progress + '%';
+                }
+
+                // Плавное обновление прогресса
+                const progressTimer = setInterval(() => {
+                    if (currentTime < totalTime) {
+                        currentTime += progressInterval;
+                        updateProgress();
+                    } else {
+                        clearInterval(progressTimer);
+                    }
+                }, progressInterval);
+
+                function showNextText() {
+                    if (currentIndex >= texts.length) {
+                        // Загрузка завершена
+                        currentTime = totalTime;
+                        updateProgress();
+                        clearInterval(progressTimer);
+                        setTimeout(() => {
+                            overlay.classList.remove('active');
+                            progressBar.style.width = '0%';
+                            if (callback) callback();
+                            resolve();
+                        }, 300);
+                        return;
+                    }
+
+                    // Показываем текущий текст
+                    textEl.textContent = texts[currentIndex];
+
+                    // Переходим к следующему тексту через 2 секунды
+                    currentIndex++;
+                    setTimeout(showNextText, 2000);
+                }
+
+                // Начинаем показ
+                showNextText();
+            });
         }
 
         // === СИСТЕМА СОСТОЯНИЙ ===
@@ -2827,7 +2967,7 @@ opacity: 0;
         }
 
         // ✅ ИСПРАВЛЕНО: Правильная обработка выбора с учетом текущего узла
-        function handleChoice(nextNodeId, choiceIndex = 0) {
+        async function handleChoice(nextNodeId, choiceIndex = 0) {
             // ✅ КРИТИЧЕСКИ ВАЖНО: Проверяем, что currentNodeId установлен
             if (!currentNodeId || !story[currentNodeId]) {
                 console.error('Текущий узел не определен');
@@ -2837,6 +2977,11 @@ opacity: 0;
             if (!node || !node.choices) return;
             const choice = node.choices[choiceIndex];
             if (!choice) return;
+
+            // === ЭКРАН ЗАГРУЗКИ (если указан) ===
+            if (choice.loading_screen && Array.isArray(choice.loading_screen) && choice.loading_screen.length > 0) {
+                await showLoadingScreen(choice.loading_screen, null);
+            }
 
             // ✅ ИСПРАВЛЕНО: Сначала обрабатываем dynamic_collect (чтобы добавить состояния даже если requires не выполнены)
             // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
