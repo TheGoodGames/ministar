@@ -1,3669 +1,539 @@
-<!DOCTYPE html>
-<html lang="ru">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lin: Drake Clipper</title>
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Google Fonts: Merriweather -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0c0b14;
-            --fg: #e8e6f6;
-            --accent: #6a5acd;
-            --success: #4caf50;
-            --deadend: #f44336;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--fg);
-            font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-            font-size: 19px;
-            padding: 20px;
-            min-height: 100vh;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            -webkit-font-smoothing: antialiased;
-            text-rendering: optimizeLegibility;
-        }
-
-        #app {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        #scene {
-            opacity: 0;
-            transform: translateY(15px);
-            transition: opacity 0.45s ease, transform 0.45s ease;
-            text-align: left;
-        }
-
-        #scene.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .illustration {
-            width: 100%;
-            border-radius: 14px;
-            margin: 24px 0;
-            overflow: hidden;
-            background: #141224;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .illustration img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .illustration .fallback {
-            color: #777;
-            font-style: italic;
-            text-align: center;
-            padding: 24px;
-            font-family: system-ui, sans-serif;
-        }
-
-        .text {
-            line-height: 1.78;
-            margin: 26px 0;
-            text-align: justify;
-            hyphens: auto;
-        }
-
-        .text p {
-            margin-bottom: 22px;
-            text-indent: 24px;
-        }
-
-        .choices {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin: 30px 0 24px;
-        }
-
-        .choice-btn {
-            padding: 16px 20px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-family: 'Merriweather', system-ui, sans-serif;
-            font-size: 17px;
-            text-align: left;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.12s;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        .choice-btn:hover {
-            background: #5a4ab0;
-        }
-
-        .choice-btn:active {
-            transform: scale(0.992);
-        }
-
-        .deadend .choice-btn {
-            background: var(--deadend);
-        }
-
-        .deadend .choice-btn:hover {
-            background: #d32f2f;
-        }
-
-        .ending-success {
-            border-left: 4px solid var(--success);
-            padding-left: 16px;
-        }
-
-        .loading {
-            padding: 40px;
-            color: #777;
-            text-align: center;
-            font-family: system-ui, sans-serif;
-        }
-
-        .restart-btn {
-            background: #ff9800;
-        }
-
-        .restart-btn:hover {
-            background: #f57c00;
-        }
-
-        #audio-control {
-            position: fixed;
-            bottom: 16px;
-            right: 16px;
-            background: rgba(106, 90, 205, 0.25);
-            backdrop-filter: blur(4px);
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            z-index: 100;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Стиль для экрана броска кубиков */
-        #dice-screen {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-
-        #dice-screen .dice {
-            font-size: 100px;
-            margin-bottom: 30px;
-        }
-
-        #dice-screen .result {
-            font-size: 24px;
-            margin: 20px 0;
-        }
-
-        #dice-screen button {
-            width: 200px;
-            margin: 0 auto;
-        }
-
-        /* === ИНВЕНТАРЬ === */
-        #inventory-screen {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            z-index: 1000;
-            overflow-y: auto;
-            padding: 20px 15px;
-            text-align: center;
-        }
-
-        #inventory-screen h2 {
-            margin-bottom: 16px;
-            font-size: 24px;
-        }
-
-        /* Аккордеон для инвентаря */
-        .inventory-accordion {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 0 10px;
-            box-sizing: border-box;
-        }
-
-        .inventory-group {
-            margin: 0;
-        }
-
-        .inventory-item {
-            width: 100%;
-            border: none;
-            border-radius: 10px;
-            padding: 8px 12px;
-            margin: 4px 0;
-            text-align: left;
-            background: rgba(86, 78, 132, 0.55);
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .inventory-item:hover {
-            filter: brightness(1.05);
-        }
-
-        .inventory-item.level-0 {
-            padding-left: 12px;
-            background: rgba(86, 78, 132, 0.55);
-            font-weight: 600;
-        }
-
-        .inventory-item.level-1 {
-            padding-left: 24px;
-            background: rgba(70, 95, 145, 0.48);
-            font-size: 15px;
-        }
-
-        .inventory-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .inventory-icon {
-            width: 20px;
-            text-align: center;
-            font-size: 18px;
-        }
-
-        .inventory-label {
-            flex: 1;
-            line-height: 1.2;
-        }
-
-        .inventory-arrow {
-            width: 18px;
-            text-align: right;
-            opacity: 0.95;
-            font-size: 16px;
-        }
-
-        .inventory-children {
-            display: none;
-            margin: 0;
-        }
-
-        .inventory-group.open > .inventory-children {
-            display: block;
-        }
-
-        .inventory-empty {
-            text-align: center;
-            color: #aaa;
-            padding: 20px;
-            font-size: 15px;
-        }
-
-        #code-screen {
-            display: none;
-            text-align: center;
-            padding: 40px 20px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        #code-screen h2 {
-            font-size: 28px;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .code-input-container {
-            background: white;
-            color: black;
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-            margin: 20px 0;
-        }
-
-        #code-input {
-            width: 100%;
-            padding: 18px;
-            font-size: 32px;
-            font-weight: bold;
-            text-align: center;
-            border: 3px solid #333;
-            border-radius: 12px;
-            margin: 20px 0;
-            background: #f8f8f8;
-            box-sizing: border-box;
-            letter-spacing: 4px;
-        }
-
-        #code-input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.3);
-        }
-
-        #submit-code {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 16px 32px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: all 0.2s;
-            width: 100%;
-        }
-
-        #submit-code:hover {
-            background: #5a4ab0;
-            transform: translateY(-2px);
-        }
-
-        #code-error {
-            color: var(--deadend);
-            min-height: 24px;
-            margin-top: 12px;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .code-hint {
-            color: #666;
-            margin-top: 15px;
-            font-style: italic;
-            font-size: 18px;
-        }
-
-        .keys-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 16px;
-            max-width: 450px;
-            margin: 0 auto;
-        }
-
-        .key-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .key-icon {
-            font-size: 48px;
-            margin-bottom: 6px;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-        }
-
-        .key-label {
-            background: white;
-            color: black;
-            font-size: 12px;
-            font-family: 'Merriweather', sans-serif;
-            padding: 4px 6px;
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        .inventory-close {
-            margin-top: 28px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-size: 17px;
-            cursor: pointer;
-        }
-
-        .inventory-close:hover {
-            background: #5a4ab0;
-        }
-
-        /* === АНИМАЦИЯ ПОЛУЧЕНИЯ КЛЮЧА === */
-        #key-animation {
-            display: none;
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        #key-animation .icon {
-            font-size: 120px;
-            margin-bottom: 20px;
-            opacity: 0;
-            animation: keyPop 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        #key-animation .label {
-            font-size: 22px;
-            margin-bottom: 30px;
-            opacity: 0;
-            animation: fadeIn 0.8s 0.4s forwards;
-        }
-
-        @keyframes keyPop {
-            0% {
-                transform: scale(0.2) rotate(-30deg);
-                opacity: 0;
-            }
-
-            70% {
-                transform: scale(1.2) rotate(5deg);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1) rotate(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
-        }
-
-        /* 🔔 NOTIFICATION SYSTEM */
-        .notification-banner {
-            background: rgba(106, 90, 205, 0.15);
-            border-left: 3px solid var(--accent);
-            padding: 12px 15px;
-            border-radius: 0 8px 8px 0;
-            margin: 15px 0;
-            font-size: 15px;
-            position: relative;
-        }
-
-        .notification-banner a {
-            color: var(--accent);
-            text-decoration: underline;
-        }
-
-        .notification-banner .close-btn {
-            position: absolute;
-            right: 8px;
-            top: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            color: white;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* === КАРТА МИРА === */
-        #map-screen {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            z-index: 1000;
-            overflow-y: auto;
-            padding: 30px 20px;
-            text-align: center;
-        }
-
-        .locations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 20px;
-            max-width: 500px;
-            margin: 20px auto;
-        }
-
-        .location-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(106, 90, 205, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-            -webkit-tap-highlight-color: rgba(106, 90, 205, 0.3);
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .location-item:hover {
-            transform: translateY(-3px);
-            border-color: var(--accent);
-            background: rgba(106, 90, 205, 0.2);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .location-item:active {
-            transform: translateY(1px);
-        }
-
-        .location-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-        }
-
-        .location-name {
-            font-family: 'Merriweather', sans-serif;
-            font-size: 16px;
-            text-align: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        /* Стили для форматированного текста */
-        .text strong,
-        .text b {
-            font-weight: bold;
-        }
-
-        .text em,
-        .text i {
-            font-style: italic;
-        }
-
-        .text code {
-            font-family: 'Courier New', monospace;
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-
-        .text a {
-            color: #4cc9f0;
-            text-decoration: underline;
-        }
-
-        .text a:hover {
-            color: #6dd5fa;
-        }
-
-        .map-desc strong,
-        .map-desc b {
-            font-weight: bold;
-        }
-
-        .map-desc em,
-        .map-desc i {
-            font-style: italic;
-        }
-
-        .map-desc code {
-            font-family: 'Courier New', monospace;
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-
-        .map-desc a {
-            color: #4cc9f0;
-            text-decoration: underline;
-        }
-
-        .location-description {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 4px;
-        }
-
-        .current-location {
-            border-color: var(--success);
-            background: rgba(76, 175, 80, 0.2);
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .location-unvisited {
-            opacity: 0.6;
-            filter: grayscale(0.5);
-        }
-
-        .location-unvisited:hover {
-            opacity: 1;
-            filter: grayscale(0);
-        }
-
-        .map-info {
-            color: #aaa;
-            font-size: 15px;
-            margin-top: 15px;
-            max-width: 450px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .map-title {
-            text-align: center;
-            margin: 12px 0 10px;
-            font-size: 28px;
-            letter-spacing: 0.2px;
-        }
-
-        .category-title {
-            margin: 30px 0 15px;
-            color: #aaa;
-            text-align: left;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        /* Адаптация для мобильных устройств */
-        @media (max-width: 480px) {
-            .notification-banner {
-                margin: 15px 10px !important;
-                border-radius: 12px !important;
-                border-left: none !important;
-                border-top: 3px solid var(--accent) !important;
-                padding: 18px 15px !important;
-                font-size: 17px !important;
-                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
-            }
-
-            .notification-banner a {
-                display: block;
-                margin-top: 8px;
-                font-weight: 600;
-            }
-
-            .locations-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 15px;
-            }
-
-            .location-item {
-                padding: 12px;
-            }
-
-            .location-icon {
-                font-size: 40px;
-            }
-
-            .location-name {
-                font-size: 15px;
-            }
-        }
-
-        /* iOS-specific fixes */
-        .notification-banner-ios {
-            position: sticky;
-            top: 70px;
-            background: rgba(40, 35, 70, 0.85) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(106, 90, 205, 0.3);
-            z-index: 10000 !important;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            width: 100% !important;
-            left: 0 !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-        }
-
-        .ios-only-warning {
-            background: rgba(255, 235, 59, 0.15);
-            border-left: 3px solid #ffc107;
-            padding: 14px 16px;
-            border-radius: 0 8px 8px 0;
-            margin: 12px 0 18px 15px;
-            font-size: 15px;
-            display: none;
-        }
-
-        @media (max-width: 480px) {
-            .ios-only-warning {
-                display: block;
-                margin: 12px 10px !important;
-                border-radius: 12px !important;
-                border-left: none !important;
-                border-top: 3px solid #ffc107 !important;
-            }
-        }
-
-        /* END NOTIFICATION SYSTEM */
-        /* ============================================
-ПОЛНОЭКРАННЫЙ ПОКАЗ NPC (тап для продолжения)
-============================================ */
-        #npc-screen {
-            pointer-events: none;
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        #npc-screen.active {
-            pointer-events: auto;
-            display: flex;
-            animation: npcFadeIn 0.25s ease-out;
-        }
-
-        @keyframes npcFadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        #npc-screen.fade-out {
-            animation: npcFadeOut 0.25s ease-out forwards;
-        }
-
-        @keyframes npcFadeOut {
-            from {
-                opacity: 1;
-            }
-
-            to {
-                opacity: 0;
-            }
-        }
-
-        #npc-image {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: 100%;
-            object-fit: contain;
-            object-position: center;
-        }
-
-        /* UI поверх картинки */
-        #npc-overlay-ui {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            /* кликается весь экран */
-        }
-
-        /* Облачко текста (комикс) */
-        #npc-speech {
-            position: absolute;
-            left: 50%;
-            top: 56%;
-            transform: translate(-50%, -50%);
-            width: min(860px, 92vw);
-            background: rgba(255, 255, 255, 0.95);
-            color: #0b0f14;
-            border: 3px solid rgba(15, 23, 36, 0.95);
-            border-radius: 28px;
-            padding: 18px 20px;
-            font-size: 18px;
-            line-height: 1.25;
-            text-align: left;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-            white-space: pre-wrap;
-        }
-
-        #npc-speech:empty {
-            display: none;
-        }
-
-        #npc-speech::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            bottom: -18px;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 16px solid transparent;
-            border-right: 16px solid transparent;
-            border-top: 18px solid rgba(255, 255, 255, 0.95);
-        }
-
-        #npc-speech::before {
-            content: "";
-            position: absolute;
-            left: 50%;
-            bottom: -24px;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 19px solid transparent;
-            border-right: 19px solid transparent;
-            border-top: 22px solid rgba(15, 23, 36, 0.95);
-        }
-
-        /* Подсказка "Продолжить" */
-        #npc-continue {
-            position: absolute;
-            left: 50%;
-            bottom: 52px;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            color: rgba(255, 255, 255, 0.92);
-            text-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
-            font-size: 28px;
-            letter-spacing: 0.2px;
-        }
-
-        /* Пока картинка грузится — прячем подсказку продолжения */
-        #npc-screen:not(.ready) #npc-continue {
-            opacity: 0;
-        }
-
-        .npc-continue-arrow {
-            font-size: 34px;
-            line-height: 1;
-            animation: npcArrowBlink 1.05s ease-in-out infinite;
-        }
-
-        @keyframes npcArrowBlink {
-            0% {
-                opacity: 0.25;
-                transform: translateY(6px);
-            }
-
-            50% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-            100% {
-                opacity: 0.25;
-                transform: translateY(6px);
-            }
-        }
-
-        /* Для телефонов - картинка на весь экран */
-        @media (max-width: 768px) {
-            #npc-image {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            #npc-speech {
-                top: 60%;
-                font-size: 21px;
-                width: 92vw;
-            }
-
-            #npc-continue {
-                bottom: 64px;
-                font-size: 30px;
-            }
-        }
-
-        /* ============================================
-КАРТА МИРА (аккордеон)
-category_name -> раскрывающиеся секции
-subcategory_name -> под-секции
-location -> кликабельные элементы
-============================================ */
-        .map-title {
-            text-align: center;
-            margin: 16px 0 12px;
-            font-size: 34px;
-            letter-spacing: 0.3px;
-        }
-
-        .map-accordion {
-            width: 100%;
-            max-width: 980px;
-            margin: 0 auto;
-            padding: 0 10px 14px;
-            box-sizing: border-box;
-        }
-
-        .map-item {
-            width: 100%;
-            border: none;
-            border-radius: 14px;
-            padding: 10px 14px;
-            margin: 6px 0;
-            text-align: left;
-            background: rgba(86, 78, 132, 0.55);
-            color: #fff;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .map-item:hover {
-            filter: brightness(1.05);
-        }
-
-        .map-item.level-0 {
-            padding-left: 14px;
-            background: rgba(86, 78, 132, 0.55);
-        }
-
-        .map-item.level-1 {
-            padding-left: 28px;
-            background: rgba(70, 95, 145, 0.48);
-            font-size: 17px;
-        }
-
-        .map-item.level-2 {
-            padding-left: 44px;
-            background: rgba(60, 105, 155, 0.42);
-            font-size: 16px;
-        }
-
-        .map-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .map-icon {
-            width: 24px;
-            text-align: center;
-        }
-
-        .map-label {
-            flex: 1;
-            line-height: 1.15;
-        }
-
-        .map-arrow {
-            width: 22px;
-            text-align: right;
-            opacity: 0.95;
-            font-size: 20px;
-        }
-
-        .map-desc {
-            margin-top: 4px;
-            opacity: 0.88;
-            font-size: 14px;
-            line-height: 1.3;
-        }
-
-        .map-group {
-            margin: 0;
-        }
-
-        .map-children {
-            display: none;
-            margin: 0;
-        }
-
-        .map-group.open>.map-children {
-            display: block;
-        }
-
-        /* Активная локация на карте */
-        .map-item.active-location {
-            background: rgba(40, 170, 90, 0.65) !important;
-            border: 2px solid rgba(140, 255, 190, 0.75);
-        }
-
-        /* Красивая кнопка "Назад к игре" */
-        .back-button {
-            display: block;
-            width: calc(100% - 24px);
-            max-width: 540px;
-            margin: 20px auto;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 16px;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .back-button:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.35);
-            transform: scale(1.02);
-        }
-
-        /* Jump Points - специальное оформление */
-        .map-group.jump-points {
-            border-left: 3px solid rgba(100, 200, 255, 0.6);
-        }
-
-        .map-item.jump-point {
-            background: rgba(100, 150, 255, 0.35) !important;
-        }
-
-        /* === МОДАЛЬНОЕ ОКНО ДЛЯ СООБЩЕНИЙ === */
-        #collect-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0, 0, 0, 0.85) !important;
-            display: none !important;
-            justify-content: center !important;
-            align-items: center !important;
-            z-index: 10000 !important;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            animation: fadeIn 0.3s ease;
-            cursor: pointer;
-        }
-
-        #collect-overlay.active {
-            display: flex !important;
-        }
-
-        /* === ЭКРАН ЗАГРУЗКИ === */
-        #loading-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0, 0, 0, 0.7) !important;
-            backdrop-filter: blur(8px) !important;
-            -webkit-backdrop-filter: blur(8px) !important;
-            display: none !important;
-            justify-content: center !important;
-            align-items: center !important;
-            z-index: 9999 !important;
-            animation: fadeIn 0.3s ease;
-        }
-
-        #loading-overlay.active {
-            display: flex !important;
-        }
-
-        #loading-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-            padding: 40px 50px !important;
-            border-radius: 20px !important;
-            text-align: center !important;
-            max-width: 500px !important;
-            width: 90% !important;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7) !important;
-            border: 2px solid rgba(106, 90, 205, 0.5) !important;
-            animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        #loading-text {
-            font-size: 20px !important;
-            color: #e8e6f6 !important;
-            margin-bottom: 30px !important;
-            min-height: 60px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            line-height: 1.5 !important;
-        }
-
-        #loading-progress-container {
-            width: 100% !important;
-            height: 12px !important;
-            background: rgba(0, 0, 0, 0.3) !important;
-            border-radius: 10px !important;
-            overflow: hidden !important;
-            margin-top: 20px !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        }
-
-        #loading-progress-bar {
-            height: 100% !important;
-            background: linear-gradient(90deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%) !important;
-            background-size: 200% 100% !important;
-            border-radius: 10px !important;
-            width: 0% !important;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
-            animation: progressShine 2s linear infinite !important;
-        }
-
-        @keyframes progressShine {
-            0% {
-                background-position: 200% 0;
-            }
-            100% {
-                background-position: -200% 0;
-            }
-        }
-
-        #collect-message {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-            padding: 50px 40px !important;
-            border-radius: 25px !important;
-            text-align: center !important;
-            max-width: 500px !important;
-            min-height: 250px !important;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7) !important;
-            border: 3px solid rgba(106, 90, 205, 0.5) !important;
-            animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: center !important;
-            position: relative !important;
-            margin: 20px;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes scaleIn {
-            from {
-                transform: scale(0.7);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        #collect-message .collect-icon {
-            font-size: 80px !important;
-            margin-bottom: 25px !important;
-            animation: pulse 1.5s ease infinite;
-            line-height: 1;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.15);
-            }
-        }
-
-        #collect-message .collect-label {
-            color: #fff !important;
-            font-size: 32px !important;
-            margin-bottom: 15px !important;
-            line-height: 1.4 !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
-            white-space: pre-line !important;
-            max-width: 100% !important;
-        }
-
-        #collect-message .collect-text {
-            color: #e0e0e0 !important;
-            font-size: 18px !important;
-            margin-bottom: 30px !important;
-            line-height: 1.6 !important;
-            font-weight: 400 !important;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
-            white-space: pre-line !important;
-            max-width: 100% !important;
-        }
-
-        #collect-message .collect-hint {
-            color: #888 !important;
-            font-size: 14px !important;
-            font-style: italic !important;
-            margin-top: 10px !important;
-            opacity: 0.7 !important;
-        }
-
-        @media (max-width: 600px) {
-            #collect-message {
-                max-width: 90% !important;
-                padding: 40px 30px !important;
-            }
-
-            #collect-message .collect-icon {
-                font-size: 60px !important;
-            }
-
-            #collect-message .collect-text {
-                font-size: 18px !important;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <!-- Полноэкранный показ NPC -->
-    <div id="npc-screen" role="button" aria-label="Продолжить" title="Нажмите, чтобы продолжить">
-        <img id="npc-image" src="" alt="NPC">
-        <div id="npc-overlay-ui">
-            <div id="npc-loader" aria-hidden="true"></div>
-            <div id="npc-speech" aria-live="polite"></div>
-            <div id="npc-continue">
-                <div class="npc-continue-arrow">^</div>
-                <div class="npc-continue-label">Продолжить</div>
-            </div>
-        </div>
-    </div>
-    <div id="app">
-        <div id="scene" class="loading">Загрузка вселенной…</div>
-    </div>
-    <button id="audio-control" onclick="toggleAudio()">🔇</button>
-    <!-- Экран ввода кода -->
-    <div id="code-screen">
-        <h2 id="code-title">Введите секретный код</h2>
-        <div class="code-input-container">
-            <input type="text" id="code-input" placeholder="____" maxlength="10">
-            <button id="submit-code">Подтвердить</button>
-            <div id="code-error"></div>
-        </div>
-        <div class="code-hint" id="code-hint">Код состоит из 4 цифр</div>
-        <div id="code-text" class="story-text" style="margin-top: 20px;"></div>
-        <div id="code-choices" class="choices" style="margin-top: 20px;"></div>
-    </div>
-    <!-- Экран броска кубиков -->
-    <div id="dice-screen">
-        <div class="dice">🎲 🎲</div>
-        <div class="result">Бросьте кости, чтобы определить исход.</div>
-        <button class="choice-btn" id="roll-button">Бросить кости</button>
-    </div>
-    <!-- Экран инвентаря -->
-    <div id="inventory-screen">
-        <h2>🎒 Инвентарь</h2>
-        <div id="inventory-accordion" class="inventory-accordion"></div>
-        <button class="inventory-close" onclick="closeInventory()">← Назад к игре</button>
-    </div>
-    <!-- Экран карты мира -->
-    <div id="map-screen" class="screen">
-        <h2 class="map-title">🗺️ Карта мира</h2>
-        <div id="map-accordion" class="map-accordion"></div>
-        <button class="back-button" onclick="closeMap()">← Назад к игре</button>
-    </div>
-    <!-- Экран анимации ключа -->
-    <div id="key-animation">
-        <div class="icon" id="anim-key-icon">🗝️</div>
-        <div class="label" id="anim-key-label">Новый ключ!</div>
-    </div>
-    <audio id="ambient-audio" loop preload="auto">
-        <source src="audio/ambient-loop.mp3" type="audio/mpeg">
-    </audio>
-    <!-- Всплывающее окно для сообщений -->
-    <div id="collect-overlay">
-        <div id="collect-message">
-            <div class="collect-icon"></div>
-            <div class="collect-label"></div>
-            <div class="collect-text"></div>
-            <div class="collect-hint">Нажмите в любое место, чтобы продолжить</div>
-        </div>
-    </div>
-    <!-- === ЭКРАН ЗАГРУЗКИ === -->
-    <div id="loading-overlay">
-        <div id="loading-content">
-            <div id="loading-text"></div>
-            <div id="loading-progress-container">
-                <div id="loading-progress-bar"></div>
-            </div>
-        </div>
-    </div>
-    <!-- === КНОПКА СБРОСА ПРОГРЕССА (ОТЛАДКА) === -->
-    <div id="resetButton" style="
-position: fixed;
-bottom: 20px;
-left: 50%;
-transform: translateX(-50%);
-z-index: 10000;
-text-align: center;
-">
-        <button onclick="resetProgress()" style="
-background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
-color: white;
-border: 2px solid #ff5252;
-border-radius: 8px;
-padding: 12px 24px;
-font-size: 14px;
-font-weight: bold;
-cursor: pointer;
-box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
-transition: all 0.3s;
-" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(211, 47, 47, 0.6)'"
-            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211, 47, 47, 0.4)'">
-            🔄 СБРОСИТЬ ВСЁ (отладка)
-        </button>
-    </div>
-    <script>
-        // ============================================
-        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С DOM
-        // ============================================
-        function createElement(tag, options = {}) {
-            const element = document.createElement(tag);
-            if (options.className) element.className = options.className;
-            if (options.id) element.id = options.id;
-            if (options.textContent) element.textContent = options.textContent;
-            if (options.style) Object.assign(element.style, options.style);
-            if (options.onclick) element.onclick = options.onclick;
-            if (options.onmouseover) element.onmouseover = options.onmouseover;
-            if (options.onmouseout) element.onmouseout = options.onmouseout;
-            if (options.onerror) element.onerror = options.onerror;
-            if (options.attributes) {
-                Object.entries(options.attributes).forEach(([key, value]) => {
-                    element.setAttribute(key, value);
-                });
-            }
-            if (options.children) {
-                options.children.forEach(child => {
-                    if (typeof child === 'string') {
-                        element.appendChild(document.createTextNode(child));
-                    } else if (child) {
-                        element.appendChild(child);
-                    }
-                });
-            }
-            return element;
-        }
-
-        function clearElement(element) {
-            if (!element) return;
-            while (element.firstChild) {
-                element.removeChild(element.firstChild);
-            }
-        }
-
-        function setHTMLContent(element, htmlString) {
-            if (!element || !htmlString) return;
-            const temp = document.createElement('div');
-            temp.innerHTML = htmlString;
-            while (temp.firstChild) {
-                element.appendChild(temp.firstChild);
-            }
-        }
-
-        // === Фильтр карты: показывать только когда map_view: true
-        function hasMapView(node) {
-            return node && node.map_view === true;
-        }
-
-        // === СОХРАНЕНИЕ/ЗАГРУЗКА СИСТЕМЫ КОРАБЛЯ ===
-        // === ОПРЕДЕЛЕНИЕ ТЕКУЩЕГО МИРА ===
-        function getCurrentWorld() {
-            if (!story || !currentNodeId || !story[currentNodeId]) {
-                return currentShipWorld; // По умолчанию возвращаем систему корабля
-            }
-            const node = story[currentNodeId];
-            // Для узлов корабля всегда используем currentShipWorld
-            if (node.location_category === 'ship') {
-                return currentShipWorld;
-            }
-            // Для остальных узлов используем их world или currentShipWorld
-            return node.world || currentShipWorld;
-        }
-
-        function saveShipWorld() {
-            localStorage.setItem('lingame_shipWorld', currentShipWorld);
-        }
-
-        function loadShipWorld() {
-            const saved = localStorage.getItem('lingame_shipWorld');
-            if (saved) {
-                currentShipWorld = saved;
-                console.log('📍 Корабль загружен в системе:', currentShipWorld);
-            }
-        }
-
-        function getAllLocationNodes() {
-            const result = [];
-            const currentWorld = getCurrentWorld();
-            for (const id in story) {
-                const n = story[id];
-                if (!n) continue;
-                if (n.is_location === true) {
-                    const isAlwaysVisible = n.loc_view_always === true;
-                    const isVisited = visitedLocations.includes(id);
-                    // Показывать локацию если она посещена или всегда видна
-                    if (!isAlwaysVisible && !isVisited) continue;
-                    // === ФИЛЬТР ПО МИРУ ===
-                    // 1. Корабль (ship) - показываем всегда
-                    // 2. Локации текущего мира
-                    // 3. Локации без мира (для совместимости)
-                    const isShip = n.location_category === 'ship';
-                    const isSameWorld = !n.world || n.world === currentWorld;
-                    if (isShip || isSameWorld) {
-                        result.push({ id, node: n });
-                    }
-                }
-            }
-            return result;
-        }
-
-        function buildMapTree() {
-            // Tree: category_name -> subcategory_name (optional) -> locations
-            const locs = getAllLocationNodes();
-            const tree = {};
-            // === ДОБАВЛЯЕМ ПРЫЖКОВЫЕ ТОЧКИ В НАЧАЛО ===
-            const jumpPoints = getAvailableJumpPoints();
-            if (jumpPoints.length > 0) {
-                tree['🚀 Jump Points'] = { subcats: {}, locs: jumpPoints };
-            }
-            locs.forEach(({ id, node }) => {
-                const cat = (node.category_name || node.location_category || 'Без категории').toString();
-                const sub = (node.subcategory_name || '').toString();
-                if (!tree[cat]) tree[cat] = { subcats: {}, locs: [] };
-                if (sub.trim()) {
-                    if (!tree[cat].subcats[sub]) tree[cat].subcats[sub] = [];
-                    tree[cat].subcats[sub].push({ id, node });
-                } else {
-                    tree[cat].locs.push({ id, node });
-                }
-            });
-            // Sort by title for stable UI
-            const sortByName = (a, b) => {
-                const an = (a.node.location_name || a.node.tag || a.id).toString();
-                const bn = (b.node.location_name || b.node.tag || b.id).toString();
-                return an.localeCompare(bn, 'ru');
-            };
-            Object.keys(tree).forEach(cat => {
-                tree[cat].locs.sort(sortByName);
-                Object.keys(tree[cat].subcats).forEach(sub => {
-                    tree[cat].subcats[sub].sort(sortByName);
-                });
-            });
-            return tree;
-        }
-
-        function createMapRow({ level, icon, title, description, isToggle, isOpen }) {
-            const btn = document.createElement('button');
-            btn.className = `map-item level-${level}`;
-            const row = document.createElement('div');
-            row.className = 'map-row';
-            const iconEl = document.createElement('div');
-            iconEl.className = 'map-icon';
-            iconEl.textContent = icon || '';
-            const label = document.createElement('div');
-            label.className = 'map-label';
-            label.textContent = title || '';
-            const arrow = document.createElement('div');
-            arrow.className = 'map-arrow';
-            arrow.textContent = isToggle ? (isOpen ? '^' : 'v') : '';
-            row.appendChild(iconEl);
-            row.appendChild(label);
-            row.appendChild(arrow);
-            btn.appendChild(row);
-            if (description) {
-                const desc = document.createElement('div');
-                desc.className = 'map-desc';
-                desc.innerHTML = formatText(description);
-                btn.appendChild(desc);
-            }
-            return btn;
-        }
-
-        // === ПОЛУЧЕНИЕ ДОСТУПНЫХ ПРЫЖКОВЫХ ТОЧЕК ===
-        function getAvailableJumpPoints() {
-            const currentNode = story[currentNodeId];
-            if (!currentNode || !currentNode.jump_point) {
-                return [];
-            }
-            const currentWorld = getCurrentWorld();
-            const jumpPoint = currentNode.jump_point;
-            // Карта доступных прыжковых точек
-            const jumpMap = {
-                'to_pyro': { world: 'pyro', name: 'Jump to Pyro', icon: '🌀', description: 'Прыжок в систему Pyro' },
-                'to_nyx': { world: 'nyx', name: 'Jump to Nyx', icon: '🌀', description: 'Прыжок в систему Nyx' },
-                'to_stanton': { world: 'stanton', name: 'Jump to Stanton', icon: '🌀', description: 'Прыжок в систему Stanton' },
-                'to_terra': { world: 'terra', name: 'Jump to Terra', icon: '🌀', description: 'Прыжок в систему Terra' }
-            };
-            const jump = jumpMap[jumpPoint];
-            if (!jump) return [];
-            // Ищем узел прыжковой точки в целевой системе (обратный прыжок)
-            let targetNodeId = null;
-            const reverseJump = 'to_' + currentWorld;
-            for (const id in story) {
-                const node = story[id];
-                if (node && node.world === jump.world && node.jump_point === reverseJump) {
-                    targetNodeId = id;
-                    break;
-                }
-            }
-            // Если не нашли точный узел, ищем любую локацию в целевой системе
-            if (!targetNodeId) {
-                for (const id in story) {
-                    const node = story[id];
-                    if (node && node.world === jump.world && node.is_location) {
-                        targetNodeId = id;
-                        break;
-                    }
-                }
-            }
-            return [{
-                id: targetNodeId || jumpPoint,
-                targetWorld: jump.world,
-                node: {
-                    location_name: jump.name,
-                    location_icon: jump.icon,
-                    location_description: jump.description,
-                    _isJumpPoint: true,
-                    _targetWorld: jump.world
-                }
-            }];
-        }
-
-        // === ВЫПОЛНЕНИЕ ПРЫЖКА МЕЖДУ МИРАМИ ===
-        function performJump(targetNodeId, targetWorld) {
-            if (targetWorld) {
-                currentShipWorld = targetWorld;
-                saveShipWorld();
-                console.log('🚀 Прыжок выполнен! Корабль теперь в системе:', targetWorld);
-            }
-            closeMap();
-            if (targetNodeId && story[targetNodeId]) {
-                showNode(targetNodeId);
-            }
-        }
-
-        // ============================================
-        // ПОКАЗ NPC КАРТИНОК
-        // ============================================
-        function showSplashImage(prefix, nodeId, bubbleText) {
-            return new Promise((resolve) => {
-                const screen = document.getElementById('npc-screen');
-                const imgEl = document.getElementById('npc-image');
-                const speechEl = document.getElementById('npc-speech');
-                const loaderEl = document.getElementById('npc-loader');
-                // Мгновенная реакция
-                screen.classList.add('active');
-                screen.classList.remove('fade-out');
-                screen.classList.remove('ready');
-                screen.classList.add('loading');
-                // Скрываем "Продолжить" на время загрузки
-                // (покажется когда будет ready)
-                speechEl.textContent = (bubbleText || '').toString().trim();
-                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
-                const imgPng = `img/${prefix}_${nodeId}.png`;
-                const img = new Image();
-                let ready = false;
-                const cleanupAndResolve = () => {
-                    // На время закрытия — гарантированно убираем "Продолжить"
-                    screen.classList.remove('ready');
-                    ready = false;
-                    screen.classList.add('fade-out');
-                    setTimeout(() => {
-                        screen.classList.remove('active', 'fade-out', 'loading');
-                        resolve();
-                    }, 250);
-                };
-                const onClick = () => {
-                    if (!ready) return;
-                    cleanupAndResolve();
-                };
-                screen.addEventListener('click', onClick, { once: true });
-                screen.addEventListener('touchstart', onClick, { once: true, passive: true });
-                img.onload = function () {
-                    imgEl.src = img.src;
-                    ready = true;
-                    screen.classList.remove('loading');
-                    screen.classList.add('ready');
-                };
-                img.onerror = function () {
-                    if (img.src.endsWith('.jpg')) {
-                        img.src = imgPng;
-                    } else {
-                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
-                        // Не блокируем игру
-                        cleanupAndResolve();
-                    }
-                };
-                img.src = imgJpg;
-            });
-        }
-
-        function showNPCImage(nodeId, helloText) {
-            return showSplashImage('npc', nodeId, helloText);
-        }
-
-        function hasNPCTag(node) {
-            return node && node.tags && Array.isArray(node.tags) && node.tags.includes('npc');
-        }
-
-        // Блокировка перехода, чтобы не запускать переход несколько раз при даблклике
-        window.__nodeTransitionLock = false;
-
-        let story = null;
-        let currentNodeId = null;
-        let currentShipWorld = 'nyx'; // Текущая система, где находится корабль
-        let diceAnimationInterval = null;
-        let autoAdvanceTimeout = null;
-
-        // 🔔 NOTIFICATION SYSTEM: Глобальные переменные
-        let lastNotificationTime = 0;
-        const NOTIFICATION_COOLDOWN = 3000; // 3 секунды между уведомлениями
-        let NOTIFICATION_CONFIG = {
-            BOT_TOKEN: '',
-            PUBLIC_CHAT_ID: '',
-            isEnabled: false
-        };
-        // END NOTIFICATION SYSTEM
-
-        // === СИСТЕМА КАРТЫ МИРА ===
-        let visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
-        const mapScreen = document.getElementById('map-screen');
-        // END СИСТЕМА КАРТЫ МИРА
-
-        // Добавляем новые переменные
-        let currentCodeNode = null;
-        const codeScreen = document.getElementById('code-screen');
-        const codeInput = document.getElementById('code-input');
-        const submitCodeBtn = document.getElementById('submit-code');
-        const codeErrorEl = document.getElementById('code-error');
-        const codeTitleEl = document.getElementById('code-title');
-        const codeHintEl = document.getElementById('code-hint');
-        const sceneEl = document.getElementById('scene');
-        const diceScreen = document.getElementById('dice-screen');
-        const inventoryScreen = document.getElementById('inventory-screen');
-        const keyAnimScreen = document.getElementById('key-animation');
-        const keysContainer = document.getElementById('keys-container');
-        const animKeyIcon = document.getElementById('anim-key-icon');
-        const animKeyLabel = document.getElementById('anim-key-label');
-        const audioEl = document.getElementById('ambient-audio');
-        const audioBtn = document.getElementById('audio-control');
-        let isAudioPlaying = false;
-
-        // === СИСТЕМА КЛЮЧЕЙ ===
-        let collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-
-        function saveKeys() {
-            localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
-        }
-
-        function collectKey(keyData) {
-            if (keyData && keyData.id) {
-                collectedKeys[keyData.id] = {
-                    label: keyData.label || keyData.id,
-                    type: keyData.type || 'regular',
-                    icon: keyData.icon
-                };
-                saveKeys();
-                console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')');
-            }
-        }
-
-        function hasAllKeys(requiredKeys) {
-            if (!requiredKeys) return true;
-            if (typeof requiredKeys === 'string') {
-                // Поддержка старого формата: "requires": "single_key"
-                // Если это state, не проверяем как ключ
-                if (requiredKeys.startsWith('state_')) {
-                    return true; // State проверяется отдельно
-                }
-                requiredKeys = [requiredKeys];
-            }
-            if (!Array.isArray(requiredKeys)) {
-                return false;
-            }
-            return requiredKeys.every(req => {
-                // Если это строка
-                if (typeof req === 'string') {
-                    // State не проверяем как ключ
-                    if (req.startsWith('state_')) {
-                        return true; // State проверяется отдельно
-                    }
-                    return !!collectedKeys[req];
-                }
-                // Если это объект
-                if (typeof req === 'object' && req !== null) {
-                    // Проверяем только item и key, не state
-                    if (req.item && req.item.id) {
-                        return !!collectedKeys[req.item.id];
-                    }
-                    if (req.key && req.key.id) {
-                        return !!collectedKeys[req.key.id];
-                    }
-                    // Если есть state, не блокируем (state проверяется отдельно)
-                    if (req.state) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-        }
-
-        function getMissingKeyMessages(requiredKeys, missingMessages = {}) {
-            if (!requiredKeys) return [];
-            const keys = Array.isArray(requiredKeys) ? requiredKeys : [requiredKeys];
-            return keys
-                .filter(req => {
-                    // Пропускаем state
-                    if (typeof req === 'string' && req.startsWith('state_')) {
-                        return false;
-                    }
-                    if (typeof req === 'object' && req !== null && req.state) {
-                        return false;
-                    }
-                    // Проверяем только item/key
-                    if (typeof req === 'string') {
-                        return !collectedKeys[req];
-                    }
-                    if (typeof req === 'object' && req !== null) {
-                        if (req.item && req.item.id) {
-                            return !collectedKeys[req.item.id];
-                        }
-                        if (req.key && req.key.id) {
-                            return !collectedKeys[req.key.id];
-                        }
-                    }
-                    return false;
-                })
-                .map(req => {
-                    let keyId = '';
-                    let label = '';
-                    if (typeof req === 'string') {
-                        keyId = req;
-                    } else if (typeof req === 'object' && req !== null) {
-                        if (req.item && req.item.id) {
-                            keyId = req.item.id;
-                            label = req.item.label || '';
-                        } else if (req.key && req.key.id) {
-                            keyId = req.key.id;
-                            label = req.key.label || '';
-                        }
-                    }
-                    return missingMessages[keyId] || (label ? `Требуется: ${label}` : `Требуется предмет: ${keyId}`);
-                });
-        }
-
-        // === СОХРАНЕНИЕ/ЗАГРУЗКА СОСТОЯНИЯ ВКЛАДОК ИНВЕНТАРЯ ===
-        function saveInventoryTabsState() {
-            const state = {};
-            document.querySelectorAll('.inventory-group').forEach(group => {
-                const header = group.querySelector('.inventory-item.level-0');
-                if (header) {
-                    const category = header.textContent.trim();
-                    state[category] = group.classList.contains('open');
-                }
-            });
-            localStorage.setItem('lingame_inventory_tabs', JSON.stringify(state));
-        }
-
-        function loadInventoryTabsState() {
-            const saved = localStorage.getItem('lingame_inventory_tabs');
-            if (!saved) return {};
-            try {
-                return JSON.parse(saved);
-            } catch (e) {
-                return {};
-            }
-        }
-
-        // === ФУНКЦИЯ ПОЛУЧЕНИЯ ИКОНКИ ИЗ JSON ===
-        function getItemIcon(keyId, keyData) {
-            // Сначала проверяем, есть ли иконка в данных
-            if (keyData.icon) {
-                return keyData.icon;
-            }
-            // Если есть тип, используем иконку по типу
-            if (keyData.type) {
-                const iconMap = {
-                    'card': '🃏',
-                    'old': '🔑',
-                    'digital': '💾',
-                    'regular': '🗝️',
-                    'photo': '🖼️'
-                };
-                if (iconMap[keyData.type]) {
-                    return iconMap[keyData.type];
-                }
-            }
-            // По умолчанию по префиксу
-            if (keyId.startsWith('item_')) {
-                return '🔑';
-            } else if (keyId.startsWith('key_')) {
-                return '🗝️';
-            }
-            return '🔑';
-        }
-
-        function showInventory() {
-            // НЕ скрываем сцену! Только показываем инвентарь поверх
-            diceScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            inventoryScreen.style.display = 'block';
-            
-            const accordion = document.getElementById('inventory-accordion');
-            if (!accordion) return;
-            clearElement(accordion);
-            
-            // Загружаем состояние вкладок
-            const tabsState = loadInventoryTabsState();
-            
-            // Фильтруем ключи: показываем только item_ и key_
-            const allKeys = Object.entries(collectedKeys);
-            const visibleKeys = allKeys.filter(([keyId]) => {
-                return keyId.startsWith('item_') || keyId.startsWith('key_');
-            });
-            
-            if (visibleKeys.length === 0) {
-                const emptyMsg = createElement('div', {
-                    className: 'inventory-empty',
-                    textContent: 'Инвентарь пуст'
-                });
-                accordion.appendChild(emptyMsg);
-                return;
-            }
-            
-            // Разделяем на категории
-            const items = [];
-            const keys = [];
-            
-            visibleKeys.forEach(([keyId, keyData]) => {
-                if (keyId.startsWith('item_')) {
-                    items.push({ id: keyId, data: keyData });
-                } else if (keyId.startsWith('key_')) {
-                    keys.push({ id: keyId, data: keyData });
-                }
-            });
-            
-            // Создаем категорию "Предметы"
-            if (items.length > 0) {
-                const itemsGroup = document.createElement('div');
-                itemsGroup.className = 'inventory-group';
-                const shouldOpenItems = tabsState['📦 Предметы'] !== false; // По умолчанию открыто
-                
-                const itemsHeader = createElement('button', {
-                    className: 'inventory-item level-0',
-                    children: [
-                        createElement('div', {
-                            className: 'inventory-row',
-                            children: [
-                                createElement('div', { className: 'inventory-icon', textContent: '📦' }),
-                                createElement('div', { className: 'inventory-label', textContent: '📦 Предметы' }),
-                                createElement('div', { className: 'inventory-arrow', textContent: shouldOpenItems ? '^' : 'v' })
-                            ]
-                        })
-                    ]
-                });
-                
-                const itemsChildren = createElement('div', { className: 'inventory-children' });
-                const itemsGrid = createElement('div', { className: 'keys-grid' });
-                
-                items.forEach(({ id, data }) => {
-                    const icon = getItemIcon(id, data);
-                    const itemDiv = createElement('div', { className: 'key-item' });
-                    itemDiv.appendChild(createElement('div', { className: 'key-icon', textContent: icon }));
-                    itemDiv.appendChild(createElement('div', { className: 'key-label', textContent: data.label || id }));
-                    itemsGrid.appendChild(itemDiv);
-                });
-                
-                itemsChildren.appendChild(itemsGrid);
-                itemsGroup.appendChild(itemsHeader);
-                itemsGroup.appendChild(itemsChildren);
-                
-                if (shouldOpenItems) {
-                    itemsGroup.classList.add('open');
-                }
-                
-                itemsHeader.addEventListener('click', () => {
-                    const open = itemsGroup.classList.toggle('open');
-                    itemsHeader.querySelector('.inventory-arrow').textContent = open ? '^' : 'v';
-                    saveInventoryTabsState();
-                });
-                
-                accordion.appendChild(itemsGroup);
-            }
-            
-            // Создаем категорию "Ключи"
-            if (keys.length > 0) {
-                const keysGroup = document.createElement('div');
-                keysGroup.className = 'inventory-group';
-                const shouldOpenKeys = tabsState['🗝️ Ключи'] !== false; // По умолчанию открыто
-                
-                const keysHeader = createElement('button', {
-                    className: 'inventory-item level-0',
-                    children: [
-                        createElement('div', {
-                            className: 'inventory-row',
-                            children: [
-                                createElement('div', { className: 'inventory-icon', textContent: '🗝️' }),
-                                createElement('div', { className: 'inventory-label', textContent: '🗝️ Ключи' }),
-                                createElement('div', { className: 'inventory-arrow', textContent: shouldOpenKeys ? '^' : 'v' })
-                            ]
-                        })
-                    ]
-                });
-                
-                const keysChildren = createElement('div', { className: 'inventory-children' });
-                const keysGrid = createElement('div', { className: 'keys-grid' });
-                
-                keys.forEach(({ id, data }) => {
-                    const icon = getItemIcon(id, data);
-                    const keyDiv = createElement('div', { className: 'key-item' });
-                    keyDiv.appendChild(createElement('div', { className: 'key-icon', textContent: icon }));
-                    keyDiv.appendChild(createElement('div', { className: 'key-label', textContent: data.label || id }));
-                    keysGrid.appendChild(keyDiv);
-                });
-                
-                keysChildren.appendChild(keysGrid);
-                keysGroup.appendChild(keysHeader);
-                keysGroup.appendChild(keysChildren);
-                
-                if (shouldOpenKeys) {
-                    keysGroup.classList.add('open');
-                }
-                
-                keysHeader.addEventListener('click', () => {
-                    const open = keysGroup.classList.toggle('open');
-                    keysHeader.querySelector('.inventory-arrow').textContent = open ? '^' : 'v';
-                    saveInventoryTabsState();
-                });
-                
-                accordion.appendChild(keysGroup);
-            }
-        }
-
-        function closeInventory() {
-            inventoryScreen.style.display = 'none';
-            // НЕ делаем sceneEl.style.display = 'block' — он и так виден
-        }
-
-        // === ФУНКЦИЯ ПЕРЕХОДА К УЗЛУ ===
-        function goToNode(nodeId) {
-            showNode(nodeId);
-        }
-
-        // ✅ ИСПРАВЛЕНО: Единая функция для показа сообщений с поддержкой callback
-        function showCollectMessage(message, icon, callback = null, label = null) {
-            console.log('showCollectMessage вызвана');
-            console.log('message:', message);
-            console.log('icon:', icon);
-            console.log('label:', label);
-            const overlay = document.getElementById('collect-overlay');
-            if (!overlay) {
-                console.error('collect-overlay не найден!');
-                alert((icon || '🔒') + ' ' + (label || '') + ' ' + message);
-                if (callback) callback();
-                return;
-            }
-            const iconEl = overlay.querySelector('.collect-icon');
-            const labelEl = overlay.querySelector('.collect-label');
-            const textEl = overlay.querySelector('.collect-text');
-            if (iconEl) iconEl.textContent = icon || '🔒';
-            if (labelEl) {
-                if (label) {
-                    labelEl.textContent = label;
-                    labelEl.style.display = 'block';
-                } else {
-                    labelEl.style.display = 'none';
-                }
-            }
-            if (textEl) {
-                if (label && message) {
-                    // Если есть label, показываем message как описание
-                    textEl.textContent = message;
-                } else {
-                    // Если нет label, показываем message как основной текст
-                    textEl.textContent = message || label || '';
-                }
-            }
-            // Удаляем предыдущий обработчик
-            overlay.onclick = null;
-            // Закрытие по клику с возможностью callback
-            overlay.onclick = function () {
-                closeCollectMessage();
-                if (callback) callback();
-            };
-            // Используем класс для показа вместо inline style
-            overlay.classList.add('active');
-            overlay.style.display = 'flex';
-        }
-
-        function closeCollectMessage() {
-            console.log('closeCollectMessage вызвана');
-            const overlay = document.getElementById('collect-overlay');
-            if (overlay) {
-                overlay.classList.remove('active');
-                overlay.style.display = 'none';
-                overlay.onclick = null;
-            }
-        }
-
-        // === ФУНКЦИЯ ПОКАЗА ЭКРАНА ЗАГРУЗКИ ===
-        function showLoadingScreen(texts, callback) {
-            return new Promise((resolve) => {
-                if (!texts || texts.length === 0) {
-                    if (callback) callback();
-                    resolve();
-                    return;
-                }
-
-                const overlay = document.getElementById('loading-overlay');
-                const textEl = document.getElementById('loading-text');
-                const progressBar = document.getElementById('loading-progress-bar');
-                
-                if (!overlay || !textEl || !progressBar) {
-                    console.error('Элементы загрузки не найдены!');
-                    if (callback) callback();
-                    resolve();
-                    return;
-                }
-
-                overlay.classList.add('active');
-                // Сбрасываем прогресс в начало
-                progressBar.style.width = '0%';
-                
-                const totalTime = texts.length * 2000; // 2 секунды на каждый текст
-                const progressUpdateInterval = 16; // ~60 FPS для плавной анимации
-                let startTime = Date.now();
-                let currentIndex = 0;
-
-                // Показываем первый текст сразу
-                textEl.textContent = texts[0];
-
-                // Плавное обновление прогресса
-                const progressTimer = setInterval(() => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min((elapsed / totalTime) * 100, 100);
-                    progressBar.style.width = progress + '%';
-                    
-                    // Если время истекло, завершаем
-                    if (elapsed >= totalTime) {
-                        clearInterval(progressTimer);
-                        progressBar.style.width = '100%';
-                        setTimeout(() => {
-                            overlay.classList.remove('active');
-                            progressBar.style.width = '0%';
-                            if (callback) callback();
-                            resolve();
-                        }, 300);
-                    }
-                }, progressUpdateInterval);
-
-                // Смена текстов каждые 2 секунды
-                function showNextText() {
-                    currentIndex++;
-                    if (currentIndex < texts.length) {
-                        textEl.textContent = texts[currentIndex];
-                        setTimeout(showNextText, 2000);
-                    }
-                }
-
-                // Начинаем смену текстов через 2 секунды
-                if (texts.length > 1) {
-                    setTimeout(showNextText, 2000);
-                }
-            });
-        }
-
-        // === СИСТЕМА СОСТОЯНИЙ ===
-        let currentState = JSON.parse(localStorage.getItem('lingame_states') || '[]');
-
-        function saveStates() {
-            localStorage.setItem('lingame_states', JSON.stringify(currentState));
-        }
-
-        function hasState(stateId) {
-            return currentState.some(state => state.id === stateId);
-        }
-
-        function addState(stateData) {
-            if (!stateData || !stateData.id) return;
-            // Удаляем существующее состояние с таким же id (если есть)
-            currentState = currentState.filter(state => state.id !== stateData.id);
-            // Добавляем новое состояние
-            currentState.push({
-                id: stateData.id,
-                label: stateData.label || stateData.id,
-                type: stateData.type || 'state',
-                icon: stateData.icon || 'ℹ️'
-            });
-            saveStates();
-            console.log(`➕ Добавлено состояние: ${stateData.id}`);
-        }
-
-        function removeState(stateId) {
-            const prevState = currentState.length;
-            currentState = currentState.filter(state => state.id !== stateId);
-            if (prevState !== currentState.length) {
-                saveStates();
-                console.log(`➖ Удалено состояние: ${stateId}`);
-            }
-        }
-
-        function clearStates() {
-            currentState = [];
-            saveStates();
-            console.log('🧹 Все состояния очищены');
-        }
-        // END СИСТЕМА СОСТОЯНИЙ
-
-        // === СИСТЕМА КАРТЫ МИРА ===
-        function saveLocations() {
-            localStorage.setItem('lingame_locations', JSON.stringify(visitedLocations));
-        }
-
-        function addLocation(nodeId) {
-            if (!nodeId || visitedLocations.includes(nodeId)) return;
-            visitedLocations.push(nodeId);
-            saveLocations();
-            console.log(`🗺️ Открыта новая локация: ${story[nodeId]?.location_name || nodeId}`);
-        }
-
-        function isLocationVisited(nodeId) {
-            return visitedLocations.includes(nodeId);
-        }
-
-        function showMap() {
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            codeScreen.style.display = 'none';
-            mapScreen.style.display = 'block';
-            renderMapAccordion();
-        }
-
-        function closeMap() {
-            mapScreen.style.display = 'none';
-            sceneEl.style.display = 'block';
-            // ✅ ВОССТАНАВЛИВАЕМ позицию скролла
-            if (window.savedScrollPosition !== undefined) {
-                window.scrollTo({ top: window.savedScrollPosition, behavior: 'instant' });
-                window.savedScrollPosition = undefined;
-            }
-        }
-
-        function renderMapAccordion() {
-            const root = document.getElementById('map-accordion');
-            if (!root) return;
-            clearElement(root);
-            // Определяем текущую категорию и подкатегорию для автооткрытия
-            const current = story[currentNodeId];
-            const openCatName = current ? (current.category_name || current.location_category || 'Без категории').toString() : null;
-            const openSubName = current ? (current.subcategory_name || '').toString() : '';
-            const tree = buildMapTree();
-            const categories = Object.keys(tree).sort((a, b) => a.localeCompare(b, 'ru'));
-            categories.forEach(catName => {
-                const shouldOpenCat = (openCatName && catName === openCatName);
-                const group = document.createElement('div');
-                group.className = 'map-group';
-                const header = createMapRow({
-                    level: 0,
-                    icon: '',
-                    title: catName,
-                    description: '',
-                    isToggle: true,
-                    isOpen: shouldOpenCat
-                });
-                const children = document.createElement('div');
-                children.className = 'map-children';
-                if (shouldOpenCat) {
-                    group.classList.add('open');
-                    header.querySelector('.map-arrow').textContent = '^';
-                }
-                header.addEventListener('click', () => {
-                    const open = group.classList.toggle('open');
-                    header.querySelector('.map-arrow').textContent = open ? '^' : 'v';
-                });
-                // Locations directly under category
-                tree[catName].locs.forEach(({ id, node }) => {
-                    const targetWorld = node._targetWorld || node.targetWorld;
-                    const locBtn = createMapRow({
-                        level: 1,
-                        icon: node.location_icon || '',
-                        title: node.location_name || node.tag || id,
-                        description: node.location_description || '',
-                        isToggle: false,
-                        isOpen: false
-                    });
-                    if (id === currentNodeId) locBtn.classList.add('active-location');
-                    locBtn.addEventListener('click', () => {
-                        if (node._isJumpPoint && targetWorld) {
-                            // Это прыжковая точка - используем performJump
-                            performJump(id, targetWorld);
-                        } else {
-                            // Обычная локация
-                            closeMap();
-                            showNode(id);
-                        }
-                    });
-                    children.appendChild(locBtn);
-                });
-                // Subcategories
-                const subs = Object.keys(tree[catName].subcats).sort((a, b) => a.localeCompare(b, 'ru'));
-                subs.forEach(subName => {
-                    const shouldOpenSub = (shouldOpenCat && openSubName && subName === openSubName);
-                    const subGroup = document.createElement('div');
-                    subGroup.className = 'map-group';
-                    const subHeader = createMapRow({
-                        level: 1,
-                        icon: '',
-                        title: subName,
-                        description: '',
-                        isToggle: true,
-                        isOpen: shouldOpenSub
-                    });
-                    const subChildren = document.createElement('div');
-                    subChildren.className = 'map-children';
-                    if (shouldOpenSub) {
-                        subGroup.classList.add('open');
-                        subHeader.querySelector('.map-arrow').textContent = '^';
-                    }
-                    subHeader.addEventListener('click', () => {
-                        const open = subGroup.classList.toggle('open');
-                        subHeader.querySelector('.map-arrow').textContent = open ? '^' : 'v';
-                    });
-                    tree[catName].subcats[subName].forEach(({ id, node }) => {
-                        const targetWorld = node._targetWorld || node.targetWorld;
-                        const locBtn = createMapRow({
-                            level: 2,
-                            icon: node.location_icon || '',
-                            title: node.location_name || node.tag || id,
-                            description: node.location_description || '',
-                            isToggle: false,
-                            isOpen: false
-                        });
-                        if (id === currentNodeId) locBtn.classList.add('active-location');
-                        locBtn.addEventListener('click', () => {
-                            if (node._isJumpPoint && targetWorld) {
-                                // Это прыжковая точка - используем performJump
-                                performJump(id, targetWorld);
-                            } else {
-                                // Обычная локация
-                                closeMap();
-                                showNode(id);
-                            }
-                        });
-                        subChildren.appendChild(locBtn);
-                    });
-                    subGroup.appendChild(subHeader);
-                    subGroup.appendChild(subChildren);
-                    children.appendChild(subGroup);
-                });
-                group.appendChild(header);
-                group.appendChild(children);
-                root.appendChild(group);
-            });
-        }
-
-        // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-        function getDiceEmoji(n) {
-            const dice = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-            return dice[n - 1] || '🎲';
-        }
-
-        function shuffleArray(array) {
-            const newArray = [...array];
-            for (let i = newArray.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-            }
-            return newArray;
-        }
-
-        function getSafeImageName(nodeId) {
-            return nodeId
-                .replace(/[^a-zA-Z0-9\s_-]/g, '')
-                .replace(/\s+/g, '_')
-                .toLowerCase()
-                .replace(/_{2,}/g, '_');
-        }
-
-        function formatText(text) {
-            if (!text) return '';
-            // Заменяем все экранированные переносы строк на реальные переносы
-            let normalized = text.replace(/\\n/g, '\n');
-            // Экранируем HTML для безопасности
-            normalized = normalized.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            // Обрабатываем ссылки [текст](url) - сначала, чтобы не конфликтовать с другими форматами
-            normalized = normalized.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-            // Обрабатываем моноширинный `текст`
-            normalized = normalized.replace(/`([^`]+)`/g, '<code>$1</code>');
-            // Обрабатываем жирный **текст** - сначала, чтобы не конфликтовать с курсивом
-            normalized = normalized.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            // Обрабатываем курсив *текст* (но не **текст** или уже обработанный жирный)
-            // Используем более точное регулярное выражение
-            normalized = normalized.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
-            return normalized;
-        }
-
-        function getIllustrationHtml(nodeId) {
-            const safeName = getSafeImageName(nodeId);
-            const imgSrc = nodeId === "node_end"
-                ? "img/end_scene.jpg"
-                : `img/${safeName}.jpg`;
-            return `
-<div class="illustration">
-<img src="${imgSrc}?v=${Date.now()}" alt="Сцена ${nodeId}" onerror="handleImageError(this, '${nodeId}')">
-</div>
-`;
-        }
-
-        function handleImageError(imgElement, nodeId) {
-            const parent = imgElement.parentElement;
-            if (parent) {
-                clearElement(parent);
-                const fallbackDiv = createElement('div', {
-                    className: 'fallback',
-                    textContent: `🌌 Иллюстрация недоступна для ${nodeId}`
-                });
-                parent.appendChild(fallbackDiv);
-            }
-        }
-
-        // === БРОСОК КУБИКОВ ===
-        function rollDice(successTarget, partialTarget, failTarget) {
-            if (diceAnimationInterval) {
-                clearInterval(diceAnimationInterval);
-                diceAnimationInterval = null;
-            }
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'block';
-            clearElement(diceScreen);
-            diceScreen.appendChild(createElement('div', { className: 'dice', textContent: '🎲 🎲' }));
-            diceScreen.appendChild(createElement('div', { className: 'result', textContent: 'Испытать удачу и сделать верный выбор.' }));
-            diceScreen.appendChild(createElement('button', { className: 'choice-btn', id: 'roll-button', textContent: 'Бросить кости' }));
-            const newRollButton = document.getElementById('roll-button');
-            if (newRollButton) {
-                newRollButton.onclick = () => {
-                    let animCount = 0;
-                    diceAnimationInterval = setInterval(() => {
-                        const d1 = Math.floor(Math.random() * 6) + 1;
-                        const d2 = Math.floor(Math.random() * 6) + 1;
-                        clearElement(diceScreen);
-                        diceScreen.appendChild(createElement('div', { className: 'dice', textContent: `${getDiceEmoji(d1)} ${getDiceEmoji(d2)}` }));
-                        diceScreen.appendChild(createElement('div', { className: 'result', textContent: 'Бросок...' }));
-                        diceScreen.appendChild(createElement('button', { className: 'choice-btn', textContent: 'Бросаем...', attributes: { disabled: 'true' } }));
-                        animCount++;
-                        if (animCount > 12) {
-                            clearInterval(diceAnimationInterval);
-                            diceAnimationInterval = null;
-                            const total = d1 + d2;
-                            clearElement(diceScreen);
-                            const diceFinalDiv = createElement('div', {
-                                className: 'dice',
-                                textContent: `${getDiceEmoji(d1)} ${getDiceEmoji(d2)}`
-                            });
-                            const resultFinalDiv = createElement('div', { className: 'result' });
-                            resultFinalDiv.textContent = 'Выпало: ';
-                            const totalStrong = createElement('strong', { textContent: total.toString() });
-                            resultFinalDiv.appendChild(totalStrong);
-                            const continueBtn = createElement('button', {
-                                className: 'choice-btn',
-                                textContent: 'Продолжить',
-                                onclick: () => proceedAfterDice(total)
-                            });
-                            diceScreen.appendChild(diceFinalDiv);
-                            diceScreen.appendChild(resultFinalDiv);
-                            diceScreen.appendChild(continueBtn);
-                            window.proceedAfterDice = function (total) {
-                                diceScreen.style.display = 'none';
-                                sceneEl.style.display = 'block';
-                                let target;
-                                if (total >= 8) {
-                                    target = successTarget;
-                                } else if (total === 7) {
-                                    target = partialTarget;
-                                } else {
-                                    target = failTarget;
-                                }
-                                if (target && story[target]) {
-                                    showNode(target);
-                                } else {
-                                    showNode('0');
-                                }
-                            };
-                        }
-                    }, 100);
-                };
-            }
-        }
-
-        // === 🔔 NOTIFICATION SYSTEM ===
-        function validateInitData(initData) {
-            if (!initData) return false;
-            // Проверяем наличие обязательных параметров
-            const params = new URLSearchParams(initData);
-            const hasUser = params.has('user');
-            const hasAuthDate = params.has('auth_date');
-            if (!hasUser || !hasAuthDate) return false;
-            // Проверяем актуальность данных (24 часа)
-            const authDate = parseInt(params.get('auth_date')) * 1000;
-            const now = Date.now();
-            return (now - authDate) < 86400000; // 24 часа в миллисекундах
-        }
-
-        async function sendGlobalNotification(nodeId, notifyData) {
-            // Проверка конфигурации
-            if (!NOTIFICATION_CONFIG.isEnabled ||
-                !NOTIFICATION_CONFIG.BOT_TOKEN ||
-                !NOTIFICATION_CONFIG.PUBLIC_CHAT_ID) {
-                console.log('🔔 Уведомления отключены или конфигурация не загружена');
-                return;
-            }
-            const tg = window.Telegram?.WebApp;
-            if (!tg?.initData || !validateInitData(tg.initData)) {
-                console.log('🔔 Невалидные данные Telegram');
-                return;
-            }
-            // Защита от спама
-            const now = Date.now();
-            if (now - lastNotificationTime < NOTIFICATION_COOLDOWN) {
-                console.log('🔔 Уведомление отклонено: кулдаун');
-                return;
-            }
-            // Проверка дубликатов
-            const notifiedKey = `notified_${nodeId}_${tg.initDataUnsafe?.user?.id}`;
-            if (localStorage.getItem(notifiedKey)) {
-                console.log('🔔 Уведомление отклонено: дубликат');
-                return;
-            }
-            lastNotificationTime = now;
-            try {
-                // Получаем данные пользователя
-                const user = tg.initDataUnsafe?.user || {};
-                const playerName = user.username
-                    ? `@${user.username}`
-                    : user.first_name || 'Игрок';
-                // Формируем сообщение
-                const message = `
-🔔 Новое достижение в игре!
-👤 ${playerName} дошёл до: ${notifyData.message}
-🎮 Прогресс: ${nodeId}
-`.trim();
-                console.log('📤 Отправка уведомления:', message);
-                // Отправляем запрос в Bot API
-                const response = await fetch(`https://api.telegram.org/bot${NOTIFICATION_CONFIG.BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        chat_id: NOTIFICATION_CONFIG.PUBLIC_CHAT_ID, // Просто число!
-                        text: message,
-                        disable_web_page_preview: true,
-                        disable_notification: false // Важно: true для тихих уведомлений
-                    })
-                });
-                const result = await response.json();
-                if (result.ok) {
-                    console.log('✅ Уведомление успешно отправлено');
-                    // Сохраняем факт отправки для избежания дубликатов
-                    localStorage.setItem(notifiedKey, 'true');
-                } else {
-                    console.error('❌ Ошибка Telegram API:', result);
-                    // Сбрасываем lastNotificationTime при ошибке для повторной попытки
-                    lastNotificationTime = 0;
-                }
-            } catch (e) {
-                console.error('❌ Ошибка отправки уведомления:', e);
-                lastNotificationTime = 0;
-            }
-        }
-        // END NOTIFICATION SYSTEM
-
-        // === ОСНОВНАЯ ЛОГИКА ===
-        async function loadStory() {
-            try {
-                const res = await fetch('story.json');
-                if (!res.ok) throw new Error('Файл story.json не найден');
-                story = await res.json();
-                initGame();
-            } catch (e) {
-                clearElement(sceneEl);
-                const loadErrDiv = createElement('div', {
-                    className: 'text',
-                    textContent: `Ошибка загрузки: ${e.message}`
-                });
-                sceneEl.appendChild(loadErrDiv);
-                console.error(e);
-            }
-        }
-
-        function initGame() {
-            // Загружаем сохраненные локации
-            visitedLocations = JSON.parse(localStorage.getItem('lingame_locations') || '[]');
-            const saved = localStorage.getItem('lingame_lastNode');
-            if (saved && story[saved]) {
-                showNode(saved);
-            } else {
-                showNode('0');
-            }
-        }
-
-        function showNode(nodeId) {
-            // Отмена предыдущего таймера
-            if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
-            sceneEl.style.display = 'block';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-            codeScreen.style.display = 'none';  // ✅ ИСПРАВЛЕНИЕ: Скрываем экран ввода кода
-            if (!story[nodeId]) {
-                console.error(`Узел "${nodeId}" не найден`);
-                showNode(Object.keys(story)[0]);
-                return;
-            }
-            currentNodeId = nodeId; // ✅ КРИТИЧЕСКИ ВАЖНО: Устанавливаем текущий узел ДО загрузки контента
-            const node = story[nodeId];
-
-            // ============================================
-            // ПРОВЕРКА NPC ТЕГА
-            // ============================================
-            if (hasNPCTag(node)) {
-                // Показываем NPC картинку, затем продолжаем
-                showNPCImage(nodeId, node.npc_hello).then(() => {
-                    loadNodeContent(node, nodeId);
-                });
-                return;
-            }
-            // Если нет тега NPC, продолжаем как обычно
-            loadNodeContent(node, nodeId);
-        }
-
-        function loadNodeContent(node, nodeId) {
-            window.__nodeTransitionLock = false;
-            localStorage.setItem('lingame_lastNode', nodeId);
-
-            // 🔔 NOTIFICATION SYSTEM: Отправка уведомления
-            if (node.notify) {
-                sendGlobalNotification(nodeId, node.notify);
-            }
-            // END NOTIFICATION SYSTEM
-
-            // === СИСТЕМА СОСТОЯНИЙ: Применение состояний из узла ===
-            // Очистка состояний, если указано в узле
-            if (node.clear_states === true) {
-                clearStates();
-            }
-
-            // Добавление состояний из узла (поддержка обоих форматов: "add_states" и "states")
-            const statesToAdd = node.add_states || node.states;
-            if (statesToAdd && Array.isArray(statesToAdd)) {
-                statesToAdd.forEach(stateData => {
-                    // Если stateData это строка (только ID), преобразуем в объект
-                    if (typeof stateData === 'string') {
-                        stateData = { id: stateData };
-                    }
-                    addState(stateData);
-                });
-            }
-
-            // Удаление состояний из узла
-            if (node.remove_states && Array.isArray(node.remove_states)) {
-                node.remove_states.forEach(stateId => {
-                    removeState(stateId);
-                });
-            }
-
-            // Проверка состояний для доступа к узлу
-            let missingStates = [];
-            if (node.requires_states && Array.isArray(node.requires_states)) {
-                missingStates = node.requires_states.filter(stateId => !hasState(stateId));
-            } else if (node.requires && Array.isArray(node.requires)) {
-                // Проверяем, есть ли среди requires состояния (начинающиеся с 'state_')
-                missingStates = node.requires
-                    .filter(req => typeof req === 'string' && req.startsWith('state_'))
-                    .filter(stateId => !hasState(stateId));
-            }
-
-            if (missingStates.length > 0) {
-                const messages = missingStates.map(stateId => {
-                    const stateInfo = (node.states || []).find(s => s.id === stateId) ||
-                        (node.add_states || []).find(s => s.id === stateId);
-                    return stateInfo?.missing_message || `Необходимо состояние: ${stateId}`;
-                });
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene deadend';
-                    clearElement(sceneEl);
-                    const lockedDiv = createElement('div', { className: 'text' });
-                    lockedDiv.appendChild(createElement('p', {
-                        textContent: messages.join('\n')
-                    }));
-                    const lockedChoices = createElement('div', { className: 'choices' });
-                    const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
-                    lockedChoices.appendChild(createElement('button', {
-                        className: 'choice-btn',
-                        textContent: fallbackChoice.text,
-                        onclick: () => handleChoice(fallbackChoice.next)
-                    }));
-                    const lockedInv = createElement('div', {
-                        style: { textAlign: 'center', marginTop: '20px' }
-                    });
-                    lockedInv.appendChild(createElement('button', {
-                        className: 'choice-btn',
-                        textContent: '🎒 Посмотреть инвентарь и состояния',
-                        style: { background: '#555' },
-                        onclick: showInventory
-                    }));
-                    sceneEl.appendChild(lockedDiv);
-                    sceneEl.appendChild(lockedChoices);
-                    sceneEl.appendChild(lockedInv);
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 320);
-                return;
-            }
-            // END СИСТЕМА СОСТОЯНИЙ
-
-            // === СИСТЕМА КАРТЫ МИРА: Отметка посещенных локаций ===
-            if (node.is_location && !isLocationVisited(nodeId)) {
-                addLocation(nodeId);
-                // Показываем анимацию открытия новой локации (опционально)
-                if (!localStorage.getItem('hide_map_tutorial')) {
-                    setTimeout(() => {
-                        const tutDiv = createElement('div');
-                        tutDiv.style.cssText = 'background: rgba(76, 175, 80, 0.2); border-left: 3px solid var(--success); padding: 12px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 15px; position: relative;';
-                        const closeBtn = createElement('button', {
-                            textStyle: 'position: absolute; right: 8px; top: 8px; background: rgba(255,255,255,0.1); border: none; width: 20px; height: 20px; border-radius: 50%; color: white; font-size: 12px; cursor: pointer;',
-                            textContent: '✕'
-                        });
-                        closeBtn.onclick = function () {
-                            localStorage.setItem('hide_map_tutorial', 'true');
-                            this.parentElement.style.display = 'none';
-                        };
-                        const tutP = createElement('p');
-                        tutP.appendChild(createElement('strong', { textContent: '🗺️ Открыта карта мира!' }));
-                        tutP.appendChild(document.createTextNode(' Вы можете вернуться сюда в любой момент.'));
-                        tutDiv.appendChild(closeBtn);
-                        tutDiv.appendChild(tutP);
-                        sceneEl.appendChild(tutDiv);
-                    }, 500);
-                }
-            }
-            // END СИСТЕМА КАРТЫ МИРА
-
-            // 🔑 Сбор ключа удалён
-            // Проверка на ноду с вводом кода
-            if (node.input_type === "code") {
-                showCodeScreen(node);
-                return;
-            }
-            // 🔒 Проверка доступа (поддержка одного или нескольких ключей)
-            if (node.requires && !hasAllKeys(node.requires)) {
-                const fallbackChoice = node.choices?.[0] || { text: "Вернуться", next: "0" };
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene deadend';
-                    clearElement(sceneEl);
-                    const lockedDiv = createElement('div', { className: 'text' });
-                    lockedDiv.appendChild(createElement('p', { textContent: 'Дверь заперта. Похоже, вам нужен особый ключ...' }));
-                    const lockedChoices = createElement('div', { className: 'choices' });
-                    lockedChoices.appendChild(createElement('button', { className: 'choice-btn', textContent: fallbackChoice.text, onclick: () => handleChoice(fallbackChoice.next) }));
-                    const lockedInv = createElement('div', { style: { textAlign: 'center', marginTop: '20px' } });
-                    lockedInv.appendChild(createElement('button', { className: 'choice-btn', textContent: '🎒 Посмотреть инвентарь', style: { background: '#555' }, onclick: showInventory }));
-                    sceneEl.appendChild(lockedDiv);
-                    sceneEl.appendChild(lockedChoices);
-                    sceneEl.appendChild(lockedInv);
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 320);
-                return;
-            }
-
-            const isRestartNode = nodeId === "node_end";
-            const hasRestartOption = node.choices?.some(c => c.next === "main_story");
-            const illustration = getIllustrationHtml(nodeId);
-            const formattedText = formatText(node.text);
-            const hasChoices = node.choices && node.choices.length > 0;
-            let showAnimation = false;
-            let nextAfterCollect = null;
-            // 🎬 Проверка: один выбор + есть collect → анимация!
-            if (node.collect && node.choices && node.choices.length === 1) {
-                showAnimation = true;
-                nextAfterCollect = node.choices[0].next;
-            }
-            if (showAnimation) {
-                // Показываем анимацию вместо кнопки
-                sceneEl.classList.remove('active');
-                setTimeout(() => {
-                    sceneEl.className = 'scene';
-                    clearElement(sceneEl);
-                    const tempIllust = document.createElement('div');
-                    setHTMLContent(tempIllust, illustration);
-                    while (tempIllust.firstChild) {
-                        sceneEl.appendChild(tempIllust.firstChild);
-                    }
-                    const textDiv = createElement('div', { className: 'text' });
-                const paragraphs = formattedText.split('\n').filter(p => p.trim());
-                paragraphs.forEach(p => {
-                    if (p.trim()) {
-                        const pEl = createElement('p');
-                        pEl.innerHTML = p.trim();
-                        textDiv.appendChild(pEl);
-                    }
-                });
-                    sceneEl.appendChild(textDiv);
-                    sceneEl.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
-                    setTimeout(() => {
-                        // Формируем сообщение о получении ключа
-                        const collectMessage = node.collect.collect_message || '';
-                        const collectIcon = node.collect.icon || '🔑';
-                        const collectLabel = node.collect.label || '';
-                        // Показываем сообщение с переходом к следующему узлу после закрытия
-                        showCollectMessage(collectMessage, collectIcon, () => {
-                            if (nextAfterCollect) {
-                                showNode(nextAfterCollect);
-                            }
-                        }, collectLabel);
-                    }, 600);
-                }, 320);
-                return;
-            }
-            // Обычное отображение
-            let choicesHtml = '';
-            if (hasChoices && !isRestartNode) {
-                let choices = [...node.choices];
-                if (!hasRestartOption) {
-                    choices = shuffleArray(choices);
-                }
-                // Создаём mapping для сохранения оригинальных индексов
-                const choicesWithIndex = choices.map((c, idx) => ({
-                    choice: c,
-                    shuffledIndex: idx,
-                    originalIndex: node.choices.indexOf(c)
-                }));
-                // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
-                const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
-                    // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
-                    if (c.hide_until_unlocked === true) {
-                        // Сначала проверяем состояния
-                        if (c.requires && Array.isArray(c.requires)) {
-                            // Фильтруем состояния (начинающиеся с 'state_' или объекты с state)
-                            const stateRequirements = c.requires.filter(req => {
-                                if (typeof req === 'string' && req.startsWith('state_')) {
-                                    return true;
-                                }
-                                if (typeof req === 'object' && req !== null && req.state) {
-                                    return true;
-                                }
-                                return false;
-                            });
-                            // Если есть состояния для проверки и они не выполнены, скрываем выбор
-                            if (stateRequirements.length > 0) {
-                                const allStatesMet = stateRequirements.every(req => {
-                                    if (typeof req === 'string') {
-                                        return hasState(req);
-                                    }
-                                    if (typeof req === 'object' && req !== null && req.state) {
-                                        const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                                        return hasState(stateId);
-                                    }
-                                    return false;
-                                });
-                                if (!allStatesMet) {
-                                    return false;
-                                }
-                            }
-
-                            // Затем проверяем ключи (item/key, не state)
-                            const keyRequirements = c.requires.filter(req => {
-                                // Пропускаем state
-                                if (typeof req === 'string' && req.startsWith('state_')) {
-                                    return false;
-                                }
-                                // Если это объект, проверяем наличие item или key
-                                if (typeof req === 'object' && req !== null) {
-                                    return !!(req.item || req.key);
-                                }
-                                return true;
-                            });
-                            // Если есть ключи для проверки и они не собраны, скрываем выбор
-                            if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
-                                return false;
-                            }
-                        } else if (c.requires) {
-                            // Если requires не массив, проверяем
-                            if (typeof c.requires === 'string' && c.requires.startsWith('state_')) {
-                                // Это состояние - проверяем отдельно
-                                if (!hasState(c.requires)) {
-                                    return false;
-                                }
-                            } else {
-                                // Это ключ - проверяем через hasAllKeys
-                                if (!hasAllKeys([c.requires])) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                });
-                choicesHtml = filteredChoices.map(({ choice: c, originalIndex }) => {
-                    const isRestart = c.next === "main_story" || c.next === "node_end";
-                    let btnClass = isRestart ? 'choice-btn restart-btn' : 'choice-btn';
-                    // Блокировка только для item/key, не для state
-                    let isLocked = false;
-                    if (c.requires) {
-                        // Фильтруем требования, отделяя состояния от ключей
-                        const allRequirements = Array.isArray(c.requires) ? c.requires : [c.requires];
-                        const keyRequirements = allRequirements.filter(req => {
-                            if (typeof req === 'string') {
-                                return !req.startsWith('state_');
-                            }
-                            // Если это объект, проверяем наличие item или key
-                            if (typeof req === 'object' && req !== null) {
-                                return !!(req.item || req.key);
-                            }
-                            return true;
-                        });
-                        // Блокируем только если есть требования item/key и они не выполнены
-                        isLocked = keyRequirements.length > 0 && !hasAllKeys(keyRequirements);
-                    }
-                    if (isLocked) btnClass += ' choice-btn-locked';
-                    const btnText = isLocked ? `${c.text} 🔒` : c.text;
-                    // НЕ используем disabled - handleChoice проверит requires
-                    return `<button class="${btnClass}" data-next="${c.next}" data-index="${originalIndex}">${btnText}</button>`;
-                }).join('');
-            }
-            let inventoryButtonHtml = '';
-            if (Object.keys(collectedKeys).length > 0 || hasChoices) {
-                inventoryButtonHtml = `
-<button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
-`;
-            }
-            // === КАРТА МИРА: Кнопка карты (только если map_view === true) ===
-            let mapButtonHtml = '';
-            if (hasMapView(node)) {
-                mapButtonHtml = `
-<button id="map-button" class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
-`;
-            }
-            // END КАРТА МИРА
-            let endMarkerHtml = '';
-            if (!hasChoices || isRestartNode) {
-                endMarkerHtml = `
-<div style="
-text-align: center;
-margin: 40px 0 20px;
-font-size: 80px;
-animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-opacity: 0;
-">❌</div>
-`;
-            }
-            // 🔔 NOTIFICATION SYSTEM: Добавляем баннер с информацией
-            let notificationBanner = '';
-            if (NOTIFICATION_CONFIG.isEnabled && !localStorage.getItem('banner_hidden')) {
-                notificationBanner = `
-<div class="notification-banner">
-<button class="close-btn" onclick="hideNotificationBanner()">×</button>
-<p>🔔 Следите за прогрессом всех игроков в нашем канале:
-<a href="https://t.me/game_notifications" target="_blank">@game_notifications</a></p>
-</div>
-`;
-            }
-            // END NOTIFICATION SYSTEM
-            sceneEl.classList.remove('active');
-            setTimeout(() => {
-                sceneEl.className = 'scene';
-                if (!hasChoices || isRestartNode) {
-                    sceneEl.className += ' deadend';
-                }
-                clearElement(sceneEl);
-
-                // ✅ ИСПРАВЛЕНО: ЗАКОММЕНТИРОВАНО отображение состояний
-                // if (currentState.length > 0) {
-                //     const statesDisplay = renderCurrentStates();
-                //     sceneEl.insertBefore(statesDisplay, sceneEl.firstChild);
-                // }
-
-                // Добавляем элементы по порядку
-                if (notificationBanner) {
-                    const tempNotif = document.createElement('div');
-                    setHTMLContent(tempNotif, notificationBanner);
-                    while (tempNotif.firstChild) sceneEl.appendChild(tempNotif.firstChild);
-                }
-                if (illustration) {
-                    const tempIllust2 = document.createElement('div');
-                    setHTMLContent(tempIllust2, illustration);
-                    while (tempIllust2.firstChild) sceneEl.appendChild(tempIllust2.firstChild);
-                }
-                const mainTextDiv = createElement('div', { className: 'text' });
-                const paragraphs = formattedText.split('\n').filter(p => p.trim());
-                paragraphs.forEach(p => {
-                    if (p.trim()) {
-                        const pEl = createElement('p');
-                        pEl.innerHTML = p.trim();
-                        mainTextDiv.appendChild(pEl);
-                    }
-                });
-                sceneEl.appendChild(mainTextDiv);
-                if (endMarkerHtml) {
-                    const tempEnd = document.createElement('div');
-                    setHTMLContent(tempEnd, endMarkerHtml);
-                    while (tempEnd.firstChild) sceneEl.appendChild(tempEnd.firstChild);
-                }
-                if (choicesHtml) {
-                    const choicesDiv = createElement('div', { className: 'choices' });
-                    setHTMLContent(choicesDiv, choicesHtml);
-                    // Добавляем обработчики для кнопок выбора
-                    const choiceButtons = choicesDiv.querySelectorAll('button');
-                    choiceButtons.forEach(btn => {
-                        if (btn.dataset.next && btn.dataset.index) {
-                            btn.onclick = () => handleChoice(btn.dataset.next, parseInt(btn.dataset.index));
-                        }
-                    });
-                    sceneEl.appendChild(choicesDiv);
-                }
-                if (inventoryButtonHtml || mapButtonHtml) {
-                    const buttonsDiv = createElement('div', { className: 'choices' });
-                    setHTMLContent(buttonsDiv, (inventoryButtonHtml || '') + (mapButtonHtml || ''));
-                    sceneEl.appendChild(buttonsDiv);
-                }
-                sceneEl.classList.add('active');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                if (isAudioPlaying) {
-                    audioEl.play().catch(e => console.log("Audio play failed:", e));
-                }
-                if (isRestartNode && window.Telegram?.WebApp) {
-                    Telegram.WebApp.showAlert("Конец ветки. Возвращаемся к началу...");
-                }
-            }, 320);
-        }
-
-        // ✅ ИСПРАВЛЕНО: Правильная обработка выбора с учетом текущего узла
-        async function handleChoice(nextNodeId, choiceIndex = 0) {
-            // ✅ КРИТИЧЕСКИ ВАЖНО: Проверяем, что currentNodeId установлен
-            if (!currentNodeId || !story[currentNodeId]) {
-                console.error('Текущий узел не определен');
-                return;
-            }
-            const node = story[currentNodeId];
-            if (!node || !node.choices) return;
-            const choice = node.choices[choiceIndex];
-            if (!choice) return;
-
-            // ✅ ИСПРАВЛЕНО: Сначала обрабатываем dynamic_collect (чтобы добавить состояния даже если requires не выполнены)
-            // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
-            if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
-                console.log('🔍 Обработка dynamic_collect:', choice.dynamic_collect);
-                
-                // Функция для проверки requires варианта
-                function checkRequires(requiresData) {
-                    if (!requiresData) return true; // Нет требований - доступно
-                    
-                    const allRequirements = Array.isArray(requiresData) ? requiresData : [requiresData];
-                    
-                    // Проверяем item/key требования
-                    const keyRequirements = allRequirements.filter(req => {
-                        if (typeof req === 'string' && req.startsWith('state_')) {
-                            return false;
-                        }
-                        if (typeof req === 'object' && req !== null) {
-                            return !!(req.item || req.key);
-                        }
-                        return true;
-                    });
-                    
-                    // Проверяем state требования
-                    const stateRequirements = allRequirements.filter(req => {
-                        if (typeof req === 'string' && req.startsWith('state_')) {
-                            return true;
-                        }
-                        if (typeof req === 'object' && req !== null && req.state) {
-                            return true;
-                        }
-                        return false;
-                    });
-                    
-                    // Проверяем item/key
-                    if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
-                        return false;
-                    }
-                    
-                    // Проверяем state
-                    if (stateRequirements.length > 0) {
-                        const allStatesMet = stateRequirements.every(req => {
-                            if (typeof req === 'string') {
-                                return hasState(req);
-                            }
-                            if (typeof req === 'object' && req !== null && req.state) {
-                                const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                                return hasState(stateId);
-                            }
-                            return false;
-                        });
-                        if (!allStatesMet) {
-                            return false;
-                        }
-                    }
-                    
-                    return true; // Все требования выполнены
-                }
-                
-                // Находим подходящий вариант для сбора
-                let collectData = null;
-                
-                // Перебираем все варианты и ищем первый подходящий:
-                // 1. Сначала варианты с default: true (если requirements выполнены)
-                // 2. Потом остальные варианты (если requirements выполнены)
-                // 3. Вариант не должен быть уже собран (если hide_after_collect)
-                
-                // Перебираем все варианты в правильном порядке:
-                // 1. Сначала варианты с default: true (если requirements выполнены и не собраны)
-                // 2. Потом остальные варианты (если requirements выполнены и не собраны)
-                
-                // Сначала ищем вариант с default: true
-                const defaultVariant = choice.dynamic_collect.find(dc => dc.default === true);
-                if (defaultVariant) {
-                    // Определяем предмет из варианта (может быть null, если только add_state)
-                    let item = defaultVariant.item || defaultVariant.key || defaultVariant.quest;
-                    const itemId = item?.id;
-                    
-                    // Проверяем requires
-                    const hasRequired = checkRequires(defaultVariant.requires);
-                    
-                    // Проверяем, собран ли уже предмет (только если есть предмет)
-                    const isAlreadyCollected = itemId && collectedKeys[itemId] && defaultVariant.hide_after_collect;
-                    
-                    if (hasRequired && !isAlreadyCollected) {
-                        collectData = defaultVariant;
-                        console.log('🔍 Найден вариант с default:', collectData);
-                    }
-                }
-                
-                // Если не нашли default или default уже собран, ищем среди остальных вариантов
-                if (!collectData) {
-                    for (const variant of choice.dynamic_collect) {
-                        // Пропускаем вариант с default, если он уже обработан
-                        if (variant.default === true) continue;
-                        
-                        // Определяем предмет из варианта (может быть null, если только add_state)
-                        let item = variant.item || variant.key || variant.quest;
-                        const itemId = item?.id;
-                        
-                        // Проверяем requires
-                        const hasRequired = checkRequires(variant.requires);
-                        
-                        // Проверяем, собран ли уже предмет (только если есть предмет)
-                        const isAlreadyCollected = itemId && collectedKeys[itemId] && variant.hide_after_collect;
-                        
-                        if (hasRequired && !isAlreadyCollected) {
-                            collectData = variant;
-                            console.log('🔍 Найден подходящий вариант:', collectData);
-                            break;
-                        }
-                    }
-                }
-                
-                // Если не нашли подходящий вариант, проверяем, есть ли уже собранные варианты
-                if (!collectData) {
-                    // Проверяем все варианты - может быть default уже собран, но есть другие доступные
-                    let allCollected = true;
-                    let hasAvailableVariant = false;
-                    
-                    for (const variant of choice.dynamic_collect) {
-                        let item = variant.item || variant.key || variant.quest;
-                        const itemId = item?.id;
-                        const isCollected = itemId && collectedKeys[itemId] && variant.hide_after_collect;
-                        const hasRequired = checkRequires(variant.requires);
-                        
-                        if (!isCollected && hasRequired) {
-                            hasAvailableVariant = true;
-                            break;
-                        }
-                        if (isCollected) {
-                            allCollected = false; // Есть собранные, но не все
-                        }
-                    }
-                    
-                    // Если все варианты собраны или нет доступных, показываем сообщение
-                    if (!hasAvailableVariant) {
-                        // Ищем первый вариант с already_collected_message
-                        const collectedVariant = choice.dynamic_collect.find(variant => {
-                            let item = variant.item || variant.key || variant.quest;
-                            const itemId = item?.id;
-                            return itemId && collectedKeys[itemId] && variant.hide_after_collect;
-                        });
-                        
-                        if (collectedVariant) {
-                            const message = collectedVariant.already_collected_message ||
-                                choice.already_collected_message ||
-                                "Здесь больше ничего нет.";
-                            const icon = (collectedVariant.item || collectedVariant.key || collectedVariant.quest)?.icon || '🔍';
-                            showCollectMessage(message, icon);
-                            return;
-                        }
-                    }
-                }
-
-                // Определяем тип предмета (item, key, quest)
-                let collectItem = null;
-                let itemType = null;
-                
-                if (collectData) {
-                    if (collectData.item) {
-                        collectItem = collectData.item;
-                        itemType = 'item';
-                    } else if (collectData.key) {
-                        collectItem = collectData.key;
-                        itemType = 'key';
-                    } else if (collectData.quest) {
-                        collectItem = collectData.quest;
-                        itemType = 'quest';
-                    }
-                }
-                
-                // Обрабатываем случай, когда есть только add_state без предмета
-                if (collectData && !collectItem && collectData.add_state) {
-                    console.log('✅ Найден вариант только с add_state:', collectData);
-                    // Добавляем состояние (но НЕ переходим сразу - сначала проверим requires)
-                    if (typeof collectData.add_state === 'string') {
-                        addState({ id: collectData.add_state });
-                        console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
-                    } else if (typeof collectData.add_state === 'object') {
-                        addState(collectData.add_state);
-                        console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
-                    }
-                    // НЕ переходим сразу - продолжим проверку requires ниже
-                    // Если requires не выполнены, покажем сообщение и заблокируем переход
-                    // Если выполнены - перейдём к следующему узлу
-                }
-                
-                if (collectData && collectItem) {
-                    console.log('✅ Найден вариант для сбора:', collectData, 'Тип:', itemType);
-
-                    // Определяем иконку для сообщения
-                    let messageIcon = collectItem.icon;
-                    if (!messageIcon) {
-                        if (itemType === 'item') {
-                            messageIcon = collectItem.id?.startsWith('item_') ? '🖼️' : '🔑';
-                        } else if (itemType === 'key') {
-                            messageIcon = '🗝️';
-                        } else if (itemType === 'quest') {
-                            messageIcon = '📜';
-                        } else {
-                            messageIcon = '🔑';
-                        }
-                    }
-                    const itemLabel = collectItem.label || '';
-                    const messageText = collectData.message || '';
-                    
-                    console.log('📦 Показываем сообщение о сборе:', itemLabel, messageText, messageIcon);
-                    
-                    // Функция для показа сообщения о сборе (после загрузки, если есть)
-                    const showCollectMessageAfterLoading = () => {
-                        showCollectMessage(messageText, messageIcon, () => {
-                            console.log('💾 Сохраняем предмет в инвентарь:', collectItem);
-                            // Сохраняем предмет в инвентарь
-                            collectedKeys[collectItem.id] = {
-                                label: collectItem.label,
-                                type: collectItem.type || (itemType === 'key' ? 'regular' : 'regular'),
-                                icon: collectItem.icon
-                            };
-                            saveKeys();
-                            console.log(`✅ Собран предмет: ${collectItem.id} - ${collectItem.label}`);
-
-                            // Добавляем состояние, если указано
-                            if (collectData.add_state) {
-                                if (typeof collectData.add_state === 'string') {
-                                    // Если add_state - это строка (ID состояния)
-                                    addState({ id: collectData.add_state });
-                                    console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
-                                } else if (typeof collectData.add_state === 'object') {
-                                    // Если add_state - это объект с данными состояния
-                                    addState(collectData.add_state);
-                                    console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
-                                }
-                            }
-
-                            // Если нужно скрыть этот выбор после сбора, сохраняем это состояние
-                            if (collectData.hide_after_collect) {
-                                console.log('🔒 Выбор будет скрыт после сбора');
-                                // Логика скрытия будет обработана при следующем посещении узла
-                            }
-
-                            // Переходим к следующему узлу
-                            console.log('➡️ Переход к узлу:', nextNodeId);
-                            goToNode(nextNodeId);
-                        }, itemLabel);
-                    };
-
-                    // === ЭКРАН ЗАГРУЗКИ (если указан для этого предмета) ===
-                    if (collectData.loading_screen && Array.isArray(collectData.loading_screen) && collectData.loading_screen.length > 0) {
-                        await showLoadingScreen(collectData.loading_screen, showCollectMessageAfterLoading);
-                    } else {
-                        // Если нет загрузки, сразу показываем сообщение
-                        showCollectMessageAfterLoading();
-                    }
-                    return;
-                } else {
-                    console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect', collectData);
-                }
-            }
-
-            // ✅ ПРОВЕРКА REQUIRES ПОСЛЕ ОБРАБОТКИ dynamic_collect
-            // (чтобы состояния из dynamic_collect успели добавиться перед проверкой requires)
-            if (choice.requires) {
-                // Фильтруем требования, отделяя состояния от ключей
-                const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
-                
-                // Проверяем item/key требования
-                const keyRequirements = allRequirements.filter(req => {
-                    // Пропускаем state
-                    if (typeof req === 'string' && req.startsWith('state_')) {
-                        return false;
-                    }
-                    // Если это объект, проверяем наличие item или key
-                    if (typeof req === 'object' && req !== null) {
-                        return !!(req.item || req.key);
-                    }
-                    return true;
-                });
-
-                // Проверяем state требования
-                const stateRequirements = allRequirements.filter(req => {
-                    if (typeof req === 'string' && req.startsWith('state_')) {
-                        return true;
-                    }
-                    if (typeof req === 'object' && req !== null && req.state) {
-                        return true;
-                    }
-                    return false;
-                });
-
-                // Проверяем item/key требования
-                if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
-                    const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
-                    if (missingKeyMsgs.length > 0) {
-                        showCollectMessage(missingKeyMsgs.join('\n'), '🔒');
-                        return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
-                    }
-                }
-
-                // Проверяем state требования
-                if (stateRequirements.length > 0) {
-                    const missingStates = stateRequirements.filter(req => {
-                        if (typeof req === 'string') {
-                            return !hasState(req);
-                        }
-                        if (typeof req === 'object' && req !== null && req.state) {
-                            const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                            return !hasState(stateId);
-                        }
-                        return false;
-                    });
-                    if (missingStates.length > 0) {
-                        // Показываем сообщение о недостающих состояниях
-                        const stateMessages = missingStates.map(req => {
-                            if (typeof req === 'string') {
-                                return `Требуется состояние: ${req}`;
-                            }
-                            if (typeof req === 'object' && req !== null && req.state) {
-                                const stateLabel = typeof req.state === 'object' ? req.state.label : req.state;
-                                return stateLabel || `Требуется состояние: ${typeof req.state === 'object' ? req.state.id : req.state}`;
-                            }
-                            return 'Требуется состояние';
-                        });
-                        showCollectMessage(stateMessages.join('\n'), '⚠️');
-                        return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
-                    }
-                }
-            }
-
-            // Если dynamic_collect добавил только состояние (без предмета) и requires выполнены - переходим
-            if (choice.dynamic_collect && Array.isArray(choice.dynamic_collect)) {
-                const stateOnlyVariant = choice.dynamic_collect.find(dc => {
-                    const hasItem = !!(dc.item || dc.key || dc.quest);
-                    const hasState = !!dc.add_state;
-                    return !hasItem && hasState;
-                });
-                
-                if (stateOnlyVariant) {
-                    // Если requires были, они уже проверены выше
-                    // Если requires не были или были выполнены - переходим
-                    console.log('➡️ Переход к узлу (после добавления состояния):', nextNodeId);
-                    goToNode(nextNodeId);
-                    return;
-                }
-            }
-
-            // === СИСТЕМА СОСТОЯНИЙ: Обработка состояний в выборе ===
-            // Очистка состояний при выборе
-            if (choice.clear_states === true) {
-                clearStates();
-            }
-
-            // Добавление состояний при выборе (поддержка обоих форматов: "add_states" и "states")
-            const statesToAdd = choice.add_states || choice.states;
-            if (statesToAdd && Array.isArray(statesToAdd)) {
-                statesToAdd.forEach(stateData => {
-                    // Если stateData это строка (только ID), преобразуем в объект
-                    if (typeof stateData === 'string') {
-                        stateData = { id: stateData };
-                    }
-                    addState(stateData);
-                });
-            }
-
-            // Удаление состояний при выборе
-            if (choice.remove_states && Array.isArray(choice.remove_states)) {
-                choice.remove_states.forEach(stateId => {
-                    removeState(stateId);
-                });
-            }
-
-            // ОБРАБОТКА COLLECT
-            if (choice.collect) {
-                // 1. Проверяем был ли уже собран
-                if (collectedKeys[choice.collect.id]) {
-                    const repeatMsg = choice.collect.already_collected_message ||
-                        choice.already_collected_message ||
-                        "Здесь больше ничего нет.";
-                    showCollectMessage(repeatMsg, choice.collect.icon || '🔍');
-                    return;
-                }
-                // 2. Если есть requires и НЕТ ключа - блокируем переход
-                if (choice.requires) {
-                    // Фильтруем требования, отделяя состояния от ключей
-                    const allRequirements = Array.isArray(choice.requires) ? choice.requires : [choice.requires];
-                    const keyRequirements = allRequirements.filter(req => {
-                        // Пропускаем state
-                        if (typeof req === 'string' && req.startsWith('state_')) {
-                            return false;
-                        }
-                        // Если это объект, проверяем наличие item или key
-                        if (typeof req === 'object' && req !== null) {
-                            return !!(req.item || req.key);
-                        }
-                        return true;
-                    });
-
-                    const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
-                    if (missingKeyMsgs.length > 0) {
-                        // Сохраняем collect СРАЗУ (без анимации)
-                        collectedKeys[choice.collect.id] = {
-                            label: choice.collect.label,
-                            type: choice.collect.type || 'regular',
-                            icon: choice.collect.icon
-                        };
-                        saveKeys();
-                        // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
-                        showCollectMessage(missingKeyMsgs.join('\n'), choice.collect.icon || '🔒');
-                        return;
-                    }
-                }
-                // 3. Обычный collect - показываем сообщение и переходим
-                // Сначала сохраняем ключ
-                collectedKeys[choice.collect.id] = {
-                    label: choice.collect.label,
-                    type: choice.collect.type || 'regular',
-                    icon: choice.collect.icon
-                };
-                saveKeys();
-                // Формируем сообщение о сборе ключа
-                const collectMessage = choice.collect.collect_message || '';
-                const collectIcon = choice.collect.icon || '🔑';
-                const collectLabel = choice.collect.label || '';
-                // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
-                showCollectMessage(collectMessage, collectIcon, () => {
-                    // После закрытия сообщения переходим к следующему узлу
-                    goToNode(nextNodeId);
-                }, collectLabel);
-                return;
-            }
-            // ПЕРЕХОД к следующему узлу (если нет collect)
-            goToNode(nextNodeId);
-        }
-
-        // === УПРАВЛЕНИЕ ЗВУКОМ ===
-        function toggleAudio() {
-            if (isAudioPlaying) {
-                audioEl.pause();
-                audioBtn.textContent = '🔇';
-                isAudioPlaying = false;
-            } else {
-                audioEl.play().then(() => {
-                    audioBtn.textContent = '🔊';
-                    isAudioPlaying = true;
-                }).catch(e => {
-                    alert('Сначала взаимодействуйте со страницей для воспроизведения звука.');
-                });
-            }
-        }
-
-        // === ЭКРАН ВВОДА КОДА ===
-        function showCodeScreen(node) {
-            // Скрываем основную сцену
-            sceneEl.style.display = 'none';
-            diceScreen.style.display = 'none';
-            inventoryScreen.style.display = 'none';
-            keyAnimScreen.style.display = 'none';
-            mapScreen.style.display = 'none';
-            // Показываем экран ввода кода
-            codeScreen.style.display = 'block';
-            currentCodeNode = node;
-            // Устанавливаем тексты и подсказки
-            codeTitleEl.textContent = node.code_title || "Введите секретный код";
-            codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
-            codeInput.value = '';
-            codeErrorEl.textContent = '';
-            // === ДОБАВЛЯЕМ ТЕКСТ УЗЛА ===
-            const codeTextEl = document.getElementById('code-text');
-            if (codeTextEl && node.text) {
-                clearElement(codeTextEl);
-                const textLines = node.text.split('\n');
-                textLines.forEach((line, i) => {
-                    if (i > 0) codeTextEl.appendChild(createElement('br'));
-                    codeTextEl.appendChild(document.createTextNode(line));
-                });
-            } else if (codeTextEl) {
-                clearElement(codeTextEl);
-            }
-            // === ДОБАВЛЯЕМ CHOICES С DATA-АТРИБУТАМИ ===
-            const codeChoicesEl = document.getElementById('code-choices');
-            if (codeChoicesEl && node.choices && node.choices.length > 0) {
-                // Очищаем контейнер
-                clearElement(codeChoicesEl);
-                // Создаём кнопки через DOM (не через innerHTML)
-                node.choices.forEach((choice, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text || `Вариант ${index + 1}`;
-                    btn.dataset.next = choice.next; // Используем data-атрибут
-                    // Добавляем обработчик клика
-                    btn.addEventListener('click', function () {
-                        handleCodeChoice(this.dataset.next);
-                    });
-                    codeChoicesEl.appendChild(btn);
-                });
-            } else if (codeChoicesEl) {
-                clearElement(codeChoicesEl);
-            }
-            // Фокус на поле ввода
-            setTimeout(() => codeInput.focus(), 300);
-            // Прокручиваем наверх
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function checkCode() {
-            if (!currentCodeNode) return;
-            const inputCode = codeInput.value.trim();
-            const correctCode = currentCodeNode.correct_code;
-            const caseSensitive = currentCodeNode.case_sensitive !== false;
-            // Проверяем код с учетом регистра
-            const isCorrect = caseSensitive
-                ? inputCode === correctCode
-                : inputCode.toLowerCase() === correctCode.toLowerCase();
-            if (isCorrect) {
-                // Код верный - переходим к следующей ноде
-                codeScreen.style.display = 'none';
-                showNode(currentCodeNode.success_next);
-                currentCodeNode = null;
-            } else {
-                // Код неверный - показываем ошибку
-                codeErrorEl.textContent = currentCodeNode.error_message || "Неверный код. Попробуйте еще раз.";
-                // Эффект тряски для поля ввода
-                codeInput.style.animation = "shake 0.5s";
-                codeInput.addEventListener('animationend', () => {
-                    codeInput.style.animation = "";
-                });
-            }
-        }
-
-        // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
-        function handleCodeChoice(nextNodeId) {
-            codeScreen.style.display = 'none';
-            currentCodeNode = null;
-            showNode(nextNodeId);
-        }
-
-        // Обработчик кнопки подтверждения
-        submitCodeBtn.addEventListener('click', checkCode);
-        // Обработчик нажатия Enter в поле ввода
-        codeInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                checkCode();
-            }
-        });
-
-        // CSS анимация для эффекта тряски
-        const style = document.createElement('style');
-        style.textContent = `
-@keyframes shake {
-0%, 100% { transform: translateX(0); }
-10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
-20%, 40%, 60%, 80% { transform: translateX(6px); }
+{
+  "0": {
+    "text": "Лин проснулась от сильного скрежета за окном, от пролетавшего мимо \"Реклеймера\". Сборщики мусора и майнеры постоянные гости на этой площадке. \n\nЛин устала от долгого перелёта и, конечно, от того, что провела всю ночь в баре, попробовав полную палитру синтетических коктейлей. И теперь спала в своей комнате на Левски после очередной вылазки на сбор металлолома. Неожиданно раздался сигнал уведомления, которое пришло на Мобиглас. \n\nВажное сообщение:\n\"Чтобы прочитать это сообщение вам нужен код доступа\" отправитель MNTLCS\n\nЛин была озадачена таким сообщением и отправителя она не знала. На спам похоже не было. Она встала с кровати и поняла, что это вовсе не её комната. Она быстро одела свою униформу, проверила боекомплект и вышла из  комнаты в направлении своего корабля. \n\nСтаренький Drake Valture \"Гарпун 3\" ждал её в ангаре. Возможно стаканчик синтетического эля поможет понять, суть сообщения и найти код доступа.",
+    "choices": [
+      {
+        "text": "Зайти на корабль \"Гарпун 3\"",
+        "next": "1"
+      },
+      {
+        "text": "Космопорт LEVSKY",
+        "next": "5"
+      }
+    ],
+    "tag": "Начало истории",
+    "world": "nyx"
+  },
+  "1": {
+    "text": "Вы зашли на борт корабля \"**Гарпун 3**\". Это обычный старенький корабль от [Drake типа Valture](https://starcitizen.tools/Vulture). Пилотское кресло, каюта с верстаком и нижний отсек с переработкой и карго. Всё скромно, но очень уютно. Это самый верный друг для Лин.",
+    "choices": [
+      {
+        "text": "Сесть за рабочий стол",
+        "next": "2"
+      },
+      {
+        "text": "Сесть в кресло пилота",
+        "next": "16"
+      },
+      {
+        "text": "Достать ящик из под стола",
+        "next": "20"
+      },
+      {
+        "text": "Выйти в космопорт LEVSKY",
+        "next": "5"
+      },
+      {
+        "text": "Новый вариант выбора",
+        "next": ""
+      }
+    ],
+    "tag": "Гарпун 3",
+    "is_location": true,
+    "location_name": "Гарпун 3",
+    "location_icon": "🚀",
+    "location_category": "ship",
+    "category_name": "Корабль \"ГАРПУН 3\"",
+    "subcategory_name": "",
+    "location_description": "Борт корабля Гарпун 3. Каюта Лин."
+  },
+  "2": {
+    "text": "Каюта с рабочим столом",
+    "choices": [
+      {
+        "text": "Попытаться расшифровать сообщение в MobiGlass",
+        "next": "3",
+        "requires": [
+          {
+            "item": {
+              "id": "item_decoder",
+              "label": "Старый декодер",
+              "type": "item",
+              "icon": "💻"
+            },
+            "message": "Вроде бы у отца был шифровальщик, надо поискать в ящике."
+          }
+        ],
+        "dynamic_collect": [
+          {
+            "default": true,
+            "add_state": {
+              "id": "state_decoder_need",
+              "label": "нужен декодер",
+              "type": "state",
+              "icon": "💻"
+            }
+          }
+        ]
+      },
+      {
+        "text": "В главную каюту",
+        "next": "1"
+      },
+      {
+        "text": "Сесть в пилотское кресло",
+        "next": "16"
+      }
+    ],
+    "tag": "Рабочий стол Лин",
+    "is_location": true,
+    "location_name": "Рабочий стол",
+    "location_icon": "🚀",
+    "location_category": "ship",
+    "category_name": "Корабль \"ГАРПУН 3\"",
+    "subcategory_name": "",
+    "location_description": "Рабочий стол, со всем необходимым. Как обычно - творческий беспорядок."
+  },
+  "3": {
+    "text": "Лин подключила декодер к своему MobiGlas и начала процесс расшифровки. \nПосле нескольких часов ожидания на декодере появились цифры 4562.\n\nНо они не подошли. \n\n\"Где же взять пароль для расшифровки и зачем мне вообще отправили это сообщение?\" - подумала Лин...",
+    "choices": [
+      {
+        "text": "Отложить MobiGlas в сторону",
+        "next": "2"
+      }
+    ],
+    "tag": "Расшифровка сообщения",
+    "input_type": "code",
+    "code_title": "Ввести код доступа к сообщению",
+    "code_hint": "Четыре планеты, четыре пути",
+    "correct_code": "5555",
+    "case_sensitive": false,
+    "error_message": "Неверный код. Попробовать ещё раз",
+    "success_next": "4"
+  },
+  "4": {
+    "text": "Новый узел 4.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ],
+    "notify": {
+      "message": "Расшифровал(а) сообщение."
+    }
+  },
+  "5": {
+    "text": "Главный холл станции LEVSKY",
+    "choices": [
+      {
+        "text": "Подняться на борт \"Гарпун 3\"",
+        "next": "1"
+      },
+      {
+        "text": "Пойти в Кафе \"Musain\"",
+        "next": "7"
+      },
+      {
+        "text": "Войти в жилой комплекс",
+        "next": "21"
+      }
+    ],
+    "tag": "LEVSKY",
+    "world": "nyx",
+    "is_location": true,
+    "loc_view_always": true,
+    "location_name": "Космопорт LEVSKY",
+    "location_icon": "🌑",
+    "location_category": "nyx",
+    "category_name": "NYX",
+    "subcategory_name": "Levsky",
+    "location_description": "Космопорт LEVSKY"
+  },
+  "6": {
+    "text": "Новый узел 6.",
+    "choices": [
+      {
+        "text": "Вернуться на корабль",
+        "next": "1"
+      }
+    ],
+    "tag": "Заброшенная база на астеройде #2411",
+    "world": "nyx",
+    "is_location": true,
+    "loc_view_always": true,
+    "location_name": "Заброшенная база на астеройде #2411",
+    "location_icon": "🌌",
+    "location_category": "nyx",
+    "category_name": "NYX",
+    "subcategory_name": "",
+    "location_description": "Заброшенная станция в астероидном поясе"
+  },
+  "7": {
+    "text": "Кафе Musain — это бар и место для встреч в Левски, расположенное на Большом базаре. Владелец Клэр Риос всю жизнь прожил в Левски.",
+    "choices": [
+      {
+        "text": "Вернуться в космопорт",
+        "next": "5"
+      },
+      {
+        "text": "Поговорить с барменом",
+        "next": "8"
+      }
+    ],
+    "world": "nyx"
+  },
+  "8": {
+    "text": "\"Добро пожаловать в Musain, работяга!\" - сказал бармен.\n\nЛин присела за барный столик и заказала двойной синтетический эль и на закуску взяла тарелку Aloprat Skewer прямиком из Pyro. Лин пила свой напиток и смотрела на гостей заведения вокруг, как неожиданно бармен тихонько спросил Лин, прислонившись поближе.\n\n\"А ты случайно не Лин Кроу?\"\n\n\"Да\" - ответила Лин - \"От куда ты знаешь?\"\n\n\"Ну, во-первых ты одна из крутых сборщиков мусора в этом регионе и твоё имя есть на доске почёта в доке, но дело не в этом. Недавно проходил один гость, явно не местный и спрашивал про тебя. Ничего конкретного, но сказал, что ты можешь его найти в Dinger's Depot и сказал, что ты знаешь где это.\"\n\n\"Кто это был? Как его зовут?\" - немного нервно и настойчиво переспросила Лин\n\n\"Да, я же говорю не знаю. Больше он ничего не сказал. Ну такой суровый здоровяк. Не знаю, но судя по броне он был Охотник за Головами или какой-нибудь пират\" - торопливо ответил Бармен.\n\n\"Понятно\".",
+    "choices": [
+      {
+        "text": "Закончить разговор",
+        "next": "7"
+      },
+      {
+        "text": "Спросить настойчиво",
+        "next": "9"
+      },
+      {
+        "text": "Предложить немного UEC",
+        "next": "10"
+      },
+      {
+        "text": "Приставить свой CODA к его веску",
+        "next": "11"
+      },
+      {
+        "text": "Я вчера тут зависла надолго да?",
+        "next": "8",
+        "requires": [
+          {
+            "state": {
+              "id": "state_kc_lin_room",
+              "label": "Найти ключ",
+              "type": "state"
+            }
+          }
+        ],
+        "hide_until_unlocked": true,
+        "dynamic_collect": [
+          {
+            "key": {
+              "id": "key_lin_room",
+              "label": "Ключ от комнаты Лин",
+              "type": "key",
+              "icon": "💳"
+            },
+            "message": "Вы получили ключ от своей комнаты",
+            "hide_after_collect": true
+          }
+        ]
+      }
+    ],
+    "tag": "Бармен NPC",
+    "world": "nyx",
+    "tags": [
+      "npc"
+    ],
+    "npc_hello": "Добро пожаловать в Musain, работяга"
+  },
+  "9": {
+    "text": "Новый узел 9.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ],
+    "world": "nyx"
+  },
+  "10": {
+    "text": "Лин открыла Мобиглас. Ввела туда трёхзначное число и сказал показала его бармену.\n\n\"Знаешь, он ещё когда уходил пробормотал про себя что-то вроде... типер, типер, грёбанный кипер. Я хз что это, но я так услышал\".\n\n\"Спасибо...\" - Лин сделала долгую паузу, смотрев прямо на бармена.\n\n\"Ofelok\" - Бармен назвал своё имя.\n\n\"Спасибо, Ofelok\" - Повторила Лин.\n\nОна задумалась. Ей показались эти слова знакомы или созвучны с чем-то, что она когда-то слышала.",
+    "choices": [
+      {
+        "text": "Закончить разговор",
+        "next": "7"
+      },
+      {
+        "text": "Может быть...",
+        "next": "14"
+      }
+    ],
+    "world": "nyx"
+  },
+  "11": {
+    "text": "Лин дёрнулась вперёд, обхватила бармена левой рукой вокруг шеи и потянула к себе. Правой рукой резко достала свой CODA с кабуры на бедре и приставела его к веску бармена.\n\n\"Ты совсем охренела, чтоли Лин?!\" - сквозь стиснувшие зубы сказал бармен - \"У нас так дела не делаются знаешь ли!\"",
+    "choices": [
+      {
+        "text": "Блин, извини. ",
+        "next": "13"
+      },
+      {
+        "text": "А как делаются?",
+        "next": "12",
+        "requires": [
+          {
+            "state": {
+              "id": "state_krou_photo",
+              "label": "Требуется фото Кроу",
+              "type": "state",
+              "icon": "🖼"
+            }
+          }
+        ]
+      }
+    ],
+    "world": "nyx"
+  },
+  "12": {
+    "text": "Новый узел 12.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ],
+    "world": "nyx"
+  },
+  "13": {
+    "text": "Это всё похмелье наверное и голова трещит. Сука, это всё батя, мать его. Лин так же быстро убрала свою пушку от веска бармена и сложила в кобуру и отпустила руку с шеи бармена. \n\n\"А ты не простая штучка, Лин\" - с сарказмом сказал бармен\n\n\"Прости ещё раз...\" - Лин сделала долгую паузу смотря в глаза Бармену\n\n\"",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ],
+    "world": "nyx"
+  },
+  "14": {
+    "text": "\"Тебе ничего не говорят буквы MNTLCS?\" - Спросила бармена Лин.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ],
+    "world": "nyx"
+  },
+  "15": {
+    "text": "Ты прибыл на станцию рядом с прыжковыми воротами в систему Pyro. Ты можешь совершить прыжок через карту.\n\nОбычная ничем не примечательная станция. Редко обслуживается, но чистота поддерживается.",
+    "choices": [
+      {
+        "text": "Прогуляться по магазинам",
+        "next": "18"
+      }
+    ],
+    "tag": "🌀 Станция и ворот в Pyro",
+    "world": "nyx",
+    "jump_point": "to_pyro",
+    "map_view": true,
+    "is_location": true,
+    "loc_view_always": true,
+    "location_name": "Станция у прыжковой точки",
+    "location_icon": "🌀",
+    "location_category": "nyx",
+    "category_name": "Станция у прыжковой точки",
+    "subcategory_name": "",
+    "location_description": "Ты прибыл на станцию рядом с прыжковыми воротами в систему Pyro."
+  },
+  "16": {
+    "text": "Новый узел 16.",
+    "choices": [
+      {
+        "text": "Войти в каюту",
+        "next": "1"
+      },
+      {
+        "text": "Сесть за рабочий стол",
+        "next": "2"
+      }
+    ],
+    "tag": "Кресло пилота",
+    "map_view": true,
+    "is_location": true,
+    "location_name": "Кресло пилота",
+    "location_icon": "🚀",
+    "location_category": "ship",
+    "category_name": "Корабль \"ГАРПУН 3\"",
+    "subcategory_name": "",
+    "location_description": "Довольно скудная по комфорту кабина пилота, но всё в традициях компании DAKE"
+  },
+  "17": {
+    "text": "Старая заброшенная станция и прыжковые ворота в систему Nyx. Ты можешь совершить прыжок через карту.\n\nКак и всё в Pyro станция имеет полуразрушенный вид и за ремонт и чистоту здесь никто не заморачивается. Что говорить... тут правит беззаконие.",
+    "choices": [
+      {
+        "text": "Посмотреть в окно",
+        "next": "19"
+      }
+    ],
+    "tag": "🌀 Станция и ворот в Nyx",
+    "world": "pyro",
+    "jump_point": "to_nyx",
+    "map_view": true,
+    "is_location": true,
+    "location_name": "Старая станция возле прыжковой точки",
+    "location_icon": "🌀",
+    "location_category": "pyro",
+    "category_name": "Станция у прыжковой точки",
+    "subcategory_name": "",
+    "location_description": "Старая заброшенная станция и прыжковые ворота в систему Nyx."
+  },
+  "18": {
+    "text": "Новый узел 18.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ]
+  },
+  "19": {
+    "text": "Новый узел 19.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ]
+  },
+  "20": {
+    "text": "Лин достаёт старый ящик из под кровати в котором хранились её игрушки детсва и всякие безделушки за всю жизнь. \n\nВ этом ящике она находит старую фотографию отца в окружении разных малознакомых людей. Но один человек ей кажется более менее знакомым. Только \"почему\" она не помнит.",
+    "choices": [
+      {
+        "text": "Порыться в ящике",
+        "next": "20",
+        "dynamic_collect": [
+          {
+            "default": true,
+            "item": {
+              "id": "item_old_photo",
+              "label": "Старая фотография отца Лин с его друзьями",
+              "type": "item",
+              "icon": "🖼"
+            },
+            "add_state": {
+              "id": "state_krou_photo",
+              "label": "фото в кармане",
+              "type": "state",
+              "icon": "🖼"
+            },
+            "message": "Может спросить кто это справа стоит",
+            "hide_after_collect": true,
+            "already_collected_message": "Здесь пусто",
+            "loading_screen": [
+              "Что здесь делают мои кружевные трусы",
+              "О! Кажется нашла, что-то интересное",
+              "А нет это не то!",
+              "Вот она! Фу, какая пыльная!"
+            ]
+          },
+          {
+            "item": {
+              "id": "item_decoder",
+              "label": "Старый декодер отца",
+              "type": "item",
+              "icon": "💻"
+            },
+            "add_state": {
+              "id": "state_decoder_done",
+              "label": "Нужен декодер",
+              "type": "state",
+              "icon": "💻"
+            },
+            "message": "Вы взяли старый декодер",
+            "hide_after_collect": true,
+            "already_collected_message": "Ничего важного тут нет",
+            "requires": {
+              "state": {
+                "id": "state_decoder_need",
+                "label": "требуется декодер",
+                "type": "state",
+                "icon": "💻"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "text": "Закрыть ящик и убрать под кровать",
+        "next": "1"
+      }
+    ],
+    "tag": "Ящик под кроватью"
+  },
+  "21": {
+    "text": "Жилой комплекс на станции Levsky. Совсем не как на Orison.",
+    "choices": [
+      {
+        "text": "Вернуться в космопорт",
+        "next": "5"
+      },
+      {
+        "text": "Войти в свою комнату",
+        "next": "22",
+        "requires": [
+          {
+            "key": {
+              "id": "key_lin_room",
+              "label": "Ключ от комнаты Лин",
+              "type": "key",
+              "icon": "💳"
+            },
+            "message": "Кажется Лин потеряла ключ. Надо его найти."
+          }
+        ]
+      },
+      {
+        "text": "Спросить у прохожего",
+        "next": "24",
+        "requires": [
+          {
+            "state": {
+              "id": "state_krou_photo",
+              "label": "Требуется фото Кроу",
+              "type": "state"
+            }
+          }
+        ],
+        "hide_until_unlocked": true
+      }
+    ],
+    "tag": "Жилой комплекс",
+    "world": "nyx",
+    "states": [
+      {
+        "id": "state_kc_lin_room",
+        "label": "Лин потеряла ключ от своей комнаты",
+        "type": "state",
+        "icon": "⚠️"
+      }
+    ]
+  },
+  "22": {
+    "text": "Новый узел 22.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": ""
+      }
+    ]
+  },
+  "23": {
+    "text": "Новый узел 23.",
+    "choices": [
+      {
+        "text": "Вернуться назад",
+        "next": "8"
+      }
+    ]
+  },
+  "24": {
+    "text": "Новый узел 24.",
+    "choices": [
+      {
+        "text": "Новый вариант выбора",
+        "next": ""
+      }
+    ],
+    "world": "nyx"
+  }
 }
-`;
-        document.head.appendChild(style);
-
-        // 🔔 NOTIFICATION SYSTEM: Функция скрытия баннера
-        function hideNotificationBanner() {
-            localStorage.setItem('banner_hidden', 'true');
-            const banner = document.querySelector('.notification-banner');
-            if (banner) banner.style.display = 'none';
-        }
-        // END NOTIFICATION SYSTEM
-
-        // === ФУНКЦИЯ СБРОСА ПРОГРЕССА (ДЛЯ ОТЛАДКИ) ===
-        function resetProgress() {
-            if (!confirm('⚠️ СБРОСИТЬ ВСЁ?\nЭто удалит:\n• Весь инвентарь\n• Все открытые локации\n• Весь прогресс игры\nВы уверены?')) {
-                return;
-            }
-            console.log('🔄 Сброс прогресса игры...');
-            // Очищаем localStorage
-            localStorage.removeItem('lingame_lastNode');
-            localStorage.removeItem('lingame_keys');
-            localStorage.removeItem('lingame_locations');
-            localStorage.removeItem('banner_hidden');
-            localStorage.removeItem('hide_map_tutorial');
-            localStorage.removeItem('lingame_shipWorld');
-            localStorage.removeItem('lingame_states'); // Очищаем и состояния
-            // Очищаем глобальные переменные
-            collectedKeys = {};
-            visitedLocations = [];
-            currentState = []; // Очищаем состояния
-            currentShipWorld = 'nyx';
-            // Перезагружаем страницу
-            console.log('✅ Прогресс сброшен!');
-            console.log('🔄 Перезагрузка страницы...');
-            window.location.reload();
-        }
-
-        // === ЗАГРУЗКА КОНФИГУРАЦИИ УВЕДОМЛЕНИЙ ===
-        async function loadNotificationConfig() {
-            try {
-                // Сначала пытаемся загрузить config.js
-                const configScript = document.createElement('script');
-                configScript.src = 'config.js?v=' + Date.now();
-                configScript.async = false;
-                document.head.appendChild(configScript);
-                // Ждем загрузки скрипта
-                await new Promise((resolve) => {
-                    configScript.onload = resolve;
-                    configScript.onerror = () => {
-                        console.log('🔔 config.js не найден, используем настройки по умолчанию');
-                        resolve();
-                    };
-                });
-                // Проверяем глобальные переменные
-                if (window.GAME_CONFIG?.BOT_TOKEN && window.GAME_CONFIG?.PUBLIC_CHAT_ID) {
-                    NOTIFICATION_CONFIG = {
-                        BOT_TOKEN: window.GAME_CONFIG.BOT_TOKEN,
-                        PUBLIC_CHAT_ID: window.GAME_CONFIG.PUBLIC_CHAT_ID,
-                        isEnabled: true
-                    };
-                    console.log('🔔 Конфигурация загружена из config.js');
-                } else {
-                    // Пытаемся получить из URL параметров (для тестирования)
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const botToken = urlParams.get('bot_token');
-                    const chatId = urlParams.get('chat_id');
-                    if (botToken && chatId) {
-                        NOTIFICATION_CONFIG = {
-                            BOT_TOKEN: botToken,
-                            PUBLIC_CHAT_ID: chatId,
-                            isEnabled: true
-                        };
-                        console.log('🔔 Конфигурация загружена из URL параметров');
-                    } else {
-                        console.log('🔔 Конфигурация не найдена, уведомления отключены');
-                        NOTIFICATION_CONFIG.isEnabled = false;
-                    }
-                }
-            } catch (e) {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                NOTIFICATION_CONFIG.isEnabled = false;
-            }
-        }
-
-        // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
-        document.addEventListener('DOMContentLoaded', () => {
-            loadShipWorld(); // Загрузка системы корабля
-            // Загрузка сохраненных состояний
-            currentState = JSON.parse(localStorage.getItem('lingame_states') || '[]');
-
-            if (window.Telegram?.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.MainButton.setText('Начать заново');
-                Telegram.WebApp.MainButton.show();
-                Telegram.WebApp.MainButton.onClick(() => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                });
-            } else {
-                const restartBtn = document.createElement('button');
-                restartBtn.className = 'choice-btn restart-btn';
-                restartBtn.textContent = 'Начать заново';
-                restartBtn.style.marginTop = '20px';
-                restartBtn.style.width = '100%';
-                restartBtn.onclick = () => {
-                    localStorage.removeItem('lingame_lastNode');
-                    // localStorage.removeItem('lingame_keys'); // ← закомментировано
-                    collectedKeys = JSON.parse(localStorage.getItem('lingame_keys') || '{}');
-                    showNode("0");
-                };
-                document.getElementById('app').appendChild(restartBtn);
-            }
-            // 🔔 NOTIFICATION SYSTEM: загрузка конфигурации
-            loadNotificationConfig().then(() => {
-                console.log('🔔 Система уведомлений инициализирована:', NOTIFICATION_CONFIG);
-                loadStory();
-            }).catch(e => {
-                console.error('🔔 Ошибка загрузки конфигурации:', e);
-                loadStory();
-            });
-            // END NOTIFICATION SYSTEM
-        });
-    </script>
-</body>
-
-</html>
