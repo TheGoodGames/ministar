@@ -2971,17 +2971,21 @@ opacity: 0;
                 // 2. Потом остальные варианты (если requirements выполнены)
                 // 3. Вариант не должен быть уже собран (если hide_after_collect)
                 
+                // Перебираем все варианты в правильном порядке:
+                // 1. Сначала варианты с default: true (если requirements выполнены и не собраны)
+                // 2. Потом остальные варианты (если requirements выполнены и не собраны)
+                
                 // Сначала ищем вариант с default: true
                 const defaultVariant = choice.dynamic_collect.find(dc => dc.default === true);
                 if (defaultVariant) {
-                    // Определяем предмет из варианта
+                    // Определяем предмет из варианта (может быть null, если только add_state)
                     let item = defaultVariant.item || defaultVariant.key || defaultVariant.quest;
                     const itemId = item?.id;
                     
                     // Проверяем requires
                     const hasRequired = checkRequires(defaultVariant.requires);
                     
-                    // Проверяем, собран ли уже предмет
+                    // Проверяем, собран ли уже предмет (только если есть предмет)
                     const isAlreadyCollected = itemId && collectedKeys[itemId] && defaultVariant.hide_after_collect;
                     
                     if (hasRequired && !isAlreadyCollected) {
@@ -2990,20 +2994,20 @@ opacity: 0;
                     }
                 }
                 
-                // Если не нашли default, ищем среди остальных вариантов
+                // Если не нашли default или default уже собран, ищем среди остальных вариантов
                 if (!collectData) {
                     for (const variant of choice.dynamic_collect) {
                         // Пропускаем вариант с default, если он уже обработан
                         if (variant.default === true) continue;
                         
-                        // Определяем предмет из варианта
+                        // Определяем предмет из варианта (может быть null, если только add_state)
                         let item = variant.item || variant.key || variant.quest;
                         const itemId = item?.id;
                         
                         // Проверяем requires
                         const hasRequired = checkRequires(variant.requires);
                         
-                        // Проверяем, собран ли уже предмет
+                        // Проверяем, собран ли уже предмет (только если есть предмет)
                         const isAlreadyCollected = itemId && collectedKeys[itemId] && variant.hide_after_collect;
                         
                         if (hasRequired && !isAlreadyCollected) {
@@ -3016,20 +3020,42 @@ opacity: 0;
                 
                 // Если не нашли подходящий вариант, проверяем, есть ли уже собранные варианты
                 if (!collectData) {
-                    // Ищем первый вариант с already_collected_message
-                    const collectedVariant = choice.dynamic_collect.find(variant => {
+                    // Проверяем все варианты - может быть default уже собран, но есть другие доступные
+                    let allCollected = true;
+                    let hasAvailableVariant = false;
+                    
+                    for (const variant of choice.dynamic_collect) {
                         let item = variant.item || variant.key || variant.quest;
                         const itemId = item?.id;
-                        return itemId && collectedKeys[itemId] && variant.hide_after_collect;
-                    });
+                        const isCollected = itemId && collectedKeys[itemId] && variant.hide_after_collect;
+                        const hasRequired = checkRequires(variant.requires);
+                        
+                        if (!isCollected && hasRequired) {
+                            hasAvailableVariant = true;
+                            break;
+                        }
+                        if (isCollected) {
+                            allCollected = false; // Есть собранные, но не все
+                        }
+                    }
                     
-                    if (collectedVariant) {
-                        const message = collectedVariant.already_collected_message ||
-                            choice.already_collected_message ||
-                            "Здесь больше ничего нет.";
-                        const icon = (collectedVariant.item || collectedVariant.key || collectedVariant.quest)?.icon || '🔍';
-                        showCollectMessage(message, icon);
-                        return;
+                    // Если все варианты собраны или нет доступных, показываем сообщение
+                    if (!hasAvailableVariant) {
+                        // Ищем первый вариант с already_collected_message
+                        const collectedVariant = choice.dynamic_collect.find(variant => {
+                            let item = variant.item || variant.key || variant.quest;
+                            const itemId = item?.id;
+                            return itemId && collectedKeys[itemId] && variant.hide_after_collect;
+                        });
+                        
+                        if (collectedVariant) {
+                            const message = collectedVariant.already_collected_message ||
+                                choice.already_collected_message ||
+                                "Здесь больше ничего нет.";
+                            const icon = (collectedVariant.item || collectedVariant.key || collectedVariant.quest)?.icon || '🔍';
+                            showCollectMessage(message, icon);
+                            return;
+                        }
                     }
                 }
 
@@ -3048,6 +3074,23 @@ opacity: 0;
                         collectItem = collectData.quest;
                         itemType = 'quest';
                     }
+                }
+                
+                // Обрабатываем случай, когда есть только add_state без предмета
+                if (collectData && !collectItem && collectData.add_state) {
+                    console.log('✅ Найден вариант только с add_state:', collectData);
+                    // Добавляем состояние
+                    if (typeof collectData.add_state === 'string') {
+                        addState({ id: collectData.add_state });
+                        console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
+                    } else if (typeof collectData.add_state === 'object') {
+                        addState(collectData.add_state);
+                        console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
+                    }
+                    // Переходим к следующему узлу
+                    console.log('➡️ Переход к узлу:', nextNodeId);
+                    goToNode(nextNodeId);
+                    return;
                 }
                 
                 if (collectData && collectItem) {
