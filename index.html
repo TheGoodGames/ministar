@@ -3336,8 +3336,8 @@ opacity: 0;
                     if (missingKeyMsgs.length > 0) {
                         // Формируем label и message из первого недостающего предмета
                         const firstMissing = missingKeyMsgs[0];
-                        const label = `Требуется: ${firstMissing.label}`;
-                        const message = firstMissing.message || (missingKeyMsgs.length > 1 ? missingKeyMsgs.slice(1).map(m => m.message || `Требуется: ${m.label}`).join('\n') : '');
+                        const label = firstMissing.label; // Просто название предмета без "Требуется:"
+                        const message = firstMissing.message || (missingKeyMsgs.length > 1 ? missingKeyMsgs.slice(1).map(m => m.message || m.label).join('\n') : '');
                         showCollectMessage(message, '🔒', null, label);
                         return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
                     }
@@ -3453,8 +3453,8 @@ opacity: 0;
                         // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
                         // Формируем label и message из первого недостающего предмета
                         const firstMissing = missingKeyMsgs[0];
-                        const label = `Требуется: ${firstMissing.label}`;
-                        const message = firstMissing.message || (missingKeyMsgs.length > 1 ? missingKeyMsgs.slice(1).map(m => m.message || `Требуется: ${m.label}`).join('\n') : '');
+                        const label = firstMissing.label; // Просто название предмета без "Требуется:"
+                        const message = firstMissing.message || (missingKeyMsgs.length > 1 ? missingKeyMsgs.slice(1).map(m => m.message || m.label).join('\n') : '');
                         showCollectMessage(message, choice.collect.icon || '🔒', null, label);
                         return;
                     }
