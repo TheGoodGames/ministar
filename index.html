@@ -1887,21 +1887,39 @@ transition: all 0.3s;
         }
 
         // ✅ ИСПРАВЛЕНО: Единая функция для показа сообщений с поддержкой callback
-        function showCollectMessage(message, icon, callback = null) {
+        function showCollectMessage(message, icon, callback = null, label = null) {
             console.log('showCollectMessage вызвана');
             console.log('message:', message);
             console.log('icon:', icon);
+            console.log('label:', label);
             const overlay = document.getElementById('collect-overlay');
             if (!overlay) {
                 console.error('collect-overlay не найден!');
-                alert((icon || '🔒') + ' ' + message);
+                alert((icon || '🔒') + ' ' + (label || '') + ' ' + message);
                 if (callback) callback();
                 return;
             }
             const iconEl = overlay.querySelector('.collect-icon');
+            const labelEl = overlay.querySelector('.collect-label');
             const textEl = overlay.querySelector('.collect-text');
             if (iconEl) iconEl.textContent = icon || '🔒';
-            if (textEl) textEl.textContent = message;
+            if (labelEl) {
+                if (label) {
+                    labelEl.textContent = label;
+                    labelEl.style.display = 'block';
+                } else {
+                    labelEl.style.display = 'none';
+                }
+            }
+            if (textEl) {
+                if (label && message) {
+                    // Если есть label, показываем message как описание
+                    textEl.textContent = message;
+                } else {
+                    // Если нет label, показываем message как основной текст
+                    textEl.textContent = message || label || '';
+                }
+            }
             // Удаляем предыдущий обработчик
             overlay.onclick = null;
             // Закрытие по клику с возможностью callback
@@ -2869,11 +2887,12 @@ opacity: 0;
                             messageIcon = '🔑';
                         }
                     }
-                    const messageText = collectData.message || `Вы получили: ${collectItem.label}`;
+                    const itemLabel = collectItem.label || '';
+                    const messageText = collectData.message || '';
                     
-                    console.log('📦 Показываем сообщение о сборе:', messageText, messageIcon);
+                    console.log('📦 Показываем сообщение о сборе:', itemLabel, messageText, messageIcon);
                     
-                    // Собираем предмет и показываем сообщение
+                    // Собираем предмет и показываем сообщение (message, icon, callback, label)
                     showCollectMessage(messageText, messageIcon, () => {
                         console.log('💾 Сохраняем предмет в инвентарь:', collectItem);
                         // Сохраняем предмет в инвентарь
@@ -2907,7 +2926,7 @@ opacity: 0;
                         // Переходим к следующему узлу
                         console.log('➡️ Переход к узлу:', nextNodeId);
                         goToNode(nextNodeId);
-                    });
+                    }, itemLabel);
                     return;
                 } else {
                     console.warn('⚠️ Не найден подходящий вариант для сбора в dynamic_collect', collectData);
