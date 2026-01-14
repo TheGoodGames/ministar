@@ -1789,30 +1789,43 @@ transition: all 0.3s;
                 .map(req => {
                     let keyId = '';
                     let label = '';
+                    let icon = '';
+                    let message = '';
                     if (typeof req === 'string') {
                         keyId = req;
                         // Пытаемся получить label из collectedKeys
                         if (collectedKeys[keyId]) {
                             label = collectedKeys[keyId].label || '';
+                            icon = collectedKeys[keyId].icon || '';
                         }
                         // Если label не найден, пытаемся получить из itemsData (если доступен)
                         if (!label && typeof itemsData !== 'undefined' && itemsData[keyId]) {
                             label = itemsData[keyId].label || '';
+                            icon = itemsData[keyId].icon || '';
                         }
                     } else if (typeof req === 'object' && req !== null) {
                         if (req.item && req.item.id) {
                             keyId = req.item.id;
                             label = req.item.label || '';
+                            icon = req.item.icon || '';
+                            // Сообщение может быть в req.item.message или req.message
+                            message = req.item.message || req.message || '';
                         } else if (req.key && req.key.id) {
                             keyId = req.key.id;
                             label = req.key.label || '';
+                            icon = req.key.icon || '';
+                            // Сообщение может быть в req.key.message или req.message
+                            message = req.key.message || req.message || '';
                         }
                     }
-                    // Получаем сообщение из missingMessages или используем дефолтное
-                    const message = missingMessages[keyId] || '';
+                    // Если message не найден в объекте, получаем из missingMessages
+                    if (!message) {
+                        message = missingMessages[keyId] || '';
+                    }
                     return {
                         label: label || keyId,
-                        message: message
+                        message: message,
+                        icon: icon || '🔒'
                     };
                 });
         }
@@ -2017,10 +2030,10 @@ transition: all 0.3s;
 
         // ✅ ИСПРАВЛЕНО: Единая функция для показа сообщений с поддержкой callback
         function showCollectMessage(message, icon, callback = null, label = null) {
-            console.log('showCollectMessage вызвана');
-            console.log('message:', message);
-            console.log('icon:', icon);
-            console.log('label:', label);
+            // console.log('showCollectMessage вызвана');
+            // console.log('message:', message);
+            // console.log('icon:', icon);
+            // console.log('label:', label);
             const overlay = document.getElementById('collect-overlay');
             if (!overlay) {
                 console.error('collect-overlay не найден!');
@@ -3334,11 +3347,13 @@ opacity: 0;
                 if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
                     const missingKeyMsgs = getMissingKeyMessages(keyRequirements, choice.missing_messages);
                     if (missingKeyMsgs.length > 0) {
-                        // Формируем label и message из первого недостающего предмета
+                        // Формируем label, message и icon из первого недостающего предмета
                         const firstMissing = missingKeyMsgs[0];
                         const label = firstMissing.label; // Просто название предмета без "Требуется:"
-                        const message = firstMissing.message || (missingKeyMsgs.length > 1 ? missingKeyMsgs.slice(1).map(m => m.message || m.label).join('\n') : '');
-                        showCollectMessage(message, '🔒', null, label);
+                        const message = firstMissing.message || ''; // Сообщение из поля "⚠️ Сообщение при отсутствии:"
+                        const icon = firstMissing.icon || '🔒'; // Иконка из объекта requires
+                        // Передаем message (может быть пустым, тогда покажется только label)
+                        showCollectMessage(message, icon, null, label);
                         return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
                     }
                 }
@@ -3451,11 +3466,12 @@ opacity: 0;
                         };
                         saveKeys();
                         // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для сообщений о недостающих ключах
-                        // Формируем label и message из первого недостающего предмета
+                        // Формируем label, message и icon из первого недостающего предмета
                         const firstMissing = missingKeyMsgs[0];
                         const label = firstMissing.label; // Просто название предмета без "Требуется:"
-                        const message = firstMissing.message || (missingKeyMsgs.length > 1 ? missingKeyMsgs.slice(1).map(m => m.message || m.label).join('\n') : '');
-                        showCollectMessage(message, choice.collect.icon || '🔒', null, label);
+                        const message = firstMissing.message; // Сообщение из поля "⚠️ Сообщение при отсутствии:"
+                        const icon = firstMissing.icon || choice.collect.icon || '🔒'; // Иконка из объекта requires или collect
+                        showCollectMessage(message, icon, null, label);
                         return;
                     }
                 }
