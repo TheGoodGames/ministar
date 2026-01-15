@@ -2263,15 +2263,25 @@ transition: all 0.3s;
                 className: 'shop-item-price',
                 textContent: 'Цена: 50 ⭐'
             }));
-            const insuranceButton = createElement('button', {
-                className: 'shop-item-button',
-                textContent: hasInsurance() ? '✅ Уже куплено' : 'Купить страховку',
-                disabled: hasInsurance()
-            });
-            if (!hasInsurance()) {
+            
+            if (hasInsurance()) {
+                const insuranceButton = createElement('button', {
+                    className: 'shop-item-button',
+                    textContent: '✅ Уже куплено',
+                    disabled: true
+                });
+                insuranceItem.appendChild(insuranceButton);
+            } else {
+                // Всегда показываем кнопку покупки
+                // Если Stars недоступны, покажем инструкцию при ошибке
+                const insuranceButton = createElement('button', {
+                    className: 'shop-item-button',
+                    textContent: 'Купить страховку'
+                });
                 insuranceButton.onclick = () => purchaseInsurance();
+                insuranceItem.appendChild(insuranceButton);
             }
-            insuranceItem.appendChild(insuranceButton);
+            
             shopContent.appendChild(insuranceItem);
         }
         
@@ -2306,7 +2316,7 @@ transition: all 0.3s;
 
             try {
                 // ВАЖНО: Замените этот URL на ваш реальный URL от Vercel!
-                const API_URL = 'https://ministar.vercel.app//api/purchase';
+                const API_URL = 'https://ministar.vercel.app/api/purchase';
                 
                 // Вызываем API для создания invoice
                 const response = await fetch(API_URL, {
@@ -2335,16 +2345,79 @@ transition: all 0.3s;
                         showCollectMessage('Страховка успешно приобретена!', '🛡️', () => {
                             closeShop();
                         }, 'Страховая защита');
+                    } else if (status === 'failed') {
+                        // Платеж не удался - возможно, Stars недоступны в регионе (например, РФ)
+                        showStarsUnavailableMessage(tg);
                     } else {
-                        // Платеж отменен или ошибка
-                        alert('Платеж не был завершен');
+                        // Платеж отменен пользователем
+                        // Не показываем ошибку, просто закрываем
                     }
                 });
 
             } catch (error) {
                 console.error('Purchase error:', error);
-                alert('Ошибка при покупке. Попробуйте позже.');
+                // При ошибке показываем инструкцию для пользователей из РФ
+                const tg = window.Telegram?.WebApp;
+                if (tg) {
+                    showStarsUnavailableMessage(tg);
+                } else {
+                    alert('Ошибка при покупке. Попробуйте позже.');
+                }
             }
+        }
+        
+        // === СООБЩЕНИЕ О НЕДОСТУПНОСТИ STARS (для пользователей из РФ) ===
+        function showStarsUnavailableMessage(tg) {
+            const messageDiv = createElement('div', {
+                style: 'text-align: center; padding: 20px;'
+            });
+            
+            messageDiv.appendChild(createElement('div', {
+                style: 'font-size: 48px; margin-bottom: 15px;',
+                textContent: '💡'
+            }));
+            
+            messageDiv.appendChild(createElement('div', {
+                style: 'font-size: 20px; color: #FFD700; font-weight: bold; margin-bottom: 15px;',
+                textContent: 'Stars недоступны в вашем регионе'
+            }));
+            
+            messageDiv.appendChild(createElement('div', {
+                style: 'font-size: 15px; color: rgba(255, 255, 255, 0.8); line-height: 1.6; margin-bottom: 20px;',
+                innerHTML: 'Для покупки Stars используйте официального бота Telegram:<br><strong>@PremiumBot</strong><br><br>После покупки Stars вы сможете использовать их здесь для покупки страховки.'
+            }));
+            
+            const premiumBotButton = createElement('button', {
+                className: 'shop-item-button',
+                style: 'background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; font-weight: bold; margin-bottom: 10px;',
+                textContent: '🤖 Открыть @PremiumBot'
+            });
+            premiumBotButton.onclick = () => {
+                if (tg && tg.openTelegramLink) {
+                    tg.openTelegramLink('https://t.me/PremiumBot');
+                } else {
+                    window.open('https://t.me/PremiumBot', '_blank');
+                }
+            };
+            messageDiv.appendChild(premiumBotButton);
+            
+            const closeButton = createElement('button', {
+                className: 'shop-item-button',
+                style: 'background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3);',
+                textContent: 'Закрыть'
+            });
+            closeButton.onclick = () => {
+                closeCollectMessage();
+            };
+            messageDiv.appendChild(closeButton);
+            
+            // Показываем в красивом окне
+            showCollectMessage(
+                messageDiv.innerHTML,
+                '💡',
+                null,
+                'Инструкция по покупке Stars'
+            );
         }
         
         // === ВОССТАНОВЛЕНИЕ ИНВЕНТАРЯ ИЗ ГОСПИТАЛЯ ===
