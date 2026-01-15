@@ -2173,26 +2173,6 @@ transition: all 0.3s;
 
         // === СИСТЕМА СОСТОЯНИЙ ===
         let currentState = JSON.parse(localStorage.getItem('lingame_states') || '[]');
-        
-        // === СИСТЕМА ОТСЛЕЖИВАНИЯ ПРОЙДЕННЫХ ВЫБОРОВ (для hide_after_unlocked) ===
-        function getUsedChoices() {
-            return JSON.parse(localStorage.getItem('lingame_used_choices') || '[]');
-        }
-        
-        function saveUsedChoice(nodeId, choiceIndex) {
-            const usedChoices = getUsedChoices();
-            const choiceKey = `${nodeId}_${choiceIndex}`;
-            if (!usedChoices.includes(choiceKey)) {
-                usedChoices.push(choiceKey);
-                localStorage.setItem('lingame_used_choices', JSON.stringify(usedChoices));
-            }
-        }
-        
-        function isChoiceUsed(nodeId, choiceIndex) {
-            const usedChoices = getUsedChoices();
-            const choiceKey = `${nodeId}_${choiceIndex}`;
-            return usedChoices.includes(choiceKey);
-        }
 
         function saveStates() {
             localStorage.setItem('lingame_states', JSON.stringify(currentState));
@@ -3413,10 +3393,6 @@ opacity: 0;
 
                             // Переходим к следующему узлу
                             console.log('➡️ Переход к узлу:', nextNodeId);
-                            // ✅ Сохраняем информацию о том, что по выбору прошли (для hide_after_unlocked)
-                            if (choice.hide_after_unlocked && nextNodeId && nextNodeId !== currentNodeId) {
-                                saveUsedChoice(currentNodeId, choiceIndex);
-                            }
                             goToNode(nextNodeId);
                         }, itemLabel);
                     };
@@ -3521,10 +3497,6 @@ opacity: 0;
                     // Если requires были, они уже проверены выше
                     // Если requires не были или были выполнены - переходим
                     console.log('➡️ Переход к узлу (после добавления состояния):', nextNodeId);
-                    // ✅ Сохраняем информацию о том, что по выбору прошли (для hide_after_unlocked)
-                    if (choice.hide_after_unlocked && nextNodeId && nextNodeId !== currentNodeId) {
-                        saveUsedChoice(currentNodeId, choiceIndex);
-                    }
                     goToNode(nextNodeId);
                     return;
                 }
@@ -3615,19 +3587,11 @@ opacity: 0;
                 // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
                 showCollectMessage(collectMessage, collectIcon, () => {
                     // После закрытия сообщения переходим к следующему узлу
-                    // ✅ Сохраняем информацию о том, что по выбору прошли (для hide_after_unlocked)
-                    if (choice.hide_after_unlocked && nextNodeId && nextNodeId !== currentNodeId) {
-                        saveUsedChoice(currentNodeId, choiceIndex);
-                    }
                     goToNode(nextNodeId);
                 }, collectLabel);
                 return;
             }
             // ПЕРЕХОД к следующему узлу (если нет collect)
-            // ✅ Сохраняем информацию о том, что по выбору прошли (для hide_after_unlocked)
-            if (choice.hide_after_unlocked && nextNodeId && nextNodeId !== currentNodeId) {
-                saveUsedChoice(currentNodeId, choiceIndex);
-            }
             goToNode(nextNodeId);
         }
 
