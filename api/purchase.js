@@ -1,7 +1,7 @@
 // API endpoint для покупки через Telegram Stars
 // ВАЖНО: Этот файл должен быть в папке /api/ для работы на Vercel
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Разрешаем только POST запросы
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
