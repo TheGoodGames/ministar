@@ -2008,8 +2008,9 @@ transition: all 0.3s;
         }
         
         function restoreInventoryFromHospital() {
-            // Восстанавливаем инвентарь из сохранённой копии
-            collectedKeys = JSON.parse(JSON.stringify(savedInventoryBeforeHospital));
+            // Восстанавливаем инвентарь из сохранённой копии в localStorage
+            const savedInventory = JSON.parse(localStorage.getItem('lingame_saved_inventory') || '{}');
+            collectedKeys = JSON.parse(JSON.stringify(savedInventory));
             saveKeys();
             // Очищаем сохранённую копию
             savedInventoryBeforeHospital = {};
@@ -2727,7 +2728,9 @@ transition: all 0.3s;
                 }
                 
                 // Если нет страховок и не использовали - показываем предложение о покупке
-                if (Object.keys(savedInventoryBeforeHospital).length > 0) {
+                // Проверяем localStorage напрямую, так как переменная может быть не синхронизирована
+                const savedInventory = JSON.parse(localStorage.getItem('lingame_saved_inventory') || '{}');
+                if (Object.keys(savedInventory).length > 0) {
                     // Показываем предложение о покупке страховки
                     return new Promise((resolve) => {
                         showCollectMessage(
@@ -3392,7 +3395,9 @@ transition: all 0.3s;
             // === СИСТЕМА ГОСПИТАЛЯ: Очистка инвентаря при входе ===
             if (node.is_hospital === true) {
                 // Сохраняем инвентарь перед очисткой (если ещё не сохранён)
-                if (Object.keys(savedInventoryBeforeHospital).length === 0 && Object.keys(collectedKeys).length > 0) {
+                // Проверяем localStorage напрямую, так как переменная может быть не синхронизирована
+                const existingSavedInventory = JSON.parse(localStorage.getItem('lingame_saved_inventory') || '{}');
+                if (Object.keys(existingSavedInventory).length === 0 && Object.keys(collectedKeys).length > 0) {
                     saveInventoryBeforeHospital();
                 }
                 // Очищаем инвентарь
