@@ -34,6 +34,7 @@
             font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
             font-size: 19px;
             padding: 20px;
+            padding-top: 80px; /* Отступ сверху для закреплённой панели */
             min-height: 100vh;
             overflow-x: hidden;
             scroll-behavior: smooth;
@@ -98,6 +99,106 @@
             flex-direction: column;
             gap: 16px;
             margin: 30px 0 24px;
+        }
+
+        /* === ЗАКРЕПЛЁННАЯ ПАНЕЛЬ КНОПОК СВЕРХУ === */
+        #top-nav-bar {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            background: rgba(12, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 2px solid rgba(106, 90, 205, 0.3);
+            padding: 10px 0;
+            margin: -20px -20px 20px -20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .top-nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .top-nav-btn {
+            flex: 1;
+            min-width: 80px;
+            max-width: 120px;
+            padding: 10px 8px;
+            background: rgba(106, 90, 205, 0.2);
+            border: 2px solid rgba(106, 90, 205, 0.4);
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .top-nav-btn:hover {
+            background: rgba(106, 90, 205, 0.4);
+            border-color: rgba(106, 90, 205, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.4);
+        }
+
+        .top-nav-btn:active {
+            transform: translateY(0);
+        }
+
+        .top-nav-btn-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .top-nav-btn-text {
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .top-nav-btn.inventory {
+            background: rgba(85, 85, 85, 0.2);
+            border-color: rgba(85, 85, 85, 0.4);
+        }
+
+        .top-nav-btn.inventory:hover {
+            background: rgba(85, 85, 85, 0.4);
+            border-color: rgba(85, 85, 85, 0.7);
+            box-shadow: 0 4px 12px rgba(85, 85, 85, 0.4);
+        }
+
+        .top-nav-btn.shop {
+            background: rgba(139, 69, 19, 0.2);
+            border-color: rgba(139, 69, 19, 0.4);
+        }
+
+        .top-nav-btn.shop:hover {
+            background: rgba(139, 69, 19, 0.4);
+            border-color: rgba(139, 69, 19, 0.7);
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.4);
+        }
+
+        .top-nav-btn.map {
+            background: rgba(58, 60, 109, 0.2);
+            border-color: rgba(58, 60, 109, 0.4);
+        }
+
+        .top-nav-btn.map:hover {
+            background: rgba(58, 60, 109, 0.4);
+            border-color: rgba(58, 60, 109, 0.7);
+            box-shadow: 0 4px 12px rgba(58, 60, 109, 0.4);
         }
 
         .choice-btn {
@@ -1460,6 +1561,10 @@ location -> кликабельные элементы
         </div>
     </div>
     <div id="app">
+        <!-- Закреплённая панель кнопок сверху -->
+        <div id="top-nav-bar" style="display: none;">
+            <div class="top-nav-buttons" id="top-nav-buttons"></div>
+        </div>
         <div id="scene" class="loading">Загрузка вселенной…</div>
     </div>
     <button id="audio-control" onclick="toggleAudio()">🔇</button>
@@ -3568,25 +3673,45 @@ transition: all 0.3s;
                     return `<button class="${btnClass}" data-next="${c.next}" data-index="${originalIndex}">${btnText}</button>`;
                 }).join('');
             }
-            let inventoryButtonHtml = '';
-            if (Object.keys(collectedKeys).length > 0 || hasChoices) {
-                inventoryButtonHtml = `
-<button class="choice-btn" style="background:#555; font-size:16px;" onclick="showInventory()">🎒 Инвентарь</button>
-`;
+            // === ОБНОВЛЕНИЕ ЗАКРЕПЛЁННОЙ ПАНЕЛИ СВЕРХУ ===
+            const topNavBar = document.getElementById('top-nav-bar');
+            const topNavButtons = document.getElementById('top-nav-buttons');
+            if (topNavBar && topNavButtons) {
+                topNavButtons.innerHTML = '';
+                
+                // Инвентарь
+                if (Object.keys(collectedKeys).length > 0 || hasChoices) {
+                    const invBtn = document.createElement('button');
+                    invBtn.className = 'top-nav-btn inventory';
+                    invBtn.onclick = () => showInventory();
+                    invBtn.innerHTML = '<div class="top-nav-btn-icon">🎒</div><div class="top-nav-btn-text">Инвентарь</div>';
+                    topNavButtons.appendChild(invBtn);
+                }
+                
+                // Магазин
+                const shopBtn = document.createElement('button');
+                shopBtn.className = 'top-nav-btn shop';
+                shopBtn.onclick = () => showShop();
+                shopBtn.innerHTML = '<div class="top-nav-btn-icon">🛒</div><div class="top-nav-btn-text">Магазин</div>';
+                topNavButtons.appendChild(shopBtn);
+                
+                // Карта мира
+                if (hasMapView(node)) {
+                    const mapBtn = document.createElement('button');
+                    mapBtn.className = 'top-nav-btn map';
+                    mapBtn.onclick = () => showMap();
+                    mapBtn.innerHTML = '<div class="top-nav-btn-icon">🗺️</div><div class="top-nav-btn-text">Карта мира</div>';
+                    topNavButtons.appendChild(mapBtn);
+                }
+                
+                // Показываем панель, если есть хотя бы одна кнопка
+                if (topNavButtons.children.length > 0) {
+                    topNavBar.style.display = 'block';
+                } else {
+                    topNavBar.style.display = 'none';
+                }
             }
-            // === МАГАЗИН: Кнопка магазина ===
-            let shopButtonHtml = `
-<button class="choice-btn" style="background:#8b4513; font-size:16px;" onclick="showShop()">🛒 Магазин</button>
-`;
-            // END МАГАЗИН
-            // === КАРТА МИРА: Кнопка карты (только если map_view === true) ===
-            let mapButtonHtml = '';
-            if (hasMapView(node)) {
-                mapButtonHtml = `
-<button id="map-button" class="choice-btn" style="background:#3a3c6d; font-size:16px;" onclick="showMap()">🗺️ Карта мира</button>
-`;
-            }
-            // END КАРТА МИРА
+            // END ЗАКРЕПЛЁННАЯ ПАНЕЛЬ
             let endMarkerHtml = '';
             if (!hasChoices || isRestartNode) {
                 endMarkerHtml = `
@@ -3663,11 +3788,8 @@ opacity: 0;
                     });
                     sceneEl.appendChild(choicesDiv);
                 }
-                if (inventoryButtonHtml || mapButtonHtml) {
-                    const buttonsDiv = createElement('div', { className: 'choices' });
-                    setHTMLContent(buttonsDiv, (inventoryButtonHtml || '') + (shopButtonHtml || '') + (mapButtonHtml || ''));
-                    sceneEl.appendChild(buttonsDiv);
-                }
+                // Убираем старые кнопки снизу - теперь они в закреплённой панели сверху
+                // (кнопки уже добавлены в top-nav-bar выше)
                 sceneEl.classList.add('active');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 if (isAudioPlaying) {
