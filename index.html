@@ -2072,13 +2072,21 @@ transition: all 0.3s;
 
         function collectKey(keyData) {
             if (keyData && keyData.id) {
-                collectedKeys[keyData.id] = {
-                    label: keyData.label || keyData.id,
-                    type: keyData.type || 'regular',
-                    icon: keyData.icon
-                };
+                const count = keyData.count || 1; // Количество по умолчанию 1
+                if (collectedKeys[keyData.id]) {
+                    // Если предмет уже есть, увеличиваем количество
+                    collectedKeys[keyData.id].count = (collectedKeys[keyData.id].count || 1) + count;
+                } else {
+                    // Создаём новый предмет
+                    collectedKeys[keyData.id] = {
+                        label: keyData.label || keyData.id,
+                        type: keyData.type || 'regular',
+                        icon: keyData.icon,
+                        count: count
+                    };
+                }
                 saveKeys();
-                console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')');
+                console.log('🔑 Собран ключ:', keyData.id, keyData.label, '(' + (keyData.type || 'regular') + ')', 'x' + (collectedKeys[keyData.id].count || 1));
             }
         }
 
@@ -2108,10 +2116,24 @@ transition: all 0.3s;
                 if (typeof req === 'object' && req !== null) {
                     // Проверяем только item и key, не state
                     if (req.item && req.item.id) {
-                        return !!collectedKeys[req.item.id];
+                        const hasItem = !!collectedKeys[req.item.id];
+                        if (!hasItem) return false;
+                        // Проверяем количество, если указано
+                        if (req.item.count && collectedKeys[req.item.id]) {
+                            const itemCount = collectedKeys[req.item.id].count || 1;
+                            return itemCount >= req.item.count;
+                        }
+                        return true;
                     }
                     if (req.key && req.key.id) {
-                        return !!collectedKeys[req.key.id];
+                        const hasKey = !!collectedKeys[req.key.id];
+                        if (!hasKey) return false;
+                        // Проверяем количество, если указано
+                        if (req.key.count && collectedKeys[req.key.id]) {
+                            const keyCount = collectedKeys[req.key.id].count || 1;
+                            return keyCount >= req.key.count;
+                        }
+                        return true;
                     }
                     // Если есть state, не блокируем (state проверяется отдельно)
                     if (req.state) {
@@ -2308,9 +2330,11 @@ transition: all 0.3s;
                 
                 items.forEach(({ id, data }) => {
                     const icon = getItemIcon(id, data);
+                    const count = data.count || 1;
                     const itemDiv = createElement('div', { className: 'key-item' });
                     itemDiv.appendChild(createElement('div', { className: 'key-icon', textContent: icon }));
-                    itemDiv.appendChild(createElement('div', { className: 'key-label', textContent: data.label || id }));
+                    const labelText = (data.label || id) + (count > 1 ? ` (${count})` : '');
+                    itemDiv.appendChild(createElement('div', { className: 'key-label', textContent: labelText }));
                     itemsGrid.appendChild(itemDiv);
                 });
                 
@@ -2356,9 +2380,11 @@ transition: all 0.3s;
                 
                 keys.forEach(({ id, data }) => {
                     const icon = getItemIcon(id, data);
+                    const count = data.count || 1;
                     const keyDiv = createElement('div', { className: 'key-item' });
                     keyDiv.appendChild(createElement('div', { className: 'key-icon', textContent: icon }));
-                    keyDiv.appendChild(createElement('div', { className: 'key-label', textContent: data.label || id }));
+                    const labelText = (data.label || id) + (count > 1 ? ` (${count})` : '');
+                    keyDiv.appendChild(createElement('div', { className: 'key-label', textContent: labelText }));
                     keysGrid.appendChild(keyDiv);
                 });
                 
@@ -2377,6 +2403,52 @@ transition: all 0.3s;
                 });
                 
                 accordion.appendChild(keysGroup);
+            }
+            
+            // === ДОБАВЛЯЕМ СТРАХОВКИ В ИНВЕНТАРЬ ===
+            const insuranceCount = parseInt(localStorage.getItem('lingame_insurance_count') || '0');
+            if (insuranceCount > 0) {
+                const insuranceGroup = document.createElement('div');
+                insuranceGroup.className = 'inventory-group';
+                const shouldOpenInsurance = tabsState['📜 Страховки'] !== false;
+                
+                const insuranceHeader = createElement('button', {
+                    className: 'inventory-item level-0',
+                    children: [
+                        createElement('div', {
+                            className: 'inventory-row',
+                            children: [
+                                createElement('div', { className: 'inventory-icon', textContent: '📜' }),
+                                createElement('div', { className: 'inventory-label', textContent: '📜 Страховки' }),
+                                createElement('div', { className: 'inventory-arrow', textContent: shouldOpenInsurance ? '^' : 'v' })
+                            ]
+                        })
+                    ]
+                });
+                
+                const insuranceChildren = createElement('div', { className: 'inventory-children' });
+                const insuranceGrid = createElement('div', { className: 'keys-grid' });
+                
+                const insuranceDiv = createElement('div', { className: 'key-item' });
+                insuranceDiv.appendChild(createElement('div', { className: 'key-icon', textContent: '📜' }));
+                insuranceDiv.appendChild(createElement('div', { className: 'key-label', textContent: `Страховка (${insuranceCount})` }));
+                insuranceGrid.appendChild(insuranceDiv);
+                
+                insuranceChildren.appendChild(insuranceGrid);
+                insuranceGroup.appendChild(insuranceHeader);
+                insuranceGroup.appendChild(insuranceChildren);
+                
+                if (shouldOpenInsurance) {
+                    insuranceGroup.classList.add('open');
+                }
+                
+                insuranceHeader.addEventListener('click', () => {
+                    const open = insuranceGroup.classList.toggle('open');
+                    insuranceHeader.querySelector('.inventory-arrow').textContent = open ? '^' : 'v';
+                    saveInventoryTabsState();
+                });
+                
+                accordion.appendChild(insuranceGroup);
             }
         }
 
@@ -2642,7 +2714,18 @@ transition: all 0.3s;
             
             // Если текущий узел - госпиталь, а следующий - нет
             if (currentNode && currentNode.is_hospital === true && nextNode && nextNode.is_hospital !== true) {
-                // Проверяем, есть ли сохранённый инвентарь
+                // Проверяем, использовали ли страховку в госпитале
+                const insuranceUsed = localStorage.getItem('lingame_insurance_used_in_hospital') === 'true';
+                // Проверяем, есть ли страховки
+                const insuranceCount = parseInt(localStorage.getItem('lingame_insurance_count') || '0');
+                
+                // Если использовали страховку или есть страховки - не показываем предложение о покупке
+                if (insuranceUsed || insuranceCount > 0) {
+                    localStorage.removeItem('lingame_insurance_used_in_hospital');
+                    return Promise.resolve(true);
+                }
+                
+                // Если нет страховок и не использовали - показываем предложение о покупке
                 if (Object.keys(savedInventoryBeforeHospital).length > 0) {
                     // Показываем предложение о покупке страховки
                     return new Promise((resolve) => {
@@ -3322,6 +3405,25 @@ transition: all 0.3s;
                 collectedKeys = {};
                 saveKeys();
                 console.log('🏥 Госпиталь: Инвентарь очищен');
+                
+                // Проверяем, есть ли страховки
+                const insuranceCount = parseInt(localStorage.getItem('lingame_insurance_count') || '0');
+                if (insuranceCount > 0) {
+                    // Предлагаем использовать страховку сразу при входе
+                    setTimeout(() => {
+                        if (confirm(`Использовать страховку, чтобы восстановить инвентарь?\n\nУ вас есть ${insuranceCount} страховок.`)) {
+                            restoreInventoryFromHospital();
+                            useInsurance();
+                            showCollectMessage('Инвентарь успешно восстановлен!', '✅', null, 'Восстановление');
+                            // Сохраняем флаг, что использовали страховку
+                            localStorage.setItem('lingame_insurance_used_in_hospital', 'true');
+                        } else {
+                            localStorage.setItem('lingame_insurance_used_in_hospital', 'false');
+                        }
+                    }, 500); // Небольшая задержка для корректного отображения
+                } else {
+                    localStorage.setItem('lingame_insurance_used_in_hospital', 'false');
+                }
             }
             // END СИСТЕМА ГОСПИТАЛЯ
 
