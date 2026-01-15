@@ -64,6 +64,7 @@
             "message": "Вроде бы у отца был шифровальщик, надо поискать в ящике."
           }
         ],
+        "hide_after_unlocked": true,
         "dynamic_collect": [
           {
             "default": true,
