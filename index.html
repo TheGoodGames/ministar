@@ -2845,68 +2845,155 @@ transition: all 0.3s;
                 }));
                 // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
                 const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
-                    // Если hide_until_unlocked: true и нет ключей - СКРЫВАЕМ
+                    // Если hide_until_unlocked: true - проверяем требования и скрываем, если не выполнены
                     if (c.hide_until_unlocked === true) {
-                        // Сначала проверяем состояния
-                        if (c.requires && Array.isArray(c.requires)) {
-                            // Фильтруем состояния (начинающиеся с 'state_' или объекты с state)
-                            const stateRequirements = c.requires.filter(req => {
-                                if (typeof req === 'string' && req.startsWith('state_')) {
-                                    return true;
-                                }
-                                if (typeof req === 'object' && req !== null && req.state) {
-                                    return true;
-                                }
-                                return false;
-                            });
-                            // Если есть состояния для проверки и они не выполнены, скрываем выбор
-                            if (stateRequirements.length > 0) {
-                                const allStatesMet = stateRequirements.every(req => {
-                                    if (typeof req === 'string') {
-                                        return hasState(req);
-                                    }
-                                    if (typeof req === 'object' && req !== null && req.state) {
-                                        const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                                        return hasState(stateId);
-                                    }
-                                    return false;
-                                });
-                                if (!allStatesMet) {
-                                    return false;
-                                }
-                            }
-
-                            // Затем проверяем ключи (item/key, не state)
-                            const keyRequirements = c.requires.filter(req => {
-                                // Пропускаем state
-                                if (typeof req === 'string' && req.startsWith('state_')) {
-                                    return false;
-                                }
-                                // Если это объект, проверяем наличие item или key
-                                if (typeof req === 'object' && req !== null) {
-                                    return !!(req.item || req.key);
-                                }
-                                return true;
-                            });
-                            // Если есть ключи для проверки и они не собраны, скрываем выбор
-                            if (keyRequirements.length > 0 && !hasAllKeys(keyRequirements)) {
-                                return false;
-                            }
-                        } else if (c.requires) {
-                            // Если requires не массив, проверяем
-                            if (typeof c.requires === 'string' && c.requires.startsWith('state_')) {
-                                // Это состояние - проверяем отдельно
-                                if (!hasState(c.requires)) {
-                                    return false;
-                                }
-                            } else {
-                                // Это ключ - проверяем через hasAllKeys
-                                if (!hasAllKeys([c.requires])) {
-                                    return false;
-                                }
+                        // Нормализуем requires в массив для единообразной обработки
+                        let allRequirements = [];
+                        if (c.requires) {
+                            if (Array.isArray(c.requires)) {
+                                allRequirements = c.requires;
+                            } else if (typeof c.requires === 'object') {
+                                // Если requires - объект, преобразуем в массив
+                                allRequirements = [c.requires];
+                            } else if (typeof c.requires === 'string') {
+                                // Если requires - строка, преобразуем в массив
+                                allRequirements = [c.requires];
                             }
                         }
+                        
+                        // Если нет требований вообще, но hide_until_unlocked = true, показываем выбор
+                        if (allRequirements.length === 0) {
+                            return true; // Показываем, если нет требований
+                        }
+                        
+                        // Разделяем требования на состояния и ключи
+                        const stateRequirements = allRequirements.filter(req => {
+                            if (typeof req === 'string' && req.startsWith('state_')) {
+                                return true;
+                            }
+                            if (typeof req === 'object' && req !== null && req.state) {
+                                return true;
+                            }
+                            return false;
+                        });
+                        
+                        const keyRequirements = allRequirements.filter(req => {
+                            // Пропускаем state
+                            if (typeof req === 'string' && req.startsWith('state_')) {
+                                return false;
+                            }
+                            // Если это объект, проверяем наличие item или key (но не state)
+                            if (typeof req === 'object' && req !== null) {
+                                return !!(req.item || req.key) && !req.state;
+                            }
+                            return true; // Строка, которая не начинается с state_
+                        });
+                        
+                        // Проверяем состояния
+                        if (stateRequirements.length > 0) {
+                            const allStatesMet = stateRequirements.every(req => {
+                                if (typeof req === 'string') {
+                                    return hasState(req);
+                                }
+                                if (typeof req === 'object' && req !== null && req.state) {
+                                    const stateId = typeof req.state === 'string' ? req.state : req.state.id;
+                                    return hasState(stateId);
+                                }
+                                return false;
+                            });
+                            if (!allStatesMet) {
+                                return false; // Скрываем, если состояния не выполнены
+                            }
+                        }
+                        
+                        // Проверяем ключи (item/key)
+                        if (keyRequirements.length > 0) {
+                            if (!hasAllKeys(keyRequirements)) {
+                                return false; // Скрываем, если ключи не собраны
+                            }
+                        }
+                        
+                        // Если все требования выполнены, показываем выбор
+                        return true;
                     }
+                    
+                    // ✅ НОВАЯ ФУНКЦИОНАЛЬНОСТЬ: hide_after_unlocked - скрывать ПОСЛЕ выполнения требований
+                    if (c.hide_after_unlocked === true) {
+                        // Нормализуем requires в массив для единообразной обработки
+                        let allRequirements = [];
+                        if (c.requires) {
+                            if (Array.isArray(c.requires)) {
+                                allRequirements = c.requires;
+                            } else if (typeof c.requires === 'object') {
+                                allRequirements = [c.requires];
+                            } else if (typeof c.requires === 'string') {
+                                allRequirements = [c.requires];
+                            }
+                        }
+                        
+                        // Если нет требований, не скрываем
+                        if (allRequirements.length === 0) {
+                            return true;
+                        }
+                        
+                        // Разделяем требования на состояния и ключи
+                        const stateRequirements = allRequirements.filter(req => {
+                            if (typeof req === 'string' && req.startsWith('state_')) {
+                                return true;
+                            }
+                            if (typeof req === 'object' && req !== null && req.state) {
+                                return true;
+                            }
+                            return false;
+                        });
+                        
+                        const keyRequirements = allRequirements.filter(req => {
+                            if (typeof req === 'string' && req.startsWith('state_')) {
+                                return false;
+                            }
+                            if (typeof req === 'object' && req !== null) {
+                                return !!(req.item || req.key) && !req.state;
+                            }
+                            return true;
+                        });
+                        
+                        // Проверяем, выполнены ли ВСЕ требования
+                        let allRequirementsMet = true;
+                        
+                        // Проверяем состояния
+                        if (stateRequirements.length > 0) {
+                            const allStatesMet = stateRequirements.every(req => {
+                                if (typeof req === 'string') {
+                                    return hasState(req);
+                                }
+                                if (typeof req === 'object' && req !== null && req.state) {
+                                    const stateId = typeof req.state === 'string' ? req.state : req.state.id;
+                                    return hasState(stateId);
+                                }
+                                return false;
+                            });
+                            if (!allStatesMet) {
+                                allRequirementsMet = false;
+                            }
+                        }
+                        
+                        // Проверяем ключи (item/key)
+                        if (keyRequirements.length > 0) {
+                            if (!hasAllKeys(keyRequirements)) {
+                                allRequirementsMet = false;
+                            }
+                        }
+                        
+                        // Если ВСЕ требования выполнены - СКРЫВАЕМ выбор
+                        if (allRequirementsMet) {
+                            return false;
+                        }
+                        
+                        // Если требования не выполнены - показываем выбор
+                        return true;
+                    }
+                    
+                    // Если hide_until_unlocked и hide_after_unlocked не установлены, показываем выбор
                     return true;
                 });
                 choicesHtml = filteredChoices.map(({ choice: c, originalIndex }) => {
