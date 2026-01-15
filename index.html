@@ -3264,8 +3264,9 @@ transition: all 0.3s;
 
         async function sendGlobalNotification(nodeId, notifyData) {
             const tg = window.Telegram?.WebApp;
-            if (!tg?.initData) {
-                console.log('🔔 Невалидные данные Telegram');
+            // Проверяем, что мы в Telegram WebApp и есть данные пользователя
+            if (!tg || !tg.initDataUnsafe?.user) {
+                console.log('🔔 Невалидные данные Telegram или игра запущена не в Telegram');
                 return;
             }
             // Защита от спама
