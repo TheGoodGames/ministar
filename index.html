@@ -2272,14 +2272,49 @@ transition: all 0.3s;
                 });
                 insuranceItem.appendChild(insuranceButton);
             } else {
-                // Всегда показываем кнопку покупки
-                // Если Stars недоступны, покажем инструкцию при ошибке
+                // Показываем обе кнопки: покупка через Stars и через бота
+                const buttonsContainer = createElement('div', {
+                    style: 'display: flex; flex-direction: column; gap: 12px;'
+                });
+                
+                // Кнопка покупки через Stars
                 const insuranceButton = createElement('button', {
                     className: 'shop-item-button',
                     textContent: 'Купить страховку'
                 });
                 insuranceButton.onclick = () => purchaseInsurance();
-                insuranceItem.appendChild(insuranceButton);
+                buttonsContainer.appendChild(insuranceButton);
+                
+                // Разделитель
+                const divider = createElement('div', {
+                    style: 'text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 14px; margin: 5px 0;',
+                    textContent: 'или'
+                });
+                buttonsContainer.appendChild(divider);
+                
+                // Кнопка открытия @PremiumBot
+                const premiumBotButton = createElement('button', {
+                    className: 'shop-item-button',
+                    style: 'background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; font-weight: bold;',
+                    textContent: '🤖 Открыть @PremiumBot'
+                });
+                premiumBotButton.onclick = () => {
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.openTelegramLink('https://t.me/PremiumBot');
+                    } else {
+                        window.open('https://t.me/PremiumBot', '_blank');
+                    }
+                };
+                buttonsContainer.appendChild(premiumBotButton);
+                
+                // Описание под кнопкой бота
+                const botDescription = createElement('div', {
+                    style: 'font-size: 13px; color: rgba(255, 255, 255, 0.7); text-align: center; margin-top: 5px; line-height: 1.4;',
+                    innerHTML: 'Если Stars недоступны в вашем регионе,<br>купите Stars через @PremiumBot,<br>затем вернитесь и купите страховку здесь'
+                });
+                buttonsContainer.appendChild(botDescription);
+                
+                insuranceItem.appendChild(buttonsContainer);
             }
             
             shopContent.appendChild(insuranceItem);
