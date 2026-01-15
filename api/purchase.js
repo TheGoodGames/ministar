@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
         currency: 'XTR', // Telegram Stars
         prices: [{
           label: getItemTitle(itemId),
-          amount: price * 100 // В центах (100 = 1 звезда)
+          amount: price // Для Telegram Stars указываем цену напрямую в звёздах
         }]
       })
     });
