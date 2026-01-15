@@ -2471,7 +2471,7 @@ transition: all 0.3s;
             
             // Страховка
             const insuranceItem = document.createElement('div');
-            insuranceItem.className = 'shop-item' + (hasInsurance() ? ' shop-item-owned' : '');
+            insuranceItem.className = 'shop-item';
             
             const titleDiv = document.createElement('div');
             titleDiv.className = 'shop-item-title';
@@ -2483,57 +2483,58 @@ transition: all 0.3s;
             descDiv.textContent = 'Восстановите весь инвентарь после посещения госпиталя. Страховка действует один раз.';
             insuranceItem.appendChild(descDiv);
             
+            // Информация о количестве страховок
+            const insuranceCount = parseInt(localStorage.getItem('lingame_insurance_count') || '0');
+            if (insuranceCount > 0) {
+                const countDiv = document.createElement('div');
+                countDiv.style.cssText = 'font-size: 14px; color: #FFD700; margin-bottom: 8px; font-weight: bold;';
+                countDiv.textContent = `У вас есть: (${insuranceCount}) страховок`;
+                insuranceItem.appendChild(countDiv);
+            }
+            
             const priceDiv = document.createElement('div');
             priceDiv.className = 'shop-item-price';
             priceDiv.textContent = 'Цена: 50 ⭐';
             insuranceItem.appendChild(priceDiv);
             
-            if (hasInsurance()) {
-                const insuranceButton = document.createElement('button');
-                insuranceButton.className = 'shop-item-button';
-                insuranceButton.textContent = '✅ Уже куплено';
-                insuranceButton.disabled = true;
-                insuranceItem.appendChild(insuranceButton);
-            } else {
-                // Показываем обе кнопки: покупка через Stars и через бота
-                const buttonsContainer = document.createElement('div');
-                buttonsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
-                
-                // Кнопка покупки через Stars
-                const insuranceButton = document.createElement('button');
-                insuranceButton.className = 'shop-item-button';
-                insuranceButton.textContent = 'Купить страховку';
-                insuranceButton.onclick = () => purchaseInsurance();
-                buttonsContainer.appendChild(insuranceButton);
-                
-                // Разделитель
-                const divider = document.createElement('div');
-                divider.style.cssText = 'text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 14px; margin: 5px 0;';
-                divider.textContent = 'или';
-                buttonsContainer.appendChild(divider);
-                
-                // Кнопка открытия @PremiumBot
-                const premiumBotButton = document.createElement('button');
-                premiumBotButton.className = 'shop-item-button';
-                premiumBotButton.style.cssText = 'background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; font-weight: bold;';
-                premiumBotButton.textContent = '🤖 Открыть @PremiumBot';
-                premiumBotButton.onclick = () => {
-                    if (window.Telegram && window.Telegram.WebApp) {
-                        window.Telegram.WebApp.openTelegramLink('https://t.me/PremiumBot');
-                    } else {
-                        window.open('https://t.me/PremiumBot', '_blank');
-                    }
-                };
-                buttonsContainer.appendChild(premiumBotButton);
-                
-                // Описание под кнопкой бота
-                const botDescription = document.createElement('div');
-                botDescription.style.cssText = 'font-size: 13px; color: rgba(255, 255, 255, 0.7); text-align: center; margin-top: 5px; line-height: 1.4;';
-                botDescription.innerHTML = 'Если Stars недоступны в вашем регионе,<br>купите Stars через @PremiumBot,<br>затем вернитесь и купите страховку здесь';
-                buttonsContainer.appendChild(botDescription);
-                
-                insuranceItem.appendChild(buttonsContainer);
-            }
+            // Всегда показываем кнопки покупки
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
+            
+            // Кнопка покупки через Stars
+            const insuranceButton = document.createElement('button');
+            insuranceButton.className = 'shop-item-button';
+            insuranceButton.textContent = 'Купить страховку';
+            insuranceButton.onclick = () => purchaseInsurance();
+            buttonsContainer.appendChild(insuranceButton);
+            
+            // Разделитель
+            const divider = document.createElement('div');
+            divider.style.cssText = 'text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 14px; margin: 5px 0;';
+            divider.textContent = 'или';
+            buttonsContainer.appendChild(divider);
+            
+            // Кнопка открытия @PremiumBot
+            const premiumBotButton = document.createElement('button');
+            premiumBotButton.className = 'shop-item-button';
+            premiumBotButton.style.cssText = 'background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; font-weight: bold;';
+            premiumBotButton.textContent = '🤖 Открыть @PremiumBot';
+            premiumBotButton.onclick = () => {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.openTelegramLink('https://t.me/PremiumBot');
+                } else {
+                    window.open('https://t.me/PremiumBot', '_blank');
+                }
+            };
+            buttonsContainer.appendChild(premiumBotButton);
+            
+            // Описание под кнопкой бота
+            const botDescription = document.createElement('div');
+            botDescription.style.cssText = 'font-size: 13px; color: rgba(255, 255, 255, 0.7); text-align: center; margin-top: 5px; line-height: 1.4;';
+            botDescription.innerHTML = 'Если Stars недоступны в вашем регионе,<br>купите Stars через @PremiumBot,<br>затем вернитесь и купите страховку здесь';
+            buttonsContainer.appendChild(botDescription);
+            
+            insuranceItem.appendChild(buttonsContainer);
             
             shopContent.appendChild(insuranceItem);
         }
