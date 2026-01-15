@@ -2290,10 +2290,29 @@ transition: all 0.3s;
             shopScreen.classList.remove('active');
             // Показываем сцену игры обратно
             sceneEl.style.display = 'block';
+            
+            // Если магазин был открыт из-за выхода из госпиталя и страховка не куплена
+            if (window.hospitalExitResolve && !hasInsurance()) {
+                // Очищаем interval
+                if (window.hospitalExitInterval) {
+                    clearInterval(window.hospitalExitInterval);
+                    delete window.hospitalExitInterval;
+                }
+                // Переходим без восстановления
+                const savedResolve = window.hospitalExitResolve;
+                const savedNextNode = window.hospitalExitNextNode;
+                delete window.hospitalExitResolve;
+                delete window.hospitalExitNextNode;
+                if (savedResolve) {
+                    savedResolve(true);
+                }
+            }
         }
         
         // === ПОКУПКА СТРАХОВКИ ===
         async function purchaseInsurance() {
+            console.log('purchaseInsurance вызвана');
+            
             // Проверяем, что мы в Telegram Mini App
             if (!window.Telegram || !window.Telegram.WebApp) {
                 // Режим тестирования (для разработки вне Telegram)
@@ -2318,6 +2337,8 @@ transition: all 0.3s;
                 // ВАЖНО: Замените этот URL на ваш реальный URL от Vercel!
                 const API_URL = 'https://ministar.vercel.app/api/purchase';
                 
+                console.log('Отправка запроса на:', API_URL);
+                
                 // Вызываем API для создания invoice
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -2331,14 +2352,26 @@ transition: all 0.3s;
                     })
                 });
 
+                console.log('Ответ получен, status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Ошибка API:', errorText);
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
+                }
+
                 const data = await response.json();
+                console.log('Данные получены:', data);
                 
                 if (!data.success || !data.invoiceUrl) {
-                    throw new Error('Failed to create invoice');
+                    throw new Error('Failed to create invoice: ' + JSON.stringify(data));
                 }
+
+                console.log('Открываем invoice:', data.invoiceUrl);
 
                 // Открываем invoice через Telegram
                 tg.openInvoice(data.invoiceUrl, (status) => {
+                    console.log('Invoice status:', status);
                     if (status === 'paid') {
                         // Платеж успешен
                         setInsurance(true);
@@ -2361,7 +2394,7 @@ transition: all 0.3s;
                 if (tg) {
                     showStarsUnavailableMessage(tg);
                 } else {
-                    alert('Ошибка при покупке. Попробуйте позже.');
+                    alert('Ошибка при покупке: ' + error.message);
                 }
             }
         }
@@ -2421,33 +2454,57 @@ transition: all 0.3s;
         }
         
         // === ВОССТАНОВЛЕНИЕ ИНВЕНТАРЯ ИЗ ГОСПИТАЛЯ ===
-        function checkHospitalExit(node) {
+        function checkHospitalExitBeforeTransition(currentNodeId, nextNodeId) {
             // Проверяем, выходим ли мы из госпиталя
-            const wasInHospital = localStorage.getItem('lingame_was_in_hospital') === 'true';
-            if (wasInHospital && node.is_hospital !== true) {
-                // Мы вышли из госпиталя
-                localStorage.removeItem('lingame_was_in_hospital');
-                
+            const currentNode = story[currentNodeId];
+            const nextNode = story[nextNodeId];
+            
+            // Если текущий узел - госпиталь, а следующий - нет
+            if (currentNode && currentNode.is_hospital === true && nextNode && nextNode.is_hospital !== true) {
                 // Проверяем, есть ли сохранённый инвентарь
                 if (Object.keys(savedInventoryBeforeHospital).length > 0) {
-                    // Предлагаем восстановить инвентарь
-                    if (hasInsurance()) {
+                    // Показываем предложение о покупке страховки
+                    return new Promise((resolve) => {
                         showCollectMessage(
-                            'Страховая компания предлагает вам восстановить ваше имущество.',
+                            'Страховая компания предлагает вам восстановить ваше имущество за 50 ⭐.',
                             '🛡️',
                             () => {
-                                if (confirm('Восстановить весь инвентарь за счёт страховки?')) {
-                                    restoreInventoryFromHospital();
-                                    setInsurance(false); // Страховка использована
-                                    showCollectMessage('Инвентарь успешно восстановлен!', '✅', null, 'Восстановление');
+                                if (confirm('Купить страховку и восстановить весь инвентарь?')) {
+                                    // Открываем магазин
+                                    showShop();
+                                    // После покупки страховки (если купили) восстанавливаем инвентарь
+                                    const checkInsurance = setInterval(() => {
+                                        if (hasInsurance()) {
+                                            clearInterval(checkInsurance);
+                                            restoreInventoryFromHospital();
+                                            setInsurance(false); // Страховка использована
+                                            showCollectMessage('Инвентарь успешно восстановлен!', '✅', () => {
+                                                resolve(true); // Переходим к следующему узлу
+                                            }, 'Восстановление');
+                                        }
+                                    }, 500);
+                                    
+                                    // Если пользователь закрыл магазин без покупки
+                                    setTimeout(() => {
+                                        clearInterval(checkInsurance);
+                                        if (!hasInsurance()) {
+                                            resolve(true); // Переходим без восстановления
+                                        }
+                                    }, 30000); // 30 секунд таймаут
+                                } else {
+                                    resolve(true); // Переходим без восстановления
                                 }
                             },
                             'Страховая защита'
                         );
-                    }
+                    });
                 }
             }
             
+            return Promise.resolve(true);
+        }
+        
+        function checkHospitalExit(node) {
             // Сохраняем, что мы в госпитале
             if (node.is_hospital === true) {
                 localStorage.setItem('lingame_was_in_hospital', 'true');
@@ -3841,9 +3898,12 @@ opacity: 0;
                                 // Логика скрытия будет обработана при следующем посещении узла
                             }
 
-                            // Переходим к следующему узлу
-                            console.log('➡️ Переход к узлу:', nextNodeId);
-                            goToNode(nextNodeId);
+                            // Проверяем выход из госпиталя перед переходом
+                            checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                                // Переходим к следующему узлу
+                                console.log('➡️ Переход к узлу:', nextNodeId);
+                                goToNode(nextNodeId);
+                            });
                         }, itemLabel);
                     };
 
@@ -3946,8 +4006,11 @@ opacity: 0;
                 if (stateOnlyVariant) {
                     // Если requires были, они уже проверены выше
                     // Если requires не были или были выполнены - переходим
-                    console.log('➡️ Переход к узлу (после добавления состояния):', nextNodeId);
-                    goToNode(nextNodeId);
+                    // Проверяем выход из госпиталя перед переходом
+                    checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                        console.log('➡️ Переход к узлу (после добавления состояния):', nextNodeId);
+                        goToNode(nextNodeId);
+                    });
                     return;
                 }
             }
@@ -4036,13 +4099,19 @@ opacity: 0;
                 const collectLabel = choice.collect.label || '';
                 // ✅ ИСПРАВЛЕНО: Используем единое всплывающее окно для показа сообщения о получении ключа
                 showCollectMessage(collectMessage, collectIcon, () => {
-                    // После закрытия сообщения переходим к следующему узлу
-                    goToNode(nextNodeId);
+                    // Проверяем выход из госпиталя перед переходом
+                    checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                        // После закрытия сообщения переходим к следующему узлу
+                        goToNode(nextNodeId);
+                    });
                 }, collectLabel);
                 return;
             }
             // ПЕРЕХОД к следующему узлу (если нет collect)
-            goToNode(nextNodeId);
+            // Проверяем выход из госпиталя перед переходом
+            checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                goToNode(nextNodeId);
+            });
         }
 
         // === УПРАВЛЕНИЕ ЗВУКОМ ===
