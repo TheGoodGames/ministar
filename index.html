@@ -34,7 +34,7 @@
             font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
             font-size: 19px;
             padding: 20px;
-            padding-top: 80px; /* Отступ сверху для закреплённой панели */
+            padding-top: 70px; /* Отступ для закреплённой панели */
             min-height: 100vh;
             overflow-x: hidden;
             scroll-behavior: smooth;
@@ -45,6 +45,7 @@
         #app {
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
         }
 
         #scene {
@@ -103,15 +104,16 @@
 
         /* === ЗАКРЕПЛЁННАЯ ПАНЕЛЬ КНОПОК СВЕРХУ === */
         #top-nav-bar {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 999;
             background: rgba(12, 11, 20, 0.95);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 2px solid rgba(106, 90, 205, 0.3);
             padding: 10px 0;
-            margin: -20px -20px 20px -20px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
