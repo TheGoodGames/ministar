@@ -2017,13 +2017,54 @@ transition: all 0.3s;
         }
         
         function hasInsurance() {
-            // Проверяем, есть ли у игрока страховка
+            // Проверяем счётчик тестовых страховок
+            const count = parseInt(localStorage.getItem('lingame_insurance_count') || '0');
+            if (count > 0) {
+                return true;
+            }
+            // Проверяем обычную страховку
             return localStorage.getItem('lingame_has_insurance') === 'true';
         }
         
         function setInsurance(value) {
             localStorage.setItem('lingame_has_insurance', value ? 'true' : 'false');
         }
+        
+        // === ФУНКЦИИ ДЛЯ ТЕСТИРОВАНИЯ ===
+        // Установить страховку (для тестирования)
+        // Использование в консоли: setTestInsurance(3) - установит 3 страховки
+        window.setTestInsurance = function(count = 1) {
+            // Сохраняем количество страховок
+            localStorage.setItem('lingame_insurance_count', count.toString());
+            if (count > 0) {
+                setInsurance(true);
+                console.log(`✅ Установлено ${count} страховок для тестирования`);
+                alert(`✅ Установлено ${count} страховок для тестирования`);
+            } else {
+                setInsurance(false);
+                localStorage.removeItem('lingame_insurance_count');
+                console.log('✅ Страховки удалены');
+                alert('✅ Страховки удалены');
+            }
+        };
+        
+        // Использование страховки (уменьшает счётчик)
+        function useInsurance() {
+            const count = parseInt(localStorage.getItem('lingame_insurance_count') || '0');
+            if (count > 0) {
+                const newCount = count - 1;
+                localStorage.setItem('lingame_insurance_count', newCount.toString());
+                if (newCount === 0) {
+                    setInsurance(false);
+                }
+                console.log(`✅ Использована страховка. Осталось: ${newCount}`);
+                return true;
+            } else {
+                setInsurance(false);
+                return false;
+            }
+        }
+        
 
         function saveKeys() {
             localStorage.setItem('lingame_keys', JSON.stringify(collectedKeys));
@@ -2617,7 +2658,7 @@ transition: all 0.3s;
                                         if (hasInsurance()) {
                                             clearInterval(checkInsurance);
                                             restoreInventoryFromHospital();
-                                            setInsurance(false); // Страховка использована
+                                            useInsurance(); // Используем страховку (уменьшает счётчик)
                                             showCollectMessage('Инвентарь успешно восстановлен!', '✅', () => {
                                                 resolve(true); // Переходим к следующему узлу
                                             }, 'Восстановление');
