@@ -93,12 +93,6 @@
         "next": "27",
         "requires": [
           {
-            "item": {
-              "id": "item_decoder",
-              "label": "Декодер в кармане",
-              "type": "item",
-              "icon": "💻"
-            },
             "state": {
               "id": "state_what_pass",
               "label": "Где код",
