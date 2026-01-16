@@ -3927,7 +3927,17 @@ opacity: 0;
                     const choiceButtons = choicesDiv.querySelectorAll('button');
                     choiceButtons.forEach(btn => {
                         if (btn.dataset.next && btn.dataset.index) {
-                            btn.onclick = () => handleChoice(btn.dataset.next, parseInt(btn.dataset.index));
+                            // Сохраняем текущий nodeId в замыкании, чтобы использовать правильный узел
+                            const currentNodeIdForChoice = nodeId;
+                            btn.onclick = () => {
+                                // Временно устанавливаем currentNodeId для handleChoice
+                                const savedCurrentNodeId = currentNodeId;
+                                currentNodeId = currentNodeIdForChoice;
+                                handleChoice(btn.dataset.next, parseInt(btn.dataset.index)).finally(() => {
+                                    // Восстанавливаем currentNodeId после обработки
+                                    currentNodeId = savedCurrentNodeId;
+                                });
+                            };
                         }
                     });
                     sceneEl.appendChild(choicesDiv);
@@ -4227,6 +4237,8 @@ opacity: 0;
                             checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
                                 // Переходим к следующему узлу
                                 console.log('➡️ Переход к узлу:', nextNodeId);
+                                // Обновляем currentNodeId перед переходом
+                                currentNodeId = nextNodeId;
                                 goToNode(nextNodeId);
                             });
                         }, itemLabel);
@@ -4342,6 +4354,8 @@ opacity: 0;
                     // Проверяем выход из госпиталя перед переходом
                     checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
                         console.log('➡️ Переход к узлу (после добавления состояния):', nextNodeId);
+                        // Обновляем currentNodeId перед переходом
+                        currentNodeId = nextNodeId;
                         goToNode(nextNodeId);
                     });
                     return;
@@ -4435,6 +4449,8 @@ opacity: 0;
                     // Проверяем выход из госпиталя перед переходом
                     checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
                         // После закрытия сообщения переходим к следующему узлу
+                        // Обновляем currentNodeId перед переходом
+                        currentNodeId = nextNodeId;
                         goToNode(nextNodeId);
                     });
                 }, collectLabel);
@@ -4443,6 +4459,8 @@ opacity: 0;
             // ПЕРЕХОД к следующему узлу (если нет collect)
             // Проверяем выход из госпиталя перед переходом
             checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                // Обновляем currentNodeId перед переходом
+                currentNodeId = nextNodeId;
                 goToNode(nextNodeId);
             });
         }
