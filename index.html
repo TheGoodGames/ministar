@@ -4457,7 +4457,8 @@ opacity: 0;
             mapScreen.style.display = 'none';
             // Показываем экран ввода кода
             codeScreen.style.display = 'block';
-            currentCodeNode = node;
+            // Сохраняем узел с ID для handleCodeChoice
+            currentCodeNode = { ...node, id: currentNodeId };
             // Устанавливаем тексты и подсказки
             codeTitleEl.textContent = node.code_title || "Введите секретный код";
             codeHintEl.textContent = node.code_hint || "Код состоит из нескольких символов";
@@ -4486,9 +4487,9 @@ opacity: 0;
                     btn.className = 'choice-btn';
                     btn.textContent = choice.text || `Вариант ${index + 1}`;
                     btn.dataset.next = choice.next; // Используем data-атрибут
-                    // Добавляем обработчик клика
+                    // Добавляем обработчик клика - используем handleChoice для обработки dynamic_collect и add_state
                     btn.addEventListener('click', function () {
-                        handleCodeChoice(this.dataset.next);
+                        handleCodeChoice(choice, index);
                     });
                     codeChoicesEl.appendChild(btn);
                 });
@@ -4527,10 +4528,29 @@ opacity: 0;
         }
 
         // === ОБРАБОТКА ВЫБОРА В CODE SCREEN ===
-        function handleCodeChoice(nextNodeId) {
+        async function handleCodeChoice(choice, choiceIndex = 0) {
+            if (!currentCodeNode || !currentCodeNode.id) {
+                console.error('currentCodeNode не установлен или не имеет ID');
+                return;
+            }
+            
+            // Устанавливаем currentNodeId для handleChoice
+            const savedCurrentNodeId = currentNodeId;
+            currentNodeId = currentCodeNode.id;
+            
+            // Скрываем экран кода
             codeScreen.style.display = 'none';
+            const nextNodeId = choice.next;
             currentCodeNode = null;
-            showNode(nextNodeId);
+            
+            // Используем handleChoice для обработки dynamic_collect, add_state и других функций
+            // Это гарантирует, что все механизмы выбора работают одинаково
+            try {
+                await handleChoice(nextNodeId, choiceIndex);
+            } finally {
+                // Восстанавливаем currentNodeId
+                currentNodeId = savedCurrentNodeId;
+            }
         }
 
         // Обработчик кнопки подтверждения
