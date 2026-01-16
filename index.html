@@ -4153,20 +4153,13 @@ opacity: 0;
                     const stateIcon = (typeof collectData.add_state === 'object' && collectData.add_state.icon) || '✅';
                     const stateLabel = (typeof collectData.add_state === 'object' && collectData.add_state.label) || '';
                     
+                    // НЕ делаем return - продолжаем проверку requires выбора ниже
+                    // Если requires не выполнены, покажем сообщение и заблокируем переход
+                    // Если выполнены - перейдём к следующему узлу
                     if (stateMessage) {
-                        showCollectMessage(stateMessage, stateIcon, () => {
-                            // После закрытия сообщения переходим к следующему узлу
-                            checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
-                                goToNode(nextNodeId);
-                            });
-                        }, stateLabel);
-                    } else {
-                        // Если нет сообщения, сразу переходим к следующему узлу
-                        checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
-                            goToNode(nextNodeId);
-                        });
+                        showCollectMessage(stateMessage, stateIcon, null, stateLabel);
                     }
-                    return; // Прерываем выполнение, так как уже обработали переход
+                    // Продолжаем выполнение для проверки requires выбора
                 }
                 
                 if (collectData && collectItem) {
