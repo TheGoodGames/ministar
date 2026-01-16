@@ -3947,15 +3947,23 @@ opacity: 0;
 
         // ✅ ИСПРАВЛЕНО: Правильная обработка выбора с учетом текущего узла
         async function handleChoice(nextNodeId, choiceIndex = 0) {
+            console.log('🎯 handleChoice вызван:', { nextNodeId, choiceIndex, currentNodeId });
             // ✅ КРИТИЧЕСКИ ВАЖНО: Проверяем, что currentNodeId установлен
             if (!currentNodeId || !story[currentNodeId]) {
                 console.error('Текущий узел не определен');
                 return;
             }
             const node = story[currentNodeId];
-            if (!node || !node.choices) return;
+            if (!node || !node.choices) {
+                console.error('Узел или choices не найдены');
+                return;
+            }
             const choice = node.choices[choiceIndex];
-            if (!choice) return;
+            if (!choice) {
+                console.error('Выбор не найден по индексу:', choiceIndex);
+                return;
+            }
+            console.log('✅ Выбор найден:', choice.text, 'Требования:', choice.requires);
 
             // ✅ ИСПРАВЛЕНО: Сначала обрабатываем dynamic_collect (чтобы добавить состояния даже если requires не выполнены)
             // ✅ ИСПРАВЛЕНО: НОВАЯ ФУНКЦИОНАЛЬНОСТЬ - dynamic_collect
@@ -4284,17 +4292,23 @@ opacity: 0;
 
                 // Проверяем state требования
                 if (stateRequirements.length > 0) {
+                    console.log('🔍 Проверка state требований:', stateRequirements);
+                    console.log('🔍 Текущие состояния:', currentState.map(s => s.id));
                     const missingStates = stateRequirements.filter(req => {
+                        let stateId;
                         if (typeof req === 'string') {
-                            return !hasState(req);
+                            stateId = req;
+                        } else if (typeof req === 'object' && req !== null && req.state) {
+                            stateId = typeof req.state === 'string' ? req.state : req.state.id;
+                        } else {
+                            return false;
                         }
-                        if (typeof req === 'object' && req !== null && req.state) {
-                            const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                            return !hasState(stateId);
-                        }
-                        return false;
+                        const hasIt = hasState(stateId);
+                        console.log(`🔍 Проверка состояния ${stateId}: ${hasIt ? '✅ есть' : '❌ нет'}`);
+                        return !hasIt;
                     });
                     if (missingStates.length > 0) {
+                        console.log('⚠️ Недостающие состояния:', missingStates);
                         // Показываем сообщение о недостающих состояниях
                         const stateMessages = missingStates.map(req => {
                             if (typeof req === 'string') {
@@ -4308,6 +4322,8 @@ opacity: 0;
                         });
                         showCollectMessage(stateMessages.join('\n'), '⚠️');
                         return; // Блокируем переход (но состояние уже добавлено из dynamic_collect)
+                    } else {
+                        console.log('✅ Все state требования выполнены');
                     }
                 }
             }
