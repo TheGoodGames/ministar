@@ -4062,9 +4062,17 @@ opacity: 0;
                         // Проверяем, собран ли уже предмет (только если есть предмет)
                         const isAlreadyCollected = itemId && collectedKeys[itemId] && variant.hide_after_collect;
                         
+                        // Если есть только add_state без предмета, тоже считаем подходящим вариантом
+                        const hasOnlyState = !item && variant.add_state;
+                        
                         if (hasRequired && !isAlreadyCollected) {
                             collectData = variant;
-                            console.log('🔍 Найден подходящий вариант:', collectData);
+                            console.log('🔍 Найден подходящий вариант:', collectData, 'Только состояние:', hasOnlyState);
+                            break;
+                        } else if (hasOnlyState && hasRequired) {
+                            // Специальная обработка для варианта с только add_state
+                            collectData = variant;
+                            console.log('🔍 Найден вариант только с add_state:', collectData);
                             break;
                         }
                     }
@@ -4131,7 +4139,7 @@ opacity: 0;
                 // Обрабатываем случай, когда есть только add_state без предмета
                 if (collectData && !collectItem && collectData.add_state) {
                     console.log('✅ Найден вариант только с add_state:', collectData);
-                    // Добавляем состояние (но НЕ переходим сразу - сначала проверим requires)
+                    // Добавляем состояние
                     if (typeof collectData.add_state === 'string') {
                         addState({ id: collectData.add_state });
                         console.log(`✅ Активировано состояние (строка): ${collectData.add_state}`);
@@ -4139,9 +4147,26 @@ opacity: 0;
                         addState(collectData.add_state);
                         console.log(`✅ Активировано состояние (объект): ${collectData.add_state.id || JSON.stringify(collectData.add_state)}`);
                     }
-                    // НЕ переходим сразу - продолжим проверку requires ниже
-                    // Если requires не выполнены, покажем сообщение и заблокируем переход
-                    // Если выполнены - перейдём к следующему узлу
+                    
+                    // Показываем сообщение о добавлении состояния (если есть)
+                    const stateMessage = collectData.add_state_message || collectData.message || '';
+                    const stateIcon = (typeof collectData.add_state === 'object' && collectData.add_state.icon) || '✅';
+                    const stateLabel = (typeof collectData.add_state === 'object' && collectData.add_state.label) || '';
+                    
+                    if (stateMessage) {
+                        showCollectMessage(stateMessage, stateIcon, () => {
+                            // После закрытия сообщения переходим к следующему узлу
+                            checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                                goToNode(nextNodeId);
+                            });
+                        }, stateLabel);
+                    } else {
+                        // Если нет сообщения, сразу переходим к следующему узлу
+                        checkHospitalExitBeforeTransition(currentNodeId, nextNodeId).then(() => {
+                            goToNode(nextNodeId);
+                        });
+                    }
+                    return; // Прерываем выполнение, так как уже обработали переход
                 }
                 
                 if (collectData && collectItem) {
