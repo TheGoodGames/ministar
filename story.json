@@ -106,7 +106,8 @@
               "icon": "❓"
             }
           }
-        ]
+        ],
+        "hide_until_unlocked": true
       }
     ],
     "tag": "Рабочий стол Лин",
