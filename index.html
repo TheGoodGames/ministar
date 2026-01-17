@@ -3685,7 +3685,8 @@ transition: all 0.3s;
                     originalIndex: node.choices.indexOf(c)
                 }));
                 // ✅ ИСПРАВЛЕНО: Правильная фильтрация choices по hide_until_unlocked И СОСТОЯНИЯМ
-                const filteredChoices = choicesWithIndex.filter(({ choice: c }) => {
+                const filteredChoices = choicesWithIndex.filter(({ choice: c, originalIndex }) => {
+                    console.log('🔍 Фильтрация выбора:', c.text, 'hide_after_unlocked:', c.hide_after_unlocked, 'hide_after_unlocked_requires:', c.hide_after_unlocked_requires);
                     // Если hide_until_unlocked: true - проверяем требования и скрываем, если не выполнены
                     if (c.hide_until_unlocked === true) {
                         // Нормализуем requires в массив для единообразной обработки
