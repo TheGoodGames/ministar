@@ -3760,23 +3760,11 @@ transition: all 0.3s;
                     
                     // ✅ НОВАЯ ФУНКЦИОНАЛЬНОСТЬ: hide_after_unlocked - скрывать ПОСЛЕ выполнения требований
                     if (c.hide_after_unlocked === true) {
-                        // СЛУЧАЙ 1: Если выбор ведёт на другую ноду (next существует и не равен текущей ноде)
-                        if (c.next && c.next !== nodeId) {
-                            // Проверяем, был ли уже переход по этому выбору
-                            if (isChoiceUsed(nodeId, originalIndex)) {
-                                return false; // Скрываем, если по выбору уже прошли
-                            }
-                            return true; // Показываем, если ещё не проходили
-                        }
-                        
-                        // СЛУЧАЙ 2: Если выбор ведёт на ту же ноду или нет next (только собирает предмет/состояние)
                         // Используем hide_after_unlocked_requires, если они заданы, иначе используем requires (для обратной совместимости)
                         const requirementsToCheck = c.hide_after_unlocked_requires || c.requires;
                         
-                        // Если нет требований, не скрываем
-                        if (!requirementsToCheck) {
-                            return true;
-                        }
+                        // Если есть требования для проверки, проверяем их
+                        if (requirementsToCheck) {
                         
                         // Функция для проверки одного требования
                         function checkSingleRequirement(req) {
@@ -3787,7 +3775,9 @@ transition: all 0.3s;
                                 // Проверяем state
                                 if (req.state) {
                                     const stateId = typeof req.state === 'string' ? req.state : req.state.id;
-                                    return hasState(stateId);
+                                    // Проверяем, есть ли префикс state_ в ID
+                                    const fullStateId = stateId.startsWith('state_') ? stateId : 'state_' + stateId;
+                                    return hasState(fullStateId);
                                 }
                                 // Проверяем item/key
                                 if (req.item || req.key) {
@@ -3877,6 +3867,15 @@ transition: all 0.3s;
                         else if (typeof requirementsToCheck === 'string') {
                             const result = checkSingleRequirement(requirementsToCheck);
                             return !result; // Скрываем если выполнено
+                        }
+                        }
+                        
+                        // Если нет требований для проверки, но выбор ведёт на другую ноду
+                        // Проверяем, был ли уже переход по этому выбору (старая логика для обратной совместимости)
+                        if (c.next && c.next !== nodeId) {
+                            if (isChoiceUsed(nodeId, originalIndex)) {
+                                return false; // Скрываем, если по выбору уже прошли
+                            }
                         }
                         
                         return true; // По умолчанию показываем
