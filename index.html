@@ -3760,6 +3760,9 @@ transition: all 0.3s;
                     
                     // ✅ НОВАЯ ФУНКЦИОНАЛЬНОСТЬ: hide_after_unlocked - скрывать ПОСЛЕ выполнения требований
                     if (c.hide_after_unlocked === true) {
+                        // Обновляем currentState из localStorage перед проверкой
+                        currentState = JSON.parse(localStorage.getItem('lingame_states') || '[]');
+                        
                         // Используем hide_after_unlocked_requires, если они заданы, иначе используем requires (для обратной совместимости)
                         const requirementsToCheck = c.hide_after_unlocked_requires || c.requires;
                         
@@ -3769,7 +3772,9 @@ transition: all 0.3s;
                         // Функция для проверки одного требования
                         function checkSingleRequirement(req) {
                             if (typeof req === 'string' && req.startsWith('state_')) {
-                                return hasState(req);
+                                const result = hasState(req);
+                                console.log('🔍 Проверка state (строка):', req, 'Результат:', result);
+                                return result;
                             }
                             if (typeof req === 'object' && req !== null) {
                                 // Проверяем state
@@ -3777,7 +3782,9 @@ transition: all 0.3s;
                                     const stateId = typeof req.state === 'string' ? req.state : req.state.id;
                                     // Проверяем, есть ли префикс state_ в ID
                                     const fullStateId = stateId.startsWith('state_') ? stateId : 'state_' + stateId;
-                                    return hasState(fullStateId);
+                                    const result = hasState(fullStateId);
+                                    console.log('🔍 Проверка state (объект):', stateId, '->', fullStateId, 'Результат:', result, 'Текущие состояния:', currentState.map(s => s.id));
+                                    return result;
                                 }
                                 // Проверяем item/key
                                 if (req.item || req.key) {
@@ -3798,7 +3805,12 @@ transition: all 0.3s;
                             
                             if (!hasOperators) {
                                 // Старый формат: все требования должны быть выполнены (AND по умолчанию)
-                                const allMet = requirementsToCheck.every(req => checkSingleRequirement(req));
+                                const allMet = requirementsToCheck.every(req => {
+                                    const result = checkSingleRequirement(req);
+                                    console.log('🔍 Проверка требования:', req, 'Результат:', result, 'Текущие состояния:', currentState.map(s => s.id));
+                                    return result;
+                                });
+                                console.log('✅ Все требования выполнены:', allMet, 'Скрываем выбор:', !allMet);
                                 return !allMet; // Скрываем если все выполнены
                             }
                             
