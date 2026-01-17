@@ -3874,8 +3874,10 @@ transition: all 0.3s;
                             }
                             
                             const result = evaluateExpression(requirementsToCheck);
-                            console.log('✅ Результат evaluateExpression:', result, 'Скрываем выбор:', !result);
-                            return !result; // Скрываем если результат true (требования выполнены)
+                            console.log('✅ Результат evaluateExpression:', result, 'Скрываем выбор:', !result, 'Возвращаем:', !result);
+                            const shouldHide = !result; // Скрываем если результат true (требования выполнены)
+                            console.log('🔚 Функция filter возвращает для выбора "' + c.text + '":', shouldHide ? 'false (скрыть)' : 'true (показать)');
+                            return shouldHide;
                         }
                         // Если это объект (для обратной совместимости)
                         else if (typeof requirementsToCheck === 'object') {
