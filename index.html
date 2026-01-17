@@ -3773,78 +3773,113 @@ transition: all 0.3s;
                         // Используем hide_after_unlocked_requires, если они заданы, иначе используем requires (для обратной совместимости)
                         const requirementsToCheck = c.hide_after_unlocked_requires || c.requires;
                         
-                        // Нормализуем требования в массив для единообразной обработки
-                        let allRequirements = [];
-                        if (requirementsToCheck) {
-                            if (Array.isArray(requirementsToCheck)) {
-                                allRequirements = requirementsToCheck;
-                            } else if (typeof requirementsToCheck === 'object') {
-                                allRequirements = [requirementsToCheck];
-                            } else if (typeof requirementsToCheck === 'string') {
-                                allRequirements = [requirementsToCheck];
-                            }
-                        }
-                        
                         // Если нет требований, не скрываем
-                        if (allRequirements.length === 0) {
+                        if (!requirementsToCheck) {
                             return true;
                         }
                         
-                        // Разделяем требования на состояния и ключи
-                        const stateRequirements = allRequirements.filter(req => {
+                        // Функция для проверки одного требования
+                        function checkSingleRequirement(req) {
                             if (typeof req === 'string' && req.startsWith('state_')) {
-                                return true;
-                            }
-                            if (typeof req === 'object' && req !== null && req.state) {
-                                return true;
-                            }
-                            return false;
-                        });
-                        
-                        const keyRequirements = allRequirements.filter(req => {
-                            if (typeof req === 'string' && req.startsWith('state_')) {
-                                return false;
+                                return hasState(req);
                             }
                             if (typeof req === 'object' && req !== null) {
-                                return !!(req.item || req.key) && !req.state;
-                            }
-                            return true;
-                        });
-                        
-                        // Проверяем, выполнены ли ВСЕ требования
-                        let allRequirementsMet = true;
-                        
-                        // Проверяем состояния
-                        if (stateRequirements.length > 0) {
-                            const allStatesMet = stateRequirements.every(req => {
-                                if (typeof req === 'string') {
-                                    return hasState(req);
-                                }
-                                if (typeof req === 'object' && req !== null && req.state) {
+                                // Проверяем state
+                                if (req.state) {
                                     const stateId = typeof req.state === 'string' ? req.state : req.state.id;
                                     return hasState(stateId);
                                 }
-                                return false;
-                            });
-                            if (!allStatesMet) {
-                                allRequirementsMet = false;
+                                // Проверяем item/key
+                                if (req.item || req.key) {
+                                    return hasAllKeys([req]);
+                                }
                             }
-                        }
-                        
-                        // Проверяем ключи (item/key)
-                        if (keyRequirements.length > 0) {
-                            if (!hasAllKeys(keyRequirements)) {
-                                allRequirementsMet = false;
-                            }
-                        }
-                        
-                        // Если ВСЕ требования выполнены - СКРЫВАЕМ выбор
-                        if (allRequirementsMet) {
                             return false;
                         }
                         
-                        // Если требования не выполнены - показываем выбор
-                        return true;
+                        // Обрабатываем массив с операторами
+                        if (Array.isArray(requirementsToCheck)) {
+                            if (requirementsToCheck.length === 0) {
+                                return true;
+                            }
+                            
+                            // Если массив содержит только объекты (старый формат без операторов)
+                            const hasOperators = requirementsToCheck.some(item => item === 'AND' || item === 'OR');
+                            
+                            if (!hasOperators) {
+                                // Старый формат: все требования должны быть выполнены (AND по умолчанию)
+                                const allMet = requirementsToCheck.every(req => checkSingleRequirement(req));
+                                return !allMet; // Скрываем если все выполнены
+                            }
+                            
+                            // Новый формат с операторами: парсим выражение последовательно слева направо
+                            // Пример: [req1, "AND", req2, "OR", req3] -> (req1 AND req2) OR req3
+                            // Пример: [req1, "OR", req2, "AND", req3] -> (req1 OR req2) AND req3
+                            function evaluateExpression(tokens) {
+                                if (tokens.length === 0) return false;
+                                if (tokens.length === 1) {
+                                    const first = tokens[0];
+                                    if (first === 'AND' || first === 'OR') return false;
+                                    return checkSingleRequirement(first);
+                                }
+                                
+                                // Обрабатываем последовательно слева направо
+                                let result = null;
+                                let i = 0;
+                                
+                                while (i < tokens.length) {
+                                    const token = tokens[i];
+                                    
+                                    // Если это оператор, пропускаем (он будет обработан на следующей итерации)
+                                    if (token === 'AND' || token === 'OR') {
+                                        i++;
+                                        continue;
+                                    }
+                                    
+                                    // Это требование
+                                    const reqResult = checkSingleRequirement(token);
+                                    
+                                    if (result === null) {
+                                        // Первое требование
+                                        result = reqResult;
+                                    } else {
+                                        // Есть предыдущий результат, нужно найти оператор перед этим требованием
+                                        // Ищем оператор перед текущим токеном
+                                        let operator = 'AND'; // По умолчанию AND
+                                        if (i > 0 && (tokens[i - 1] === 'AND' || tokens[i - 1] === 'OR')) {
+                                            operator = tokens[i - 1];
+                                        }
+                                        
+                                        if (operator === 'AND') {
+                                            // AND: оба должны быть true
+                                            result = result && reqResult;
+                                        } else if (operator === 'OR') {
+                                            // OR: хотя бы один должен быть true
+                                            result = result || reqResult;
+                                        }
+                                    }
+                                    
+                                    i++;
+                                }
+                                
+                                return result === null ? false : result;
+                            }
+                            
+                            const result = evaluateExpression(requirementsToCheck);
+                            return !result; // Скрываем если результат true (требования выполнены)
+                        }
+                        // Если это объект (для обратной совместимости)
+                        else if (typeof requirementsToCheck === 'object') {
+                            const result = checkSingleRequirement(requirementsToCheck);
+                            return !result; // Скрываем если выполнено
+                        }
+                        // Если это строка (для обратной совместимости)
+                        else if (typeof requirementsToCheck === 'string') {
+                            const result = checkSingleRequirement(requirementsToCheck);
+                            return !result; // Скрываем если выполнено
+                        }
+                        
+                        return true; // По умолчанию показываем
                     }
                     
                     // Если hide_until_unlocked и hide_after_unlocked не установлены, показываем выбор
