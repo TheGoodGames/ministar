@@ -131,7 +131,7 @@
           {
             "add_state": {
               "id": "state_what_pass",
-              "label": "Где взять код",
+              "label": "Где код?",
               "type": "state",
               "icon": "❓"
             }
@@ -284,7 +284,15 @@
               "icon": "💳"
             },
             "message": "Вы получили ключ от своей комнаты",
-            "hide_after_collect": true
+            "hide_after_collect": true,
+            "requires": {
+              "state": {
+                "id": "state_lin_door",
+                "label": "Дверь заперта",
+                "icon": "🚪",
+                "type": "state"
+              }
+            }
           }
         ]
       }
