@@ -216,6 +216,23 @@
             transition: background 0.2s, transform 0.12s;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
+        
+        /* Анимация мигания для выборов, которые появились впервые */
+        @keyframes choiceBlink {
+            0%, 100% {
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+                border: 2px solid transparent;
+            }
+            25%, 75% {
+                box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 50px rgba(255, 255, 255, 0.5), 0 0 75px rgba(255, 255, 255, 0.3);
+                border: 3px solid rgba(255, 255, 255, 1);
+            }
+        }
+        
+        .choice-btn.newly-unlocked {
+            animation: choiceBlink 1.5s ease-in-out 2;
+            border: 2px solid transparent;
+        }
 
         .choice-btn:hover {
             background: #5a4ab0;
@@ -3691,6 +3708,7 @@ transition: all 0.3s;
                 const filteredChoices = choicesWithIndex.filter(({ choice: c, originalIndex }) => {
                     console.log('🔍 Фильтрация выбора:', c.text, 'hide_after_unlocked:', c.hide_after_unlocked, 'hide_after_unlocked_requires:', c.hide_after_unlocked_requires);
                     // Если hide_until_unlocked: true - проверяем требования и скрываем, если не выполнены
+                    const choiceKey = `hidden_choice_${nodeId}_${originalIndex}`;
                     if (c.hide_until_unlocked === true) {
                         // Нормализуем requires в массив для единообразной обработки
                         let allRequirements = [];
@@ -3747,6 +3765,8 @@ transition: all 0.3s;
                                 return false;
                             });
                             if (!allStatesMet) {
+                                // Сохраняем информацию о том, что выбор был скрыт
+                                localStorage.setItem(choiceKey, 'true');
                                 return false; // Скрываем, если состояния не выполнены
                             }
                         }
@@ -3754,6 +3774,8 @@ transition: all 0.3s;
                         // Проверяем ключи (item/key)
                         if (keyRequirements.length > 0) {
                             if (!hasAllKeys(keyRequirements)) {
+                                // Сохраняем информацию о том, что выбор был скрыт
+                                localStorage.setItem(choiceKey, 'true');
                                 return false; // Скрываем, если ключи не собраны
                             }
                         }
@@ -3930,6 +3952,21 @@ transition: all 0.3s;
                         isLocked = keyRequirements.length > 0 && !hasAllKeys(keyRequirements);
                     }
                     if (isLocked) btnClass += ' choice-btn-locked';
+                    
+                    // Проверяем, был ли выбор скрыт ранее через hide_until_unlocked
+                    let isNewlyUnlocked = false;
+                    if (c.hide_until_unlocked === true) {
+                        const choiceKey = `hidden_choice_${nodeId}_${originalIndex}`;
+                        const wasHidden = localStorage.getItem(choiceKey);
+                        if (wasHidden === 'true') {
+                            // Выбор был скрыт ранее, а теперь появился - добавляем анимацию
+                            isNewlyUnlocked = true;
+                            btnClass += ' newly-unlocked';
+                            // Удаляем метку, чтобы анимация не повторялась
+                            localStorage.removeItem(choiceKey);
+                        }
+                    }
+                    
                     const btnText = isLocked ? `${c.text} 🔒` : c.text;
                     // НЕ используем disabled - handleChoice проверит requires
                     return `<button class="${btnClass}" data-next="${c.next}" data-index="${originalIndex}">${btnText}</button>`;
