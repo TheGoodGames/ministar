@@ -3770,15 +3770,18 @@ transition: all 0.3s;
                         }
                         
                         // СЛУЧАЙ 2: Если выбор ведёт на ту же ноду или нет next (только собирает предмет/состояние)
-                        // Нормализуем requires в массив для единообразной обработки
+                        // Используем hide_after_unlocked_requires, если они заданы, иначе используем requires (для обратной совместимости)
+                        const requirementsToCheck = c.hide_after_unlocked_requires || c.requires;
+                        
+                        // Нормализуем требования в массив для единообразной обработки
                         let allRequirements = [];
-                        if (c.requires) {
-                            if (Array.isArray(c.requires)) {
-                                allRequirements = c.requires;
-                            } else if (typeof c.requires === 'object') {
-                                allRequirements = [c.requires];
-                            } else if (typeof c.requires === 'string') {
-                                allRequirements = [c.requires];
+                        if (requirementsToCheck) {
+                            if (Array.isArray(requirementsToCheck)) {
+                                allRequirements = requirementsToCheck;
+                            } else if (typeof requirementsToCheck === 'object') {
+                                allRequirements = [requirementsToCheck];
+                            } else if (typeof requirementsToCheck === 'string') {
+                                allRequirements = [requirementsToCheck];
                             }
                         }
                         
