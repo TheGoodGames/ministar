@@ -3760,8 +3760,9 @@ transition: all 0.3s;
                     }
                     
                     // ✅ НОВАЯ ФУНКЦИОНАЛЬНОСТЬ: hide_after_unlocked - скрывать ПОСЛЕ выполнения требований
+                    console.log('🔍 Проверка hide_after_unlocked для:', c.text, 'hide_after_unlocked:', c.hide_after_unlocked, 'тип:', typeof c.hide_after_unlocked, '=== true?', c.hide_after_unlocked === true);
                     if (c.hide_after_unlocked === true) {
-                        console.log('🔍 hide_after_unlocked проверка для выбора:', c.text, 'Требования:', c.hide_after_unlocked_requires || c.requires);
+                        console.log('✅ hide_after_unlocked проверка для выбора:', c.text, 'Требования:', c.hide_after_unlocked_requires || c.requires);
                         // Обновляем currentState из localStorage перед проверкой
                         currentState = JSON.parse(localStorage.getItem('lingame_states') || '[]');
                         console.log('📋 Текущие состояния:', currentState.map(s => s.id));
