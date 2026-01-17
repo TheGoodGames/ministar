@@ -1064,10 +1064,16 @@
         #npc-image {
             max-width: 100%;
             max-height: 100%;
-            width: auto;
+            width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             object-position: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+        
+        #npc-screen.ready #npc-image {
+            opacity: 1;
         }
 
         /* UI поверх картинки */
@@ -1891,56 +1897,107 @@ transition: all 0.3s;
         // ============================================
         // ПОКАЗ NPC КАРТИНОК
         // ============================================
+        // Кэш для предзагруженных изображений
+        const imagePreloadCache = new Map();
+        
+        // Функция предзагрузки изображения
+        function preloadNPCImage(prefix, nodeId) {
+            const cacheKey = `${prefix}_${nodeId}`;
+            if (imagePreloadCache.has(cacheKey)) {
+                return Promise.resolve(imagePreloadCache.get(cacheKey));
+            }
+            
+            return new Promise((resolve, reject) => {
+                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
+                const imgPng = `img/${prefix}_${nodeId}.png`;
+                const img = new Image();
+                
+                img.onload = function() {
+                    imagePreloadCache.set(cacheKey, img.src);
+                    resolve(img.src);
+                };
+                
+                img.onerror = function() {
+                    if (img.src.endsWith('.jpg')) {
+                        img.src = imgPng;
+                    } else {
+                        reject(new Error(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`));
+                    }
+                };
+                
+                img.src = imgJpg;
+            });
+        }
+        
+        // Проверка первого посещения NPC
+        function isNPCFirstVisit(nodeId) {
+            const key = `npc_visited_${nodeId}`;
+            const visited = localStorage.getItem(key);
+            if (!visited) {
+                localStorage.setItem(key, 'true');
+                return true;
+            }
+            return false;
+        }
+        
         function showSplashImage(prefix, nodeId, bubbleText) {
             return new Promise((resolve) => {
                 const screen = document.getElementById('npc-screen');
                 const imgEl = document.getElementById('npc-image');
                 const speechEl = document.getElementById('npc-speech');
-                const loaderEl = document.getElementById('npc-loader');
-                // Мгновенная реакция
-                screen.classList.add('active');
-                screen.classList.remove('fade-out');
-                screen.classList.remove('ready');
-                screen.classList.add('loading');
-                // Скрываем "Продолжить" на время загрузки
-                // (покажется когда будет ready)
+                
+                // Проверяем, первое ли это посещение
+                const isFirstVisit = isNPCFirstVisit(nodeId);
+                
+                // Если не первое посещение, пропускаем показ полноэкранной картинки
+                if (!isFirstVisit) {
+                    resolve();
+                    return;
+                }
+                
                 speechEl.textContent = (bubbleText || '').toString().trim();
-                const imgJpg = `img/${prefix}_${nodeId}.jpg`;
-                const imgPng = `img/${prefix}_${nodeId}.png`;
-                const img = new Image();
-                let ready = false;
-                const cleanupAndResolve = () => {
-                    // На время закрытия — гарантированно убираем "Продолжить"
-                    screen.classList.remove('ready');
-                    ready = false;
-                    screen.classList.add('fade-out');
-                    setTimeout(() => {
-                        screen.classList.remove('active', 'fade-out', 'loading');
+                
+                // Предзагружаем изображение ПЕРЕД показом экрана
+                preloadNPCImage(prefix, nodeId)
+                    .then((imageSrc) => {
+                        // Картинка загружена - теперь показываем экран
+                        imgEl.src = imageSrc;
+                        imgEl.style.opacity = '0';
+                        
+                        // Показываем экран только после загрузки
+                        screen.classList.remove('fade-out', 'loading');
+                        screen.classList.add('active', 'ready');
+                        
+                        // Плавное появление картинки
+                        requestAnimationFrame(() => {
+                            imgEl.style.transition = 'opacity 0.3s ease-in';
+                            imgEl.style.opacity = '1';
+                        });
+                        
+                        let ready = true;
+                        const cleanupAndResolve = () => {
+                            ready = false;
+                            screen.classList.add('fade-out');
+                            setTimeout(() => {
+                                screen.classList.remove('active', 'fade-out', 'ready');
+                                imgEl.style.opacity = '0';
+                                resolve();
+                            }, 250);
+                        };
+                        
+                        const onClick = () => {
+                            if (!ready) return;
+                            cleanupAndResolve();
+                        };
+                        
+                        screen.addEventListener('click', onClick, { once: true });
+                        screen.addEventListener('touchstart', onClick, { once: true, passive: true });
+                    })
+                    .catch((error) => {
+                        console.log(error.message);
+                        // Если картинка не найдена, просто продолжаем без показа
                         resolve();
-                    }, 250);
-                };
-                const onClick = () => {
-                    if (!ready) return;
-                    cleanupAndResolve();
-                };
-                screen.addEventListener('click', onClick, { once: true });
-                screen.addEventListener('touchstart', onClick, { once: true, passive: true });
-                img.onload = function () {
-                    imgEl.src = img.src;
-                    ready = true;
-                    screen.classList.remove('loading');
-                    screen.classList.add('ready');
-                };
-                img.onerror = function () {
-                    if (img.src.endsWith('.jpg')) {
-                        img.src = imgPng;
-                    } else {
-                        console.log(`Splash картинка не найдена: ${imgJpg} или ${imgPng}`);
-                        // Не блокируем игру
-                        cleanupAndResolve();
-                    }
-                };
-                img.src = imgJpg;
+                    });
             });
         }
 
