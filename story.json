@@ -241,14 +241,6 @@
         "hide_after_unlocked_requires": [
           {
             "state": {
-              "id": "state_I_know_who",
-              "label": "Знаю кто на фото",
-              "icon": "🖼️",
-              "type": "state"
-            }
-          },
-          {
-            "state": {
               "id": "state_barmen_up_1",
               "label": "Репутация у бармена +1",
               "icon": "🍸",
